@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Login Admin - KOPICU</title>
+
+  <link rel="stylesheet" href="css/login.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+  <main class="login-container">
+    <div class="login-card">
+
+      <div class="login-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-mug-hot"></i>
+        </div>
+        <h1>KOPICU</h1>
+        <p>Administrator Panel</p>
+      </div>
+
+      <div class="login-heading">
+        <h2>Selamat Datang</h2>
+        <p>Silakan masuk ke akun administrator kamu.</p>
+      </div>
+
+      <form id="login-form">
+
+        <div class="form-group">
+          <label for="username">Username</label>
+          <div class="input-box">
+            <i class="fa-regular fa-user"></i>
+            <input
+              type="text"
+              id="username"
+              placeholder="Masukkan username"
+              autocomplete="username"
+              required
+            >
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <div class="input-box">
+            <i class="fa-solid fa-lock"></i>
+            <input
+              type="password"
+              id="password"
+              placeholder="Masukkan password"
+              autocomplete="current-password"
+              required
+            >
+            <button type="button" id="toggle-password" aria-label="Tampilkan password">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <p id="login-error" class="login-error" hidden></p>
+
+        <button type="submit" id="login-button" class="login-button">
+          <span>Masuk Sekarang</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+
+      </form>
+
+      <div class="login-footer">
+        <i class="fa-solid fa-shield-halved"></i>
+        <span>Halaman khusus administrator KOPICU</span>
+      </div>
+
+    </div>
+  </main>
+
+  <script type="module" src="js/login.js"></script>
+
+</body>
+</html>
