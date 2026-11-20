@@ -14,6 +14,8 @@ const emptyState = document.getElementById("empty-state");
 const productsHeading = document.getElementById("products-heading");
 const resetCategory = document.getElementById("reset-category");
 const showAllCategories = document.getElementById("show-all-categories");
+const storeLogo = document.getElementById("store-logo");
+const brandFallback = document.getElementById("brand-fallback");
 
 let allProducts = [];
 let allCategories = [];
@@ -40,6 +42,30 @@ function toArray(data) {
     id,
     ...value
   }));
+}
+
+function renderStoreLogo(value) {
+  const logoUrl = typeof value === "string"
+    ? value
+    : value?.url || value?.image || "";
+
+  if (!logoUrl) {
+    storeLogo.hidden = true;
+    brandFallback.hidden = false;
+    return;
+  }
+
+  storeLogo.onload = () => {
+    storeLogo.hidden = false;
+    brandFallback.hidden = true;
+  };
+
+  storeLogo.onerror = () => {
+    storeLogo.hidden = true;
+    brandFallback.hidden = false;
+  };
+
+  storeLogo.src = logoUrl;
 }
 
 function renderBanners(items) {
@@ -112,25 +138,17 @@ function renderCategories() {
     <button
       class="category-item ${activeCategory === "all" ? "active" : ""}"
       data-category="all"
+      type="button"
     >
-      <span class="category-image">
-        <i class="fa-solid fa-border-all"></i>
-      </span>
-      <span>Semua</span>
+      Semua
     </button>
   ` + visible.map(category => `
     <button
       class="category-item ${activeCategory === category.id ? "active" : ""}"
       data-category="${safe(category.id)}"
+      type="button"
     >
-      <span class="category-image">
-        ${
-          category.image
-            ? `<img src="${safe(category.image)}" alt="" loading="lazy">`
-            : `<i class="fa-solid fa-mug-hot"></i>`
-        }
-      </span>
-      <span>${safe(category.name)}</span>
+      ${safe(category.name)}
     </button>
   `).join("");
 
@@ -141,6 +159,49 @@ function renderCategories() {
       renderProducts();
     });
   });
+}
+
+function renderProductCard(product) {
+  const productUrl = `customer/product.html?id=${encodeURIComponent(product.id)}`;
+
+  return `
+    <article class="product-card">
+      <a class="product-image-link" href="${productUrl}">
+        <img
+          class="product-image"
+          src="${safe(product.image || "assets/images/product-placeholder.png")}"
+          alt="${safe(product.name)}"
+          loading="lazy"
+        >
+      </a>
+
+      <div class="product-info">
+        <div>
+          <h3 class="product-name">
+            ${safe(product.name || "Produk")}
+          </h3>
+
+          <p class="product-description">
+            ${safe(product.description || "Menu pilihan KOPICU")}
+          </p>
+        </div>
+
+        <div class="product-bottom">
+          <span class="product-price">
+            ${rupiah(product.price)}
+          </span>
+
+          <a
+            class="add-button"
+            href="${productUrl}"
+            aria-label="Pilih ${safe(product.name)}"
+          >
+            <i class="fa-solid fa-plus"></i>
+          </a>
+        </div>
+      </div>
+    </article>
+  `;
 }
 
 function renderProducts() {
@@ -164,68 +225,99 @@ function renderProducts() {
 
   productsHeading.textContent = query
     ? "Hasil pencarian"
-    : activeCategory === "all"
-      ? "Menu KOPICU"
-      : (
-          allCategories.find(item =>
-            item.id === activeCategory
-          )?.name || "Menu"
-        );
+    : "Menu";
 
   resetCategory.hidden = activeCategory === "all";
 
-  productList.innerHTML = products.map(product => `
-    <article class="product-card">
-      <a href="customer/product.html?id=${encodeURIComponent(product.id)}">
-        <img
-          class="product-image"
-          src="${safe(product.image || "assets/images/product-placeholder.png")}"
-          alt="${safe(product.name)}"
-          loading="lazy"
-        >
-      </a>
+  if (!products.length) {
+    productList.innerHTML = "";
+    emptyState.textContent = query
+      ? "Menu yang kamu cari belum tersedia."
+      : "Produk belum tersedia.";
+    emptyState.hidden = false;
+    return;
+  }
 
-      <div class="product-info">
-        <h3 class="product-name">
-          ${safe(product.name || "Produk")}
+  emptyState.hidden = true;
+
+  if (activeCategory !== "all") {
+    productList.innerHTML = `
+      <section class="product-category-group">
+        <h3 class="product-category-title">
+          ${safe(allCategories.find(item =>
+            item.id === activeCategory
+          )?.name || "Menu")}
         </h3>
 
-        <p class="product-description">
-          ${safe(product.description || "Menu pilihan KOPICU")}
-        </p>
-
-        <div class="product-bottom">
-          <span class="product-price">
-            ${rupiah(product.price)}
-          </span>
-
-          <a
-            class="add-button"
-            href="customer/product.html?id=${encodeURIComponent(product.id)}"
-            aria-label="Pilih ${safe(product.name)}"
-          >
-            <i class="fa-solid fa-plus"></i>
-          </a>
+        <div class="product-category-items">
+          ${products.map(renderProductCard).join("")}
         </div>
+      </section>
+    `;
+
+    return;
+  }
+
+  const groups = allCategories
+    .filter(category => category.active !== false)
+    .map(category => ({
+      category,
+      products: products.filter(product =>
+        product.categoryId === category.id
+      )
+    }))
+    .filter(group => group.products.length > 0);
+
+  const categorizedIds = new Set(
+    groups.flatMap(group =>
+      group.products.map(product => product.id)
+    )
+  );
+
+  const uncategorized = products.filter(product =>
+    !categorizedIds.has(product.id)
+  );
+
+  productList.innerHTML = groups.map(group => `
+    <section class="product-category-group">
+      <h3 class="product-category-title">
+        ${safe(group.category.name)}
+      </h3>
+
+      <div class="product-category-items">
+        ${group.products.map(renderProductCard).join("")}
       </div>
-    </article>
+    </section>
   `).join("");
 
-  emptyState.hidden = products.length > 0;
+  if (uncategorized.length) {
+    productList.innerHTML += `
+      <section class="product-category-group">
+        <h3 class="product-category-title">Lainnya</h3>
+
+        <div class="product-category-items">
+          ${uncategorized.map(renderProductCard).join("")}
+        </div>
+      </section>
+    `;
+  }
 }
 
 async function loadHome() {
   try {
     const [
+      settingsSnap,
       bannersSnap,
       categoriesSnap,
       productsSnap
     ] = await Promise.all([
+      get(ref(db, "settings/storeLogo")),
       get(ref(db, "banners")),
       get(ref(db, "categories")),
       get(ref(db, "products"))
     ]);
 
+    renderStoreLogo(settingsSnap.val());
     renderBanners(toArray(bannersSnap.val()));
 
     allCategories = toArray(categoriesSnap.val());
