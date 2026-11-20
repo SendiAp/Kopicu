@@ -884,6 +884,160 @@ productForm.addEventListener("submit", async event => {
   }
 });
 
+function showAvailabilityOptions() {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+
+    overlay.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      background:rgba(0,0,0,.4);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    `;
+
+    const dialog = document.createElement("div");
+
+    dialog.style.cssText = `
+      width:100%;
+      max-width:350px;
+      background:#fff;
+      padding:22px;
+      border-radius:14px;
+      font-family:"DM Sans",sans-serif;
+    `;
+
+    dialog.innerHTML = `
+      <h3 style="margin:0 0 16px;color:#38251d;font-size:17px;">
+        Atur ketersediaan
+      </h3>
+
+      <div class="availability-options">
+        <button data-value="today">
+          Tidak tersedia hari ini
+        </button>
+
+        <button data-value="indefinite">
+          Tidak tersedia sampai waktu tidak pasti
+        </button>
+
+        <button data-value="hidden">
+          Sembunyikan item ini
+        </button>
+      </div>
+
+      <button class="availability-cancel">
+        Batal
+      </button>
+    `;
+
+    dialog.querySelectorAll("[data-value]").forEach(button => {
+      button.style.cssText = `
+        display:block;
+        width:100%;
+        padding:13px;
+        margin-bottom:9px;
+        border:1px solid #eee;
+        border-radius:9px;
+        background:#fff;
+        color:#38251d;
+        text-align:left;
+        font-size:13px;
+        cursor:pointer;
+      `;
+
+      button.addEventListener("click", () => {
+        overlay.remove();
+        resolve(button.dataset.value);
+      });
+    });
+
+    const cancel = dialog.querySelector(".availability-cancel");
+
+    cancel.style.cssText = `
+      width:100%;
+      padding:12px;
+      border:0;
+      border-radius:9px;
+      background:#eee;
+      color:#555;
+      cursor:pointer;
+      margin-top:5px;
+    `;
+
+    cancel.addEventListener("click", () => {
+      overlay.remove();
+      resolve(null);
+    });
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        overlay.remove();
+        resolve(null);
+      }
+    });
+
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+  });
+}
+
+async function handleProductAvailability(id, toggle, product) {
+  const previousStatus = product.availabilityStatus || "";
+  const previousAvailable = product.available !== false;
+
+  toggle.disabled = true;
+
+  try {
+    if (toggle.checked) {
+      await update(ref(db, `products/${id}`), {
+        available: true,
+        availabilityStatus: "",
+        updatedAt: Date.now()
+      });
+
+      product.available = true;
+      product.availabilityStatus = "";
+
+      renderProducts();
+      return;
+    }
+
+    toggle.checked = true;
+
+    const selectedStatus = await showAvailabilityOptions();
+
+    if (!selectedStatus) return;
+
+    await update(ref(db, `products/${id}`), {
+      available: false,
+      availabilityStatus: selectedStatus,
+      updatedAt: Date.now()
+    });
+
+    product.available = false;
+    product.availabilityStatus = selectedStatus;
+
+    renderProducts();
+
+  } catch (error) {
+    console.error("Gagal mengubah ketersediaan:", error);
+
+    product.available = previousAvailable;
+    product.availabilityStatus = previousStatus;
+
+    await popup("Ketersediaan hidangan gagal diperbarui.");
+
+    renderProducts();
+
+  } finally {
+    toggle.disabled = false;
+  }
+}
+
 function renderProducts() {
   const search = (searchInput?.value || "").trim().toLowerCase();
 
@@ -900,66 +1054,86 @@ function renderProducts() {
 
   menuListSection.hidden = false;
 
+  const grouped = {};
+
   filteredProducts.forEach(([id, product]) => {
-    const category = categories[product.categoryId];
-    const categoryName = category?.name || "Tanpa kategori";
-    const image = product.image || product.images?.[0] || "";
-    const available = product.available !== false;
+    const categoryId = product.categoryId || "uncategorized";
 
-    const item = document.createElement("article");
-    item.className = "menu-item";
+    if (!grouped[categoryId]) {
+      grouped[categoryId] = [];
+    }
 
-    item.innerHTML = `
-      <div class="menu-item-image">
-        ${
-          image
-            ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}">`
-            : '<i class="fa-solid fa-image"></i>'
-        }
-      </div>
+    grouped[categoryId].push([id, product]);
+  });
 
-      <div class="menu-item-info">
-        <span class="menu-item-category">
-          ${escapeHTML(categoryName)}
-        </span>
+  Object.entries(grouped).forEach(([categoryId, items]) => {
+    const categoryName = categories[categoryId]?.name || "Lainnya";
 
-        <h3>${escapeHTML(product.name)}</h3>
+    const section = document.createElement("section");
+    section.className = "menu-category-section";
 
-        <p>Rp${Number(product.price || 0).toLocaleString("id-ID")}</p>
-      </div>
+    const heading = document.createElement("h3");
+    heading.className = "menu-category-heading";
+    heading.textContent = categoryName;
 
-      <label class="menu-toggle">
-        <input type="checkbox" ${available ? "checked" : ""}>
-        <span class="menu-toggle-slider"></span>
-      </label>
-    `;
+    section.appendChild(heading);
 
-    const toggle = item.querySelector('input[type="checkbox"]');
+    items.forEach(([id, product]) => {
+      const image = product.image || product.images?.[0] || "";
+      const status = product.availabilityStatus || "";
 
-    toggle.addEventListener("change", async () => {
-      const previousValue = products[id].available !== false;
-      toggle.disabled = true;
+      let statusText = "";
+      let statusClass = "";
 
-      try {
-        await update(ref(db, `products/${id}`), {
-          available: toggle.checked,
-          updatedAt: Date.now()
-        });
-
-        products[id].available = toggle.checked;
-
-      } catch (error) {
-        console.error("Gagal mengubah status hidangan:", error);
-
-        toggle.checked = previousValue;
-
-        await popup("Status hidangan gagal diperbarui.");
-      } finally {
-        toggle.disabled = false;
+      if (status === "today") {
+        statusText = "Tidak tersedia hari ini";
+        statusClass = "status-today";
+      } else if (status === "indefinite") {
+        statusText = "Tidak tersedia sampai waktu tidak pasti";
+        statusClass = "status-indefinite";
+      } else if (status === "hidden") {
+        statusText = "Tersembunyi";
+        statusClass = "status-hidden";
       }
+
+      const item = document.createElement("article");
+      item.className = "menu-item";
+
+      item.innerHTML = `
+        <div class="menu-item-image">
+          ${
+            image
+              ? `<img src="${escapeHTML(image)}" alt="${escapeHTML(product.name)}">`
+              : '<i class="fa-solid fa-image"></i>'
+          }
+        </div>
+
+        <div class="menu-item-info">
+          <h3>${escapeHTML(product.name)}</h3>
+          <p>Rp${Number(product.price || 0).toLocaleString("id-ID")}</p>
+          ${
+            statusText
+              ? `<span class="menu-status ${statusClass}">${statusText}</span>`
+              : ""
+          }
+        </div>
+
+        <label class="menu-toggle">
+          <input type="checkbox" ${product.available !== false ? "checked" : ""}>
+          <span class="menu-toggle-slider"></span>
+        </label>
+      `;
+
+      const toggle = item.querySelector('input[type="checkbox"]');
+
+      toggle.addEventListener("change", () => {
+        handleProductAvailability(id, toggle, product);
+      });
+
+      section.appendChild(item);
     });
 
-    menuList.appendChild(item);
+    menuList.appendChild(section);
   });
 }
 
