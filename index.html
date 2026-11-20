@@ -19,30 +19,26 @@
 <body>
 
   <header class="topbar">
-    <a class="brand" href="index.html">FUCK<span>.</span></a>
-
-    <a class="header-cart" href="customer/cart.html">
-      <i class="fa-solid fa-bag-shopping"></i>
-      <b id="cart-count">0</b>
+    <a class="brand" href="index.html" aria-label="KOPICU">
+      <img id="store-logo" src="" alt="KOPICU" hidden>
+      <span id="brand-fallback">KOPICU</span>
     </a>
+
+    <label class="search-box">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input
+        id="product-search"
+        type="search"
+        placeholder="Cari kopi atau menu favoritmu..."
+        autocomplete="off"
+      >
+      <button id="clear-search" class="clear-search" type="button" hidden>
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </label>
   </header>
 
   <main class="page">
-
-    <section class="search-wrap">
-      <label class="search-box">
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input
-          id="product-search"
-          type="search"
-          placeholder="Cari kopi atau menu favoritmu..."
-          autocomplete="off"
-        >
-        <button id="clear-search" class="clear-search" type="button" hidden>
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </label>
-    </section>
 
     <section class="banner-section">
       <div id="banner-list" class="banner-list">
@@ -63,19 +59,18 @@
         <div class="skeleton category-skeleton"></div>
         <div class="skeleton category-skeleton"></div>
         <div class="skeleton category-skeleton"></div>
-        <div class="skeleton category-skeleton"></div>
       </div>
     </section>
 
     <section class="section products-section">
       <div class="section-heading">
-        <h2 id="products-heading">Menu KOPICU</h2>
+        <h2 id="products-heading">Menu</h2>
         <button id="reset-category" class="text-button" type="button" hidden>
           Semua menu
         </button>
       </div>
 
-      <div id="product-list" class="product-grid">
+      <div id="product-list" class="product-list">
         <div class="skeleton product-skeleton"></div>
         <div class="skeleton product-skeleton"></div>
       </div>
@@ -91,11 +86,6 @@
     <a class="nav-item active" href="index.html">
       <i class="fa-solid fa-house"></i>
       <span>Beranda</span>
-    </a>
-
-    <a class="nav-item" href="customer/search.html">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <span>Cari</span>
     </a>
 
     <a class="nav-item" href="customer/cart.html">
