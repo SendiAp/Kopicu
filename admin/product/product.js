@@ -1,4 +1,4 @@
-import { db, storage } from "../../database/firebase.js";
+import { db } from "../../database/firebase.js";
 
 import {
   ref,
@@ -8,12 +8,6 @@ import {
   update,
   remove
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
-
-import {
-  ref as storageRef,
-  uploadBytes,
-  getDownloadURL
-} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-storage.js";
 
 const loginStatus = sessionStorage.getItem("kopicu_admin_login");
 
@@ -777,22 +771,25 @@ productName.addEventListener("input", updateProductButton);
 productDescription.addEventListener("input", updateProductButton);
 productCategory.addEventListener("change", updateProductButton);
 
-async function uploadProductPhotos(productId) {
+async function uploadProductPhotos() {
   const urls = [];
 
-  for (let index = 0; index < selectedPhotos.length; index++) {
-    const file = selectedPhotos[index];
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+  for (const file of selectedPhotos) {
+    const formData = new FormData();
+    formData.append("file", file);
 
-    const imageRef = storageRef(
-      storage,
-      `products/${productId}/${Date.now()}_${index}_${safeName}`
-    );
+    const response = await fetch("https://files.maelyn.eu/upload", {
+      method: "POST",
+      body: formData
+    });
 
-    await uploadBytes(imageRef, file);
+    const result = await response.json();
 
-    const imageUrl = await getDownloadURL(imageRef);
-    urls.push(imageUrl);
+    if (!response.ok || !result.ok || !result.url) {
+      throw new Error(result.message || `Gagal mengunggah ${file.name}`);
+    }
+
+    urls.push(result.url);
   }
 
   return urls;
@@ -837,8 +834,8 @@ productForm.addEventListener("submit", async event => {
     const productRef = push(ref(db, "products"));
     const productId = productRef.key;
 
-    const imageUrls = await uploadProductPhotos(productId);
-
+    const imageUrls = await uploadProductPhotos();
+    
     const selectedGroups = Array.from(
       productOptionGroups.querySelectorAll(
         ".product-option-group-checkbox:checked"
