@@ -36,6 +36,7 @@ const menuListSection = $("menu-list-section");
 const searchInput = $("search-menu-input");
 const searchButton = $("search-menu-button");
 const searchContainer = $("product-search");
+const helpButton = $("help-menu-button");
 
 const categoryForm = $("category-form");
 const categoryNameInput = $("category-name");
@@ -43,11 +44,25 @@ const saveCategoryButton = $("save-category-button");
 const categoryList = $("category-list");
 const categoryTotal = $("category-total");
 
+const optionGroupForm = $("option-group-form");
+const optionGroupName = $("option-group-name");
+const optionItemsList = $("option-items-list");
+const addOptionButton = $("add-option-button");
+const optionRequired = $("option-required");
+const optionMultiple = $("option-multiple");
+const saveOptionGroupButton = $("save-option-group-button");
+const optionGroupList = $("option-group-list");
+const optionGroupTotal = $("option-group-total");
+const productOptionGroups = $("product-option-groups");
+
 let selectedPhotos = [];
 let categories = {};
 let products = {};
+let optionGroups = {};
+
 let isSavingProduct = false;
 let isSavingCategory = false;
+let isSavingOptionGroup = false;
 
 const username = sessionStorage.getItem("kopicu_admin_username") || "Admin";
 
@@ -78,6 +93,111 @@ function escapeHTML(value) {
   })[char]);
 }
 
+function popup(message, title = "Informasi", confirmMode = false) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+
+    overlay.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(0,0,0,.38);
+      backdrop-filter:blur(3px);
+    `;
+
+    const dialog = document.createElement("div");
+
+    dialog.style.cssText = `
+      width:100%;
+      max-width:370px;
+      padding:25px 22px 20px;
+      border:1px solid #eeeeee;
+      border-radius:15px;
+      background:#fff;
+      box-shadow:0 15px 50px rgba(0,0,0,.15);
+      font-family:"DM Sans",sans-serif;
+      text-align:center;
+      animation:popupAppear .2s ease;
+    `;
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    heading.style.cssText = `
+      margin:0;
+      color:#38251d;
+      font-size:17px;
+      font-weight:800;
+    `;
+
+    const description = document.createElement("p");
+    description.textContent = message;
+    description.style.cssText = `
+      margin:12px 0 22px;
+      color:#777;
+      font-size:13px;
+      line-height:1.6;
+    `;
+
+    const actions = document.createElement("div");
+    actions.style.cssText = `
+      display:flex;
+      gap:9px;
+      justify-content:center;
+    `;
+
+    function createButton(text, background, color, value) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = text;
+      button.style.cssText = `
+        flex:1;
+        min-height:42px;
+        border:0;
+        border-radius:8px;
+        background:${background};
+        color:${color};
+        font-family:inherit;
+        font-size:12px;
+        font-weight:700;
+        cursor:pointer;
+      `;
+
+      button.addEventListener("click", () => {
+        overlay.remove();
+        resolve(value);
+      });
+
+      return button;
+    }
+
+    if (confirmMode) {
+      actions.append(
+        createButton("Batal", "#eeeeee", "#555", false),
+        createButton("Ya, lanjutkan", "#38251d", "#fff", true)
+      );
+    } else {
+      actions.append(
+        createButton("Mengerti", "#38251d", "#fff", true)
+      );
+    }
+
+    dialog.append(heading, description, actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
+}
+
 function updateProductButton() {
   const valid =
     productName.value.trim() &&
@@ -92,6 +212,113 @@ function updateProductButton() {
 function updateCategoryButton() {
   saveCategoryButton.disabled =
     !categoryNameInput.value.trim() || isSavingCategory;
+}
+
+function getOptionRows() {
+  return Array.from(
+    optionItemsList.querySelectorAll(".option-item")
+  );
+}
+
+function getOptionData() {
+  return getOptionRows().map(row => ({
+    name: row.querySelector(".option-name").value.trim(),
+    price: getPrice(row.querySelector(".option-price").value)
+  }));
+}
+
+function updateOptionGroupButton() {
+  const nameValid = optionGroupName.value.trim().length > 0;
+  const rows = getOptionRows();
+
+  const optionsValid =
+    rows.length > 0 &&
+    rows.every(row => {
+      const optionName = row.querySelector(".option-name").value.trim();
+      const optionPrice = row.querySelector(".option-price").value.trim();
+
+      return (
+        optionName !== "" &&
+        /^\d[\d,]*$/.test(optionPrice)
+      );
+    });
+
+  saveOptionGroupButton.disabled =
+    !nameValid || !optionsValid || isSavingOptionGroup;
+}
+
+function createOptionRow(name = "", price = "0") {
+  const row = document.createElement("div");
+  row.className = "option-item";
+
+  row.innerHTML = `
+    <div class="option-item-fields">
+      <div class="form-group">
+        <label>Nama</label>
+        <input
+          type="text"
+          class="option-name"
+          placeholder="Cth. Jelly, besar, gula 50%"
+          maxlength="50"
+          value="${escapeHTML(name)}"
+          required
+        >
+      </div>
+
+      <div class="form-group">
+        <label>Harga</label>
+        <div class="price-input-wrapper option-price-wrapper">
+          <span>+Rp</span>
+          <input
+            type="text"
+            class="option-price"
+            inputmode="numeric"
+            value="${escapeHTML(formatRupiah(price))}"
+            required
+          >
+        </div>
+      </div>
+    </div>
+
+    <button type="button" class="option-item-remove">
+      Hapus opsi
+    </button>
+  `;
+
+  const nameInput = row.querySelector(".option-name");
+  const priceInput = row.querySelector(".option-price");
+  const removeButton = row.querySelector(".option-item-remove");
+
+  nameInput.addEventListener("input", updateOptionGroupButton);
+
+  priceInput.addEventListener("input", () => {
+    priceInput.value = formatRupiah(priceInput.value);
+    updateOptionGroupButton();
+  });
+
+  removeButton.addEventListener("click", () => {
+    if (getOptionRows().length <= 1) {
+      popup("Minimal harus ada satu opsi dalam grup ini.");
+      return;
+    }
+
+    row.remove();
+    updateOptionGroupButton();
+  });
+
+  optionItemsList.appendChild(row);
+  updateOptionGroupButton();
+}
+
+function resetOptionGroupForm() {
+  optionGroupForm.reset();
+  optionItemsList.innerHTML = "";
+
+  optionRequired.checked = true;
+  optionMultiple.checked = false;
+
+  createOptionRow();
+  updateOptionGroupButton();
 }
 
 async function loadCategories() {
@@ -134,7 +361,6 @@ function renderCategories() {
   );
 
   categoryTotal.textContent = `${entries.length} kategori`;
-
   categoryList.innerHTML = "";
 
   if (entries.length === 0) {
@@ -162,8 +388,7 @@ function renderCategories() {
       <button
         type="button"
         class="delete-category-button"
-        aria-label="Hapus kategori ${escapeHTML(category.name || "")}"
-        title="Hapus kategori"
+        aria-label="Hapus kategori"
       >
         <i class="fa-regular fa-trash-can"></i>
       </button>
@@ -193,7 +418,7 @@ categoryForm.addEventListener("submit", async event => {
   );
 
   if (duplicate) {
-    alert("Kategori tersebut sudah tersedia.");
+    await popup("Kategori tersebut sudah tersedia.");
     return;
   }
 
@@ -220,11 +445,11 @@ categoryForm.addEventListener("submit", async event => {
     renderCategories();
     updateCategorySelect();
 
-    alert("Kategori berhasil ditambahkan.");
+    await popup("Kategori berhasil ditambahkan.");
 
   } catch (error) {
     console.error("Gagal menyimpan kategori:", error);
-    alert("Kategori gagal disimpan. Silakan coba lagi.");
+    await popup("Kategori gagal disimpan. Silakan coba lagi.");
   } finally {
     isSavingCategory = false;
     saveCategoryButton.innerHTML =
@@ -240,12 +465,16 @@ async function deleteCategory(id, name) {
   );
 
   if (usedByProduct) {
-    alert("Kategori ini masih digunakan oleh hidangan. Ubah kategori hidangan terlebih dahulu.");
+    await popup(
+      "Kategori ini masih digunakan oleh hidangan. Ubah kategori hidangan terlebih dahulu."
+    );
     return;
   }
 
-  const confirmed = confirm(
-    `Yakin ingin menghapus kategori "${name}"?`
+  const confirmed = await popup(
+    `Yakin ingin menghapus kategori "${name}"?`,
+    "Hapus kategori",
+    true
   );
 
   if (!confirmed) return;
@@ -258,13 +487,231 @@ async function deleteCategory(id, name) {
     renderCategories();
     updateCategorySelect();
 
-    alert("Kategori berhasil dihapus.");
+    await popup("Kategori berhasil dihapus.");
 
   } catch (error) {
     console.error("Gagal menghapus kategori:", error);
-    alert("Kategori gagal dihapus. Silakan coba lagi.");
+    await popup("Kategori gagal dihapus. Silakan coba lagi.");
   }
 }
+
+function renderOptionGroups() {
+  const entries = Object.entries(optionGroups).filter(([, group]) =>
+    group && group.name
+  );
+
+  optionGroupTotal.textContent = `${entries.length} grup`;
+  optionGroupList.innerHTML = "";
+
+  if (entries.length === 0) {
+    optionGroupList.innerHTML = `
+      <div class="category-empty">
+        Belum ada grup opsi.
+      </div>
+    `;
+    return;
+  }
+
+  entries.forEach(([id, group]) => {
+    const options = Array.isArray(group.options) ? group.options : [];
+
+    const item = document.createElement("div");
+    item.className = "option-group-card";
+
+    item.innerHTML = `
+      <div class="option-group-card-header">
+        <strong>${escapeHTML(group.name)}</strong>
+
+        <div class="option-group-card-actions">
+          <button
+            type="button"
+            class="delete-option-group-button"
+            aria-label="Hapus grup opsi"
+            title="Hapus grup opsi"
+          >
+            <i class="fa-regular fa-trash-can"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="option-group-card-details">
+        ${group.required ? "Wajib diisi" : "Tidak wajib"}
+        ·
+        ${group.multiple ? "Bisa pilih lebih dari satu" : "Hanya satu pilihan"}
+      </div>
+
+      <div class="option-group-card-options">
+        ${options.map(option => `
+          <span>
+            ${escapeHTML(option.name)}
+            ·
+            +Rp${Number(option.price || 0).toLocaleString("id-ID")}
+          </span>
+        `).join("")}
+      </div>
+    `;
+
+    item.querySelector(".delete-option-group-button").addEventListener("click", () => {
+      deleteOptionGroup(id, group.name);
+    });
+
+    optionGroupList.appendChild(item);
+  });
+}
+
+function renderProductOptionGroups() {
+  const entries = Object.entries(optionGroups).filter(([, group]) =>
+    group && group.name
+  );
+
+  productOptionGroups.innerHTML = "";
+
+  if (entries.length === 0) {
+    productOptionGroups.innerHTML = `
+      <div class="option-group-empty">
+        Belum ada grup opsi. Kamu bisa membuatnya di tab Grup opsi.
+      </div>
+    `;
+    return;
+  }
+
+  entries.forEach(([id, group]) => {
+    const label = document.createElement("label");
+    label.className = "product-option-group-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.value = id;
+    checkbox.className = "product-option-group-checkbox";
+
+    const text = document.createElement("span");
+    text.textContent = group.name;
+
+    label.append(checkbox, text);
+    productOptionGroups.appendChild(label);
+  });
+}
+
+async function loadOptionGroups() {
+  const snapshot = await get(ref(db, "optionGroups"));
+
+  optionGroups = snapshot.exists() ? snapshot.val() : {};
+
+  renderOptionGroups();
+  renderProductOptionGroups();
+}
+
+async function deleteOptionGroup(id, name) {
+  const usedByProduct = Object.values(products).some(product =>
+    product &&
+    Array.isArray(product.optionGroups) &&
+    product.optionGroups.includes(id)
+  );
+
+  if (usedByProduct) {
+    await popup(
+      "Grup opsi ini masih digunakan oleh hidangan. Hapus hubungan grup dari hidangan terlebih dahulu."
+    );
+    return;
+  }
+
+  const confirmed = await popup(
+    `Yakin ingin menghapus grup opsi "${name}"?`,
+    "Hapus grup opsi",
+    true
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await remove(ref(db, `optionGroups/${id}`));
+
+    delete optionGroups[id];
+
+    renderOptionGroups();
+    renderProductOptionGroups();
+
+    await popup("Grup opsi berhasil dihapus.");
+
+  } catch (error) {
+    console.error("Gagal menghapus grup opsi:", error);
+    await popup("Grup opsi gagal dihapus. Silakan coba lagi.");
+  }
+}
+
+optionGroupName.addEventListener("input", updateOptionGroupButton);
+
+optionItemsList.addEventListener("input", updateOptionGroupButton);
+
+addOptionButton.addEventListener("click", () => {
+  createOptionRow();
+});
+
+optionGroupForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  updateOptionGroupButton();
+
+  if (saveOptionGroupButton.disabled || isSavingOptionGroup) return;
+
+  const name = optionGroupName.value.trim();
+  const options = getOptionData();
+
+  if (!name || options.length === 0) return;
+
+  if (options.some(option => !option.name)) {
+    await popup("Semua nama opsi wajib diisi.");
+    return;
+  }
+
+  const duplicate = Object.values(optionGroups).some(group =>
+    group &&
+    String(group.name || "").trim().toLowerCase() === name.toLowerCase()
+  );
+
+  if (duplicate) {
+    await popup("Nama grup opsi tersebut sudah digunakan.");
+    return;
+  }
+
+  isSavingOptionGroup = true;
+  saveOptionGroupButton.disabled = true;
+  saveOptionGroupButton.innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+
+  try {
+    const groupRef = push(ref(db, "optionGroups"));
+
+    const groupData = {
+      name,
+      options,
+      required: optionRequired.checked,
+      multiple: optionMultiple.checked,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    await set(groupRef, groupData);
+
+    optionGroups[groupRef.key] = groupData;
+
+    resetOptionGroupForm();
+    renderOptionGroups();
+    renderProductOptionGroups();
+
+    await popup("Grup opsi berhasil disimpan.");
+
+  } catch (error) {
+    console.error("Gagal menyimpan grup opsi:", error);
+    await popup("Grup opsi gagal disimpan. Silakan periksa koneksi Firebase.");
+  } finally {
+    isSavingOptionGroup = false;
+    saveOptionGroupButton.innerHTML =
+      '<i class="fa-solid fa-check"></i><span>Simpan Grup opsi</span>';
+
+    updateOptionGroupButton();
+  }
+});
 
 function renderPhotoPreview() {
   photoPreview.innerHTML = "";
@@ -299,17 +746,17 @@ productPhotos.addEventListener("change", () => {
 
   for (const file of files) {
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      alert("Format foto harus JPG, PNG, atau WEBP.");
+      popup("Format foto harus JPG, PNG, atau WEBP.");
       continue;
     }
 
     if (file.size > 2 * 1024 * 1024) {
-      alert("Ukuran setiap foto maksimal 2 MB.");
+      popup("Ukuran setiap foto maksimal 2 MB.");
       continue;
     }
 
     if (selectedPhotos.length >= 4) {
-      alert("Maksimal 4 foto untuk setiap hidangan.");
+      popup("Maksimal 4 foto untuk setiap hidangan.");
       break;
     }
 
@@ -344,7 +791,8 @@ async function uploadProductPhotos(productId) {
 
     await uploadBytes(imageRef, file);
 
-    urls.push(await getDownloadURL(imageRef));
+    const imageUrl = await getDownloadURL(imageRef);
+    urls.push(imageUrl);
   }
 
   return urls;
@@ -356,27 +804,27 @@ productForm.addEventListener("submit", async event => {
   if (isSavingProduct) return;
 
   if (!productName.value.trim()) {
-    alert("Nama hidangan wajib diisi.");
+    await popup("Nama hidangan wajib diisi.");
     return;
   }
 
   if (!productDescription.value.trim()) {
-    alert("Deskripsi hidangan wajib diisi.");
+    await popup("Deskripsi hidangan wajib diisi.");
     return;
   }
 
   if (!productCategory.value) {
-    alert("Silakan pilih kategori.");
+    await popup("Silakan pilih kategori.");
     return;
   }
 
   if (getPrice(productPrice.value) <= 0) {
-    alert("Harga harus lebih dari 0.");
+    await popup("Harga harus lebih dari 0.");
     return;
   }
 
   if (!selectedPhotos.length) {
-    alert("Tambahkan minimal satu foto hidangan.");
+    await popup("Tambahkan minimal satu foto hidangan.");
     return;
   }
 
@@ -391,6 +839,12 @@ productForm.addEventListener("submit", async event => {
 
     const imageUrls = await uploadProductPhotos(productId);
 
+    const selectedGroups = Array.from(
+      productOptionGroups.querySelectorAll(
+        ".product-option-group-checkbox:checked"
+      )
+    ).map(input => input.value);
+
     const productData = {
       name: productName.value.trim(),
       description: productDescription.value.trim(),
@@ -399,25 +853,31 @@ productForm.addEventListener("submit", async event => {
       image: imageUrls[0],
       images: imageUrls,
       available: true,
-      optionGroups: [],
+      optionGroups: selectedGroups,
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
 
     await set(productRef, productData);
 
-    alert("Hidangan berhasil disimpan.");
+    products[productId] = productData;
 
     productForm.reset();
     selectedPhotos = [];
 
-    photoPreview.innerHTML = "";
+    renderPhotoPreview();
+    renderProducts();
+    renderProductOptionGroups();
+    updateProductButton();
 
-    await loadProducts();
+    await popup("Hidangan berhasil disimpan.");
 
   } catch (error) {
     console.error("Gagal menyimpan hidangan:", error);
-    alert("Gagal menyimpan hidangan. Periksa koneksi dan Firebase Storage.");
+
+    await popup(
+      "Gagal menyimpan hidangan. Periksa koneksi dan Firebase Storage."
+    );
   } finally {
     isSavingProduct = false;
     saveButton.innerHTML =
@@ -462,8 +922,12 @@ function renderProducts() {
       </div>
 
       <div class="menu-item-info">
-        <span class="menu-item-category">${escapeHTML(categoryName)}</span>
+        <span class="menu-item-category">
+          ${escapeHTML(categoryName)}
+        </span>
+
         <h3>${escapeHTML(product.name)}</h3>
+
         <p>Rp${Number(product.price || 0).toLocaleString("id-ID")}</p>
       </div>
 
@@ -476,6 +940,7 @@ function renderProducts() {
     const toggle = item.querySelector('input[type="checkbox"]');
 
     toggle.addEventListener("change", async () => {
+      const previousValue = products[id].available !== false;
       toggle.disabled = true;
 
       try {
@@ -488,8 +953,10 @@ function renderProducts() {
 
       } catch (error) {
         console.error("Gagal mengubah status hidangan:", error);
-        toggle.checked = !toggle.checked;
-        alert("Status hidangan gagal diperbarui.");
+
+        toggle.checked = previousValue;
+
+        await popup("Status hidangan gagal diperbarui.");
       } finally {
         toggle.disabled = false;
       }
@@ -520,6 +987,13 @@ searchButton?.addEventListener("click", () => {
 
 searchInput?.addEventListener("input", renderProducts);
 
+helpButton?.addEventListener("click", () => {
+  popup(
+    "Tambahkan hidangan melalui tab Hidangan. Kelola kategori melalui tab Kategori dan buat pilihan tambahan melalui tab Grup opsi.",
+    "Bantuan"
+  );
+});
+
 document.querySelectorAll(".product-tab").forEach(tab => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".product-tab").forEach(item => {
@@ -534,24 +1008,27 @@ document.querySelectorAll(".product-tab").forEach(tab => {
 
     const target = $(`${tab.dataset.tab}-panel`);
 
-    if (target) target.hidden = false;
+    if (target) {
+      target.hidden = false;
+    }
   });
 });
 
 async function initializeProductPage() {
   try {
+    resetOptionGroupForm();
+
     console.log("Memulai koneksi Firebase...");
 
-    console.log("Membaca kategori...");
-    await loadCategories();
-    console.log("Kategori berhasil dibaca:", categories);
-
-    console.log("Membaca produk...");
-    await loadProducts();
-    console.log("Produk berhasil dibaca:", products);
+    await Promise.all([
+      loadCategories(),
+      loadProducts(),
+      loadOptionGroups()
+    ]);
 
     updateProductButton();
     updateCategoryButton();
+    updateOptionGroupButton();
 
     console.log("Halaman produk berhasil dimuat.");
 
@@ -560,7 +1037,7 @@ async function initializeProductPage() {
     console.error("Error Code:", error.code);
     console.error("Error Message:", error.message);
 
-    alert(
+    await popup(
       "Gagal mengambil data Firebase: " +
       (error.code || error.message || "Kesalahan tidak diketahui")
     );
