@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Pesan menu favorit KOPICU dengan mudah.">
+  <title>KOPICU Order</title>
+
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/customer.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <a class="brand" href="index.html">KOPICU<span>.</span></a>
+
+    <a class="header-cart" href="customer/cart.html">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <b id="cart-count">0</b>
+    </a>
+  </header>
+
+  <main class="page">
+
+    <section class="search-wrap">
+      <label class="search-box">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input
+          id="product-search"
+          type="search"
+          placeholder="Cari kopi atau menu favoritmu..."
+          autocomplete="off"
+        >
+        <button id="clear-search" class="clear-search" type="button" hidden>
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </label>
+    </section>
+
+    <section class="banner-section">
+      <div id="banner-list" class="banner-list">
+        <div class="skeleton banner-skeleton"></div>
+      </div>
+      <div id="banner-dots" class="banner-dots"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-heading">
+        <h2>Kategori</h2>
+        <button id="show-all-categories" class="text-button" type="button">
+          Lihat semua
+        </button>
+      </div>
+
+      <div id="category-list" class="category-list">
+        <div class="skeleton category-skeleton"></div>
+        <div class="skeleton category-skeleton"></div>
+        <div class="skeleton category-skeleton"></div>
+        <div class="skeleton category-skeleton"></div>
+      </div>
+    </section>
+
+    <section class="section products-section">
+      <div class="section-heading">
+        <h2 id="products-heading">Menu KOPICU</h2>
+        <button id="reset-category" class="text-button" type="button" hidden>
+          Semua menu
+        </button>
+      </div>
+
+      <div id="product-list" class="product-grid">
+        <div class="skeleton product-skeleton"></div>
+        <div class="skeleton product-skeleton"></div>
+      </div>
+
+      <p id="empty-state" class="empty-state" hidden>
+        Produk belum tersedia.
+      </p>
+    </section>
+
+  </main>
+
+  <nav class="bottom-nav">
+    <a class="nav-item active" href="index.html">
+      <i class="fa-solid fa-house"></i>
+      <span>Beranda</span>
+    </a>
+
+    <a class="nav-item" href="customer/search.html">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <span>Cari</span>
+    </a>
+
+    <a class="nav-item" href="customer/cart.html">
+      <i class="fa-solid fa-bag-shopping"></i>
+      <span>Keranjang</span>
+    </a>
+
+    <a class="nav-item" href="customer/orders.html">
+      <i class="fa-solid fa-receipt"></i>
+      <span>Pesanan</span>
+    </a>
+
+    <a class="nav-item" href="customer/profile.html">
+      <i class="fa-regular fa-user"></i>
+      <span>Akun</span>
+    </a>
+  </nav>
+
+  <script type="module" src="js/home.js"></script>
+
+</body>
+</html>
