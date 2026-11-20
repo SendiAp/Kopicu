@@ -11,7 +11,7 @@ const firebaseConfig = {
   projectId: "kopicu-eb948",
   storageBucket: "kopicu-eb948.firebasestorage.app",
   messagingSenderId: "656269985841",
-  appId: "1:20261120:web:53fdbc28192a2399cded10",
+  appId: "1:656269985841:web:53fdbc28192a2399cded10",
   measurementId: "G-PCBEXWCQBF"
 };
 
