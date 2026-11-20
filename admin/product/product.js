@@ -540,14 +540,30 @@ document.querySelectorAll(".product-tab").forEach(tab => {
 
 async function initializeProductPage() {
   try {
+    console.log("Memulai koneksi Firebase...");
+
+    console.log("Membaca kategori...");
     await loadCategories();
+    console.log("Kategori berhasil dibaca:", categories);
+
+    console.log("Membaca produk...");
     await loadProducts();
+    console.log("Produk berhasil dibaca:", products);
+
     updateProductButton();
     updateCategoryButton();
 
+    console.log("Halaman produk berhasil dimuat.");
+
   } catch (error) {
-    console.error("Gagal memuat halaman produk:", error);
-    alert("Gagal mengambil data dari Firebase.");
+    console.error("Firebase Error:", error);
+    console.error("Error Code:", error.code);
+    console.error("Error Message:", error.message);
+
+    alert(
+      "Gagal mengambil data Firebase: " +
+      (error.code || error.message || "Kesalahan tidak diketahui")
+    );
   }
 }
 
