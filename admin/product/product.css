@@ -1474,3 +1474,35 @@ button:disabled {
     grid-template-columns: 1fr;
   }
 }
+
+.menu-category-section {
+  margin-bottom: 28px;
+}
+
+.menu-category-heading {
+  margin: 0 0 14px;
+  color: #38251d;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.menu-status {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 7px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.status-today,
+.status-indefinite {
+  color: #a83232;
+  background: #ffe5e5;
+}
+
+.status-hidden {
+  color: #666;
+  background: #eeeeee;
+}
