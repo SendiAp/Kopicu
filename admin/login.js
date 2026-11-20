@@ -5,7 +5,10 @@ const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const togglePassword = document.getElementById("toggle-password");
 const loginError = document.getElementById("login-error");
-const loginButton = document.getElementById("login-button");
+
+if (!adminAccount || !loginForm) {
+  console.error("Data akun atau form login tidak ditemukan.");
+}
 
 togglePassword.addEventListener("click", () => {
   const visible = passwordInput.type === "text";
@@ -26,11 +29,13 @@ loginForm.addEventListener("submit", event => {
   loginError.hidden = true;
 
   if (
-    username === adminAccount.username &&
-    password === adminAccount.password
+    username === String(adminAccount.username).trim() &&
+    password === String(adminAccount.password)
   ) {
     sessionStorage.setItem("kopicu_admin_login", "true");
-    window.location.href = "dashboard/dashboard.html";
+    sessionStorage.setItem("kopicu_admin_username", username);
+
+    window.location.replace("dashboard/dashboard.html");
     return;
   }
 
