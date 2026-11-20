@@ -24,6 +24,7 @@ input {
 
 button {
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .login-container {
@@ -37,6 +38,7 @@ button {
 .login-card {
   width: 100%;
   max-width: 410px;
+  animation: loginFade .45s ease;
 }
 
 .login-brand {
@@ -45,19 +47,20 @@ button {
 }
 
 .brand-icon {
-  width: 58px;
-  height: 58px;
-  border-radius: 17px;
+  width: 60px;
+  height: 60px;
+  border-radius: 18px;
   background: #38251d;
   color: #fff;
   display: grid;
   place-items: center;
   font-size: 25px;
-  margin: 0 auto 13px;
+  margin: 0 auto 14px;
+  box-shadow: 0 8px 20px rgba(56, 37, 29, .13);
 }
 
 .login-brand h1 {
-  font-size: 25px;
+  font-size: 26px;
   font-weight: 800;
   letter-spacing: -1px;
   margin: 0;
@@ -71,7 +74,7 @@ button {
 }
 
 .login-heading {
-  margin-bottom: 25px;
+  margin-bottom: 27px;
 }
 
 .login-heading h2 {
@@ -79,16 +82,18 @@ button {
   font-weight: 800;
   letter-spacing: -.7px;
   margin: 0 0 7px;
+  color: #252525;
 }
 
 .login-heading p {
   font-size: 13px;
   color: #999;
   margin: 0;
+  line-height: 1.6;
 }
 
 .form-group {
-  margin-bottom: 19px;
+  margin-bottom: 20px;
 }
 
 .form-group label {
@@ -96,30 +101,81 @@ button {
   font-size: 12px;
   font-weight: 700;
   margin-bottom: 9px;
+  color: #444;
 }
 
 .input-box {
+  height: 51px;
+  border: 1px solid #e9e9e9;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 13px;
+  color: #999;
+  background: #fff;
+  transition: border-color .2s, box-shadow .2s;
   position: relative;
+  overflow: visible;
+}
+
+.input-box:focus-within {
+  border-color: #8b6247;
+  box-shadow: 0 0 0 3px rgba(139, 98, 71, .09);
+}
+
+.input-box > i {
+  width: 17px;
+  flex-shrink: 0;
+  font-size: 14px;
+  text-align: center;
+}
+
+.input-box input {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #222;
+  font-size: 13px;
+  padding: 0;
+}
+
+.input-box input::placeholder {
+  color: #b5b5b5;
 }
 
 .input-box button {
   border: 0;
+  outline: 0;
   background: transparent;
   color: #999;
-  padding: 8px;
-  margin-right: -8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0;
+  margin: 0;
   width: 36px;
   height: 36px;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 15px;
+  transition: background .2s, color .2s;
+  position: relative;
+  z-index: 5;
   cursor: pointer;
-  z-index: 2;
 }
 
 .input-box button:hover {
+  background: #f7f3f0;
   color: #38251d;
+}
+
+.input-box button:active {
+  transform: scale(.94);
 }
 
 .input-box button i {
@@ -128,15 +184,20 @@ button {
 
 .login-error {
   color: #d33;
+  background: #fff5f5;
+  border: 1px solid #ffe0e0;
+  border-radius: 9px;
   font-size: 12px;
+  padding: 10px 12px;
   margin: 0 0 15px;
+  line-height: 1.5;
 }
 
 .login-button {
   width: 100%;
-  height: 49px;
+  height: 51px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 12px;
   background: #38251d;
   color: #fff;
   font-size: 13px;
@@ -146,16 +207,26 @@ button {
   justify-content: center;
   gap: 10px;
   margin-top: 25px;
-  transition: .2s;
+  transition: background .2s, transform .2s, box-shadow .2s;
+  box-shadow: 0 7px 16px rgba(56, 37, 29, .12);
 }
 
 .login-button:hover {
   background: #503629;
+  box-shadow: 0 9px 20px rgba(56, 37, 29, .17);
+}
+
+.login-button:active {
+  transform: scale(.99);
 }
 
 .login-button:disabled {
   opacity: .65;
   cursor: not-allowed;
+}
+
+.login-button i {
+  font-size: 12px;
 }
 
 .login-footer {
@@ -170,6 +241,19 @@ button {
 
 .login-footer i {
   color: #8b6247;
+  font-size: 12px;
+}
+
+@keyframes loginFade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 480px) {
@@ -177,11 +261,36 @@ button {
     padding: 22px;
   }
 
+  .login-card {
+    max-width: 100%;
+  }
+
   .login-brand {
-    margin-bottom: 32px;
+    margin-bottom: 34px;
   }
 
   .login-heading h2 {
     font-size: 21px;
+  }
+}
+
+@media (max-height: 650px) {
+  .login-container {
+    align-items: flex-start;
+    padding-top: 35px;
+    padding-bottom: 35px;
+  }
+
+  .login-brand {
+    margin-bottom: 25px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
   }
 }
