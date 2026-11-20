@@ -1,3 +1,6 @@
+import { db } from "../../database/firebase.js";
+import { ref, get } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
 const loginStatus = sessionStorage.getItem("kopicu_admin_login");
 
 if (loginStatus !== "true") {
@@ -14,6 +17,7 @@ const sidebar = document.getElementById("sidebar");
 const sidebarOverlay = document.getElementById("sidebar-overlay");
 const logoutButton = document.getElementById("logout-button");
 const currentDate = document.getElementById("current-date");
+const sidebarLogo = document.getElementById("sidebar-logo");
 
 adminUsername.textContent = username;
 adminAvatar.textContent = username.charAt(0).toUpperCase();
@@ -24,6 +28,46 @@ currentDate.textContent = new Intl.DateTimeFormat("id-ID", {
   month: "long",
   year: "numeric"
 }).format(new Date());
+
+async function loadSidebarLogo() {
+  if (!sidebarLogo) return;
+
+  sidebarLogo.hidden = true;
+  sidebarLogo.removeAttribute("src");
+
+  try {
+    const snapshot = await get(ref(db, "settings/storeLogo"));
+
+    if (!snapshot.exists()) return;
+
+    const data = snapshot.val();
+
+    const logoUrl = typeof data === "string"
+      ? data.trim()
+      : typeof data === "object" && data !== null
+        ? String(data.url || data.image || "").trim()
+        : "";
+
+    if (!logoUrl) return;
+
+    sidebarLogo.onload = () => {
+      sidebarLogo.hidden = false;
+    };
+
+    sidebarLogo.onerror = () => {
+      sidebarLogo.hidden = true;
+      sidebarLogo.removeAttribute("src");
+    };
+
+    sidebarLogo.src = logoUrl;
+  } catch (error) {
+    console.error("Gagal memuat logo sidebar:", error);
+    sidebarLogo.hidden = true;
+    sidebarLogo.removeAttribute("src");
+  }
+}
+
+loadSidebarLogo();
 
 function openSidebar() {
   sidebar.classList.add("open");
