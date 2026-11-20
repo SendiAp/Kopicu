@@ -70,7 +70,7 @@
         </button>
 
         <button type="button" class="product-tab" data-tab="grup-pilihan">
-          Grup Pilihan
+          Grup opsi
         </button>
       </nav>
 
@@ -158,6 +158,15 @@
               </div>
             </div>
 
+            <div class="form-group">
+              <label>Grup opsi</label>
+              <div class="product-option-groups" id="product-option-groups">
+                <div class="option-group-empty">
+                  Belum ada grup opsi. Kamu bisa membuatnya di tab Grup opsi.
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="form-footer">
@@ -215,11 +224,121 @@
       </section>
 
       <section class="product-tab-content" id="grup-pilihan-panel" hidden>
-        <div class="tab-placeholder">
-          <i class="fa-solid fa-list-check"></i>
-          <h2>Grup Pilihan</h2>
-          <p>Pengaturan grup pilihan akan ditampilkan di sini.</p>
+
+        <div class="category-form-section option-form-section">
+
+          <div class="form-section-heading">
+            <h2>Buat Grup opsi</h2>
+          </div>
+
+          <form id="option-group-form" class="option-group-form">
+
+            <div class="form-group">
+              <label for="option-group-name">Nama</label>
+              <input
+                type="text"
+                id="option-group-name"
+                placeholder="Masukan nama grup opsi (cth, Ukuran)"
+                maxlength="50"
+                required
+              >
+            </div>
+
+            <div class="option-items-section">
+              <div class="option-items-heading">
+                <label>Opsi</label>
+                <button type="button" id="add-option-button" class="add-option-button">
+                  <i class="fa-solid fa-plus"></i>
+                  Tambahkan opsi
+                </button>
+              </div>
+
+              <div id="option-items-list" class="option-items-list">
+
+                <div class="option-item">
+                  <div class="option-item-fields">
+                    <div class="form-group">
+                      <label>Nama</label>
+                      <input
+                        type="text"
+                        class="option-name"
+                        placeholder="Cth. Jelly, besar, gula 50%"
+                        maxlength="50"
+                        required
+                      >
+                    </div>
+
+                    <div class="form-group">
+                      <label>Harga</label>
+                      <div class="price-input-wrapper option-price-wrapper">
+                        <span>+Rp</span>
+                        <input
+                          type="text"
+                          class="option-price"
+                          inputmode="numeric"
+                          value="0"
+                          required
+                        >
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="option-settings">
+
+              <div class="option-setting">
+                <div class="option-setting-text">
+                  <strong>Jadikan wajib diisi</strong>
+                  <p>Konsumen harus memilih setidaknya satu opsi dari grup opsi ini.</p>
+                </div>
+
+                <label class="switch">
+                  <input type="checkbox" id="option-required" checked>
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <div class="option-setting">
+                <div class="option-setting-text">
+                  <strong>Bolehkah pilih lebih dari satu</strong>
+                  <p>Aktifkan agar konsumen bisa memilih lebih dari satu opsi.</p>
+                </div>
+
+                <label class="switch">
+                  <input type="checkbox" id="option-multiple">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+            </div>
+
+            <div class="form-footer">
+              <button type="submit" id="save-option-group-button" disabled>
+                <i class="fa-solid fa-check"></i>
+                <span>Simpan Grup opsi</span>
+              </button>
+            </div>
+
+          </form>
+
         </div>
+
+        <div class="category-list-section option-group-list-section">
+          <div class="category-list-heading">
+            <h2>Daftar Grup opsi</h2>
+            <span id="option-group-total">0 grup</span>
+          </div>
+
+          <div class="option-group-list" id="option-group-list">
+            <div class="category-empty">
+              Belum ada grup opsi.
+            </div>
+          </div>
+        </div>
+
       </section>
 
       <section class="menu-list-section" id="menu-list-section" hidden>
