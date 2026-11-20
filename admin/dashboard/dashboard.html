@@ -7,63 +7,23 @@
   <title>Kopicu</title>
 
   <link rel="stylesheet" href="dashboard.css">
+  <link rel="stylesheet" href="/admin/hamburger/hamburger.css">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
 
-  <div class="sidebar-overlay" id="sidebar-overlay"></div>
-
-  <aside class="sidebar no-logo" id="sidebar">
-    <div class="sidebar-header">
-      <div class="sidebar-brand">
-        <img id="sidebar-logo" alt="Logo KOPICU" hidden>
-      </div>
-
-      <button class="close-sidebar" id="close-sidebar" aria-label="Tutup menu">
-        <i class="fa-solid fa-xmark"></i>
-      </button>
-    </div>
-
-    <div class="sidebar-label">MENU UTAMA</div>
-
-    <nav class="sidebar-menu">
-      <a href="/admin/dashboard/dashboard.html" class="sidebar-link active">
-        <i class="fa-solid fa-house"></i>
-        <span>Dashboard</span>
-      </a>
-
-      <a href="/admin/product/product.html" class="sidebar-link">
-        <i class="fa-solid fa-box"></i>
-        <span>Product</span>
-      </a>
-
-      <a href="/admin/picture/picture.html" class="sidebar-link">
-        <i class="fa-solid fa-image"></i>
-        <span>Picture</span>
-      </a>
-      
-      <a href="/admin/notifikasi/notifikasi.html" class="sidebar-link">
-        <i class="fa-regular fa-bell"></i>
-        <span>Notifikasi</span>
-      </a>
-    </nav>
-
-    <div class="sidebar-bottom">
-      <button class="sidebar-link logout-link" id="logout-button">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        <span>Logout</span>
-      </button>
-    </div>
-  </aside>
+  <div id="hamburger-container"></div>
 
   <main class="main-content">
 
     <header class="topbar">
       <div class="topbar-left">
-        <button class="hamburger-button" id="hamburger-button" aria-label="Buka menu">
+        <button class="hamburger-button" id="hamburger-button" aria-label="Buka menu" aria-expanded="false">
           <i class="fa-solid fa-bars"></i>
         </button>
 
@@ -78,10 +38,9 @@
 
     <section class="dashboard-content">
 
-        <div class="date-display">
-          <i class="fa-regular fa-calendar"></i>
-          <span id="current-date">Memuat tanggal...</span>
-        </div>
+      <div class="date-display">
+        <i class="fa-regular fa-calendar"></i>
+        <span id="current-date">Memuat tanggal...</span>
       </div>
 
       <section class="statistics-grid">
@@ -102,6 +61,7 @@
               <i class="fa-solid fa-minus"></i>
               <span>--</span>
             </div>
+
             <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
               <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
             </svg>
@@ -124,6 +84,7 @@
               <i class="fa-solid fa-minus"></i>
               <span>--</span>
             </div>
+
             <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
               <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
             </svg>
@@ -146,6 +107,7 @@
               <i class="fa-solid fa-minus"></i>
               <span>--</span>
             </div>
+
             <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
               <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
             </svg>
@@ -168,6 +130,7 @@
               <i class="fa-solid fa-minus"></i>
               <span>--</span>
             </div>
+
             <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
               <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
             </svg>
@@ -180,6 +143,7 @@
         <div class="note-icon">
           <i class="fa-solid fa-chart-line"></i>
         </div>
+
         <div>
           <strong>Statistik</strong>
           <p>Data statistik akan muncul setelah terhubung dengan transaksi dan data keuangan toko.</p>
@@ -190,6 +154,7 @@
 
   </main>
 
+  <script type="module" src="/admin/hamburger/hamburger.js"></script>
   <script type="module" src="dashboard.js"></script>
 
 </body>
