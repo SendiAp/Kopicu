@@ -102,7 +102,7 @@
                   type="file"
                   id="product-photos"
                   name="productPhotos"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
                   hidden
                 >
@@ -158,22 +158,6 @@
               </div>
             </div>
 
-            <div class="form-group">
-              <div class="form-label-row">
-                <label for="product-option-groups">Grup opsi</label>
-                <span id="selected-option-count">0 terpilih</span>
-              </div>
-
-              <button
-                type="button"
-                class="option-select-button"
-                id="product-option-groups"
-              >
-                <span>Pilih grup opsi</span>
-                <i class="fa-solid fa-chevron-right"></i>
-              </button>
-            </div>
-
           </div>
 
           <div class="form-footer">
@@ -188,11 +172,46 @@
       </section>
 
       <section class="product-tab-content" id="kategori-panel" hidden>
-        <div class="tab-placeholder">
-          <i class="fa-solid fa-layer-group"></i>
-          <h2>Kategori</h2>
-          <p>Pengaturan kategori menu akan ditampilkan di sini.</p>
+
+        <div class="category-form-section">
+          <div class="form-section-heading">
+            <h2>Tambah Kategori</h2>
+          </div>
+
+          <form id="category-form" class="category-form">
+
+            <div class="form-group">
+              <label for="category-name">Nama kategori</label>
+              <input
+                type="text"
+                id="category-name"
+                placeholder="Misalnya: Burger, Minuman, Cemilan"
+                maxlength="40"
+                required
+              >
+            </div>
+
+            <button type="submit" id="save-category-button" disabled>
+              <i class="fa-solid fa-plus"></i>
+              <span>Simpan Kategori</span>
+            </button>
+
+          </form>
         </div>
+
+        <div class="category-list-section">
+          <div class="category-list-heading">
+            <h2>Daftar Kategori</h2>
+            <span id="category-total">0 kategori</span>
+          </div>
+
+          <div class="category-list" id="category-list">
+            <div class="category-empty">
+              Belum ada kategori.
+            </div>
+          </div>
+        </div>
+
       </section>
 
       <section class="product-tab-content" id="grup-pilihan-panel" hidden>
@@ -212,28 +231,7 @@
           </div>
         </div>
 
-        <div class="menu-list" id="menu-list">
-
-          <article class="menu-item">
-
-            <div class="menu-item-image">
-              <img src="" alt="Foto hidangan">
-            </div>
-
-            <div class="menu-item-info">
-              <span class="menu-item-category">Botol 250ml</span>
-              <h3>Kopicu Gula Aren Berempat</h3>
-              <p>Rp68,000</p>
-            </div>
-
-            <label class="menu-toggle">
-              <input type="checkbox" checked>
-              <span class="menu-toggle-slider"></span>
-            </label>
-
-          </article>
-
-        </div>
+        <div class="menu-list" id="menu-list"></div>
 
       </section>
 
