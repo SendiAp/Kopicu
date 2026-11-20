@@ -1,4 +1,4 @@
-import { adminAccount } from "../akun.js";
+import { adminAccount } from "./akun.js";
 
 const loginForm = document.getElementById("login-form");
 const usernameInput = document.getElementById("username");
