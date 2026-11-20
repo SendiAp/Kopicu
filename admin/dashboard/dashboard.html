@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Dashboard Admin - KOPICU</title>
+
+  <link rel="stylesheet" href="dashboard.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+  <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-mug-hot"></i>
+        </div>
+        <span>KOPICU</span>
+      </div>
+
+      <button class="close-sidebar" id="close-sidebar" aria-label="Tutup menu">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="sidebar-label">MENU UTAMA</div>
+
+    <nav class="sidebar-menu">
+      <a href="dashboard.html" class="sidebar-link active">
+        <i class="fa-solid fa-house"></i>
+        <span>Dashboard</span>
+      </a>
+
+      <a href="../product/product.html" class="sidebar-link">
+        <i class="fa-solid fa-box"></i>
+        <span>Product</span>
+      </a>
+
+      <a href="../notifikasi/notifikasi.html" class="sidebar-link">
+        <i class="fa-regular fa-bell"></i>
+        <span>Notifikasi</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="sidebar-link logout-link" id="logout-button">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span>Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger-button" id="hamburger-button" aria-label="Buka menu">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="greeting">
+          <span>Hallo,</span>
+          <strong id="admin-username">Admin</strong>
+        </div>
+      </div>
+
+      <div class="admin-avatar" id="admin-avatar">A</div>
+    </header>
+
+    <section class="dashboard-content">
+
+      <div class="welcome-section">
+        <div>
+          <h1>Dashboard</h1>
+          <p>Ringkasan aktivitas toko KOPICU.</p>
+        </div>
+
+        <div class="date-display">
+          <i class="fa-regular fa-calendar"></i>
+          <span id="current-date">Memuat tanggal...</span>
+        </div>
+      </div>
+
+      <section class="statistics-grid">
+
+        <article class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon order-icon">
+              <i class="fa-solid fa-receipt"></i>
+            </div>
+            <span class="stat-period">Hari ini</span>
+          </div>
+
+          <p class="stat-label">Orderan Masuk</p>
+          <h2 id="total-orders">0</h2>
+
+          <div class="stat-chart">
+            <div class="stat-trend neutral" id="orders-trend">
+              <i class="fa-solid fa-minus"></i>
+              <span>--</span>
+            </div>
+            <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
+              <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
+            </svg>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon income-icon">
+              <i class="fa-solid fa-wallet"></i>
+            </div>
+            <span class="stat-period">Hari ini</span>
+          </div>
+
+          <p class="stat-label">Total Pendapatan Hari Ini</p>
+          <h2 id="daily-income">Rp0</h2>
+
+          <div class="stat-chart">
+            <div class="stat-trend neutral" id="daily-income-trend">
+              <i class="fa-solid fa-minus"></i>
+              <span>--</span>
+            </div>
+            <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
+              <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
+            </svg>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon monthly-icon">
+              <i class="fa-solid fa-chart-column"></i>
+            </div>
+            <span class="stat-period">Bulan ini</span>
+          </div>
+
+          <p class="stat-label">Total Pendapatan Bulanan</p>
+          <h2 id="monthly-income">Rp0</h2>
+
+          <div class="stat-chart">
+            <div class="stat-trend neutral" id="monthly-income-trend">
+              <i class="fa-solid fa-minus"></i>
+              <span>--</span>
+            </div>
+            <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
+              <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
+            </svg>
+          </div>
+        </article>
+
+        <article class="stat-card">
+          <div class="stat-top">
+            <div class="stat-icon expense-icon">
+              <i class="fa-solid fa-money-bill-transfer"></i>
+            </div>
+            <span class="stat-period">Bulan ini</span>
+          </div>
+
+          <p class="stat-label">Total Pengeluaran</p>
+          <h2 id="total-expenses">Rp0</h2>
+
+          <div class="stat-chart">
+            <div class="stat-trend neutral" id="expenses-trend">
+              <i class="fa-solid fa-minus"></i>
+              <span>--</span>
+            </div>
+            <svg viewBox="0 0 120 42" preserveAspectRatio="none" aria-hidden="true">
+              <path class="chart-line neutral-line" d="M0 27 L15 27 L30 27 L45 27 L60 27 L75 27 L90 27 L105 27 L120 27"/>
+            </svg>
+          </div>
+        </article>
+
+      </section>
+
+      <section class="dashboard-note">
+        <div class="note-icon">
+          <i class="fa-solid fa-chart-line"></i>
+        </div>
+        <div>
+          <strong>Statistik KOPICU</strong>
+          <p>Data statistik akan muncul setelah terhubung dengan transaksi dan data keuangan toko.</p>
+        </div>
+      </section>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="dashboard.js"></script>
+
+</body>
+</html>
