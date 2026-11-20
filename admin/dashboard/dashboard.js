@@ -32,6 +32,7 @@ currentDate.textContent = new Intl.DateTimeFormat("id-ID", {
 async function loadSidebarLogo() {
   if (!sidebarLogo) return;
 
+  sidebar.classList.add("no-logo");
   sidebarLogo.hidden = true;
   sidebarLogo.removeAttribute("src");
 
@@ -52,11 +53,13 @@ async function loadSidebarLogo() {
 
     sidebarLogo.onload = () => {
       sidebarLogo.hidden = false;
+      sidebar.classList.remove("no-logo");
     };
 
     sidebarLogo.onerror = () => {
       sidebarLogo.hidden = true;
       sidebarLogo.removeAttribute("src");
+      sidebar.classList.add("no-logo");
     };
 
     sidebarLogo.src = logoUrl;
@@ -64,6 +67,7 @@ async function loadSidebarLogo() {
     console.error("Gagal memuat logo sidebar:", error);
     sidebarLogo.hidden = true;
     sidebarLogo.removeAttribute("src");
+    sidebar.classList.add("no-logo");
   }
 }
 
