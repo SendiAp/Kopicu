@@ -5,7 +5,8 @@ import {
   get,
   push,
   set,
-  update
+  update,
+  remove
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 import {
@@ -35,14 +36,18 @@ const menuListSection = $("menu-list-section");
 const searchInput = $("search-menu-input");
 const searchButton = $("search-menu-button");
 const searchContainer = $("product-search");
-const optionGroupsButton = $("product-option-groups");
-const selectedOptionCount = $("selected-option-count");
+
+const categoryForm = $("category-form");
+const categoryNameInput = $("category-name");
+const saveCategoryButton = $("save-category-button");
+const categoryList = $("category-list");
+const categoryTotal = $("category-total");
 
 let selectedPhotos = [];
-let selectedGroups = [];
 let categories = {};
 let products = {};
-let isSaving = false;
+let isSavingProduct = false;
+let isSavingCategory = false;
 
 const username = sessionStorage.getItem("kopicu_admin_username") || "Admin";
 
@@ -73,14 +78,20 @@ function escapeHTML(value) {
   })[char]);
 }
 
-function updateSaveButton() {
+function updateProductButton() {
   const valid =
     productName.value.trim() &&
+    productDescription.value.trim() &&
     productCategory.value &&
     getPrice(productPrice.value) > 0 &&
     selectedPhotos.length > 0;
 
-  saveButton.disabled = !valid || isSaving;
+  saveButton.disabled = !valid || isSavingProduct;
+}
+
+function updateCategoryButton() {
+  saveCategoryButton.disabled =
+    !categoryNameInput.value.trim() || isSavingCategory;
 }
 
 async function loadCategories() {
@@ -88,11 +99,18 @@ async function loadCategories() {
 
   categories = snapshot.exists() ? snapshot.val() : {};
 
+  renderCategories();
+  updateCategorySelect();
+}
+
+function updateCategorySelect() {
+  const currentValue = productCategory.value;
+
   productCategory.innerHTML =
-    '<option value="">Pilih kategori</option>';
+    '<option value="" disabled selected>Pilih kategori</option>';
 
   Object.entries(categories).forEach(([id, category]) => {
-    if (category.active === false) return;
+    if (!category || category.active === false) return;
 
     const option = document.createElement("option");
     option.value = id;
@@ -100,6 +118,152 @@ async function loadCategories() {
 
     productCategory.appendChild(option);
   });
+
+  if (
+    currentValue &&
+    categories[currentValue] &&
+    categories[currentValue].active !== false
+  ) {
+    productCategory.value = currentValue;
+  }
+}
+
+function renderCategories() {
+  const entries = Object.entries(categories).filter(([, category]) =>
+    category && category.active !== false
+  );
+
+  categoryTotal.textContent = `${entries.length} kategori`;
+
+  categoryList.innerHTML = "";
+
+  if (entries.length === 0) {
+    categoryList.innerHTML = `
+      <div class="category-empty">
+        Belum ada kategori.
+      </div>
+    `;
+    return;
+  }
+
+  entries.forEach(([id, category]) => {
+    const item = document.createElement("div");
+    item.className = "category-item";
+
+    item.innerHTML = `
+      <div class="category-item-info">
+        <div class="category-item-icon">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+
+        <span>${escapeHTML(category.name || "Kategori")}</span>
+      </div>
+
+      <button
+        type="button"
+        class="delete-category-button"
+        aria-label="Hapus kategori ${escapeHTML(category.name || "")}"
+        title="Hapus kategori"
+      >
+        <i class="fa-regular fa-trash-can"></i>
+      </button>
+    `;
+
+    item.querySelector(".delete-category-button").addEventListener("click", () => {
+      deleteCategory(id, category.name);
+    });
+
+    categoryList.appendChild(item);
+  });
+}
+
+categoryNameInput.addEventListener("input", updateCategoryButton);
+
+categoryForm.addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const name = categoryNameInput.value.trim();
+
+  if (!name || isSavingCategory) return;
+
+  const duplicate = Object.values(categories).some(category =>
+    category &&
+    String(category.name || "").trim().toLowerCase() === name.toLowerCase() &&
+    category.active !== false
+  );
+
+  if (duplicate) {
+    alert("Kategori tersebut sudah tersedia.");
+    return;
+  }
+
+  isSavingCategory = true;
+  saveCategoryButton.disabled = true;
+  saveCategoryButton.innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
+
+  try {
+    const categoryRef = push(ref(db, "categories"));
+
+    const categoryData = {
+      name,
+      active: true,
+      createdAt: Date.now()
+    };
+
+    await set(categoryRef, categoryData);
+
+    categories[categoryRef.key] = categoryData;
+
+    categoryForm.reset();
+
+    renderCategories();
+    updateCategorySelect();
+
+    alert("Kategori berhasil ditambahkan.");
+
+  } catch (error) {
+    console.error("Gagal menyimpan kategori:", error);
+    alert("Kategori gagal disimpan. Silakan coba lagi.");
+  } finally {
+    isSavingCategory = false;
+    saveCategoryButton.innerHTML =
+      '<i class="fa-solid fa-plus"></i><span>Simpan Kategori</span>';
+
+    updateCategoryButton();
+  }
+});
+
+async function deleteCategory(id, name) {
+  const usedByProduct = Object.values(products).some(product =>
+    product && product.categoryId === id
+  );
+
+  if (usedByProduct) {
+    alert("Kategori ini masih digunakan oleh hidangan. Ubah kategori hidangan terlebih dahulu.");
+    return;
+  }
+
+  const confirmed = confirm(
+    `Yakin ingin menghapus kategori "${name}"?`
+  );
+
+  if (!confirmed) return;
+
+  try {
+    await remove(ref(db, `categories/${id}`));
+
+    delete categories[id];
+
+    renderCategories();
+    updateCategorySelect();
+
+    alert("Kategori berhasil dihapus.");
+
+  } catch (error) {
+    console.error("Gagal menghapus kategori:", error);
+    alert("Kategori gagal dihapus. Silakan coba lagi.");
+  }
 }
 
 function renderPhotoPreview() {
@@ -122,7 +286,7 @@ function renderPhotoPreview() {
     removeButton.addEventListener("click", () => {
       selectedPhotos.splice(index, 1);
       renderPhotoPreview();
-      updateSaveButton();
+      updateProductButton();
     });
 
     wrapper.append(image, removeButton);
@@ -134,8 +298,8 @@ productPhotos.addEventListener("change", () => {
   const files = Array.from(productPhotos.files || []);
 
   for (const file of files) {
-    if (!file.type.startsWith("image/")) {
-      alert("File harus berupa gambar.");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      alert("Format foto harus JPG, PNG, atau WEBP.");
       continue;
     }
 
@@ -154,208 +318,17 @@ productPhotos.addEventListener("change", () => {
 
   productPhotos.value = "";
   renderPhotoPreview();
-  updateSaveButton();
+  updateProductButton();
 });
 
 productPrice.addEventListener("input", () => {
   productPrice.value = formatRupiah(productPrice.value);
-  updateSaveButton();
+  updateProductButton();
 });
 
-productName.addEventListener("input", updateSaveButton);
-productCategory.addEventListener("change", updateSaveButton);
-
-function openGroupEditor() {
-  const modal = document.createElement("div");
-  modal.className = "option-modal-overlay";
-
-  modal.innerHTML = `
-    <div class="option-modal">
-      <div class="option-modal-header">
-        <h3>Grup Opsi</h3>
-        <button type="button" class="option-modal-close">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <div class="option-modal-body">
-        <div id="option-group-list"></div>
-
-        <button type="button" class="add-option-group" id="add-option-group">
-          <i class="fa-solid fa-plus"></i>
-          Tambah Grup Opsi
-        </button>
-      </div>
-
-      <div class="option-modal-footer">
-        <button type="button" class="option-cancel">Batal</button>
-        <button type="button" class="option-save">Simpan Pilihan</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  const groupList = modal.querySelector("#option-group-list");
-
-  function renderGroups() {
-    groupList.innerHTML = "";
-
-    selectedGroups.forEach((group, index) => {
-      const card = document.createElement("div");
-      card.className = "option-group-card";
-
-      card.innerHTML = `
-        <div class="option-group-heading">
-          <input
-            class="option-group-name"
-            type="text"
-            placeholder="Nama grup, contoh: Ukuran"
-            value="${escapeHTML(group.name)}"
-          >
-
-          <button type="button" class="remove-option-group">
-            <i class="fa-solid fa-trash"></i>
-          </button>
-        </div>
-
-        <div class="option-group-settings">
-          <label>
-            <input type="checkbox" class="group-required" ${group.required ? "checked" : ""}>
-            Wajib dipilih
-          </label>
-
-          <label>
-            <input type="checkbox" class="group-multiple" ${group.multiple ? "checked" : ""}>
-            Bisa pilih lebih dari satu
-          </label>
-        </div>
-
-        <div class="option-items"></div>
-
-        <button type="button" class="add-option-item">
-          <i class="fa-solid fa-plus"></i>
-          Tambah pilihan
-        </button>
-      `;
-
-      const optionItems = card.querySelector(".option-items");
-
-      group.options.forEach((option, optionIndex) => {
-        const item = document.createElement("div");
-        item.className = "option-item";
-
-        item.innerHTML = `
-          <input
-            type="text"
-            class="option-name"
-            placeholder="Nama pilihan"
-            value="${escapeHTML(option.name)}"
-          >
-
-          <input
-            type="text"
-            class="option-price"
-            placeholder="Tambahan harga"
-            value="${formatRupiah(option.price || 0)}"
-          >
-
-          <button type="button" class="remove-option-item">
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        `;
-
-        item.querySelector(".option-price").addEventListener("input", event => {
-          event.target.value = formatRupiah(event.target.value);
-        });
-
-        item.querySelector(".remove-option-item").addEventListener("click", () => {
-          group.options.splice(optionIndex, 1);
-          renderGroups();
-        });
-
-        optionItems.appendChild(item);
-      });
-
-      card.querySelector(".add-option-item").addEventListener("click", () => {
-        group.options.push({ name: "", price: 0 });
-        renderGroups();
-      });
-
-      card.querySelector(".remove-option-group").addEventListener("click", () => {
-        selectedGroups.splice(index, 1);
-        renderGroups();
-      });
-
-      groupList.appendChild(card);
-    });
-  }
-
-  function readGroups() {
-    const cards = Array.from(groupList.querySelectorAll(".option-group-card"));
-
-    return cards.map(card => ({
-      name: card.querySelector(".option-group-name").value.trim(),
-      required: card.querySelector(".group-required").checked,
-      multiple: card.querySelector(".group-multiple").checked,
-      options: Array.from(card.querySelectorAll(".option-item")).map(item => ({
-        name: item.querySelector(".option-name").value.trim(),
-        price: getPrice(item.querySelector(".option-price").value)
-      }))
-    }));
-  }
-
-  modal.querySelector("#add-option-group").addEventListener("click", () => {
-    selectedGroups = readGroups();
-
-    selectedGroups.push({
-      name: "",
-      required: false,
-      multiple: false,
-      options: [{ name: "", price: 0 }]
-    });
-
-    renderGroups();
-  });
-
-  modal.querySelector(".option-modal-close").addEventListener("click", () => {
-    modal.remove();
-  });
-
-  modal.querySelector(".option-cancel").addEventListener("click", () => {
-    modal.remove();
-  });
-
-  modal.querySelector(".option-save").addEventListener("click", () => {
-    const groups = readGroups();
-
-    const invalid = groups.some(group =>
-      !group.name ||
-      group.options.length === 0 ||
-      group.options.some(option => !option.name)
-    );
-
-    if (invalid) {
-      alert("Lengkapi nama grup dan semua pilihan terlebih dahulu.");
-      return;
-    }
-
-    selectedGroups = groups;
-
-    selectedOptionCount.textContent =
-      `${selectedGroups.length} terpilih`;
-
-    modal.remove();
-  });
-
-  modal.addEventListener("click", event => {
-    if (event.target === modal) modal.remove();
-  });
-
-  renderGroups();
-}
-
-optionGroupsButton.addEventListener("click", openGroupEditor);
+productName.addEventListener("input", updateProductButton);
+productDescription.addEventListener("input", updateProductButton);
+productCategory.addEventListener("change", updateProductButton);
 
 async function uploadProductPhotos(productId) {
   const urls = [];
@@ -371,8 +344,7 @@ async function uploadProductPhotos(productId) {
 
     await uploadBytes(imageRef, file);
 
-    const url = await getDownloadURL(imageRef);
-    urls.push(url);
+    urls.push(await getDownloadURL(imageRef));
   }
 
   return urls;
@@ -381,10 +353,15 @@ async function uploadProductPhotos(productId) {
 productForm.addEventListener("submit", async event => {
   event.preventDefault();
 
-  if (isSaving) return;
+  if (isSavingProduct) return;
 
   if (!productName.value.trim()) {
     alert("Nama hidangan wajib diisi.");
+    return;
+  }
+
+  if (!productDescription.value.trim()) {
+    alert("Deskripsi hidangan wajib diisi.");
     return;
   }
 
@@ -403,9 +380,10 @@ productForm.addEventListener("submit", async event => {
     return;
   }
 
-  isSaving = true;
+  isSavingProduct = true;
   saveButton.disabled = true;
-  saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+  saveButton.innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
 
   try {
     const productRef = push(ref(db, "products"));
@@ -421,7 +399,7 @@ productForm.addEventListener("submit", async event => {
       image: imageUrls[0],
       images: imageUrls,
       available: true,
-      optionGroups: selectedGroups,
+      optionGroups: [],
       createdAt: Date.now(),
       updatedAt: Date.now()
     };
@@ -432,10 +410,8 @@ productForm.addEventListener("submit", async event => {
 
     productForm.reset();
     selectedPhotos = [];
-    selectedGroups = [];
 
     photoPreview.innerHTML = "";
-    selectedOptionCount.textContent = "0 terpilih";
 
     await loadProducts();
 
@@ -443,18 +419,20 @@ productForm.addEventListener("submit", async event => {
     console.error("Gagal menyimpan hidangan:", error);
     alert("Gagal menyimpan hidangan. Periksa koneksi dan Firebase Storage.");
   } finally {
-    isSaving = false;
-    saveButton.innerHTML = "Simpan Hidangan";
-    updateSaveButton();
+    isSavingProduct = false;
+    saveButton.innerHTML =
+      '<i class="fa-solid fa-check"></i><span>Simpan Hidangan</span>';
+
+    updateProductButton();
   }
 });
 
 function renderProducts() {
   const search = (searchInput?.value || "").trim().toLowerCase();
 
-  const filteredProducts = Object.entries(products).filter(([id, product]) => {
-    return String(product.name || "").toLowerCase().includes(search);
-  });
+  const filteredProducts = Object.entries(products).filter(([, product]) =>
+    String(product?.name || "").toLowerCase().includes(search)
+  );
 
   menuList.innerHTML = "";
 
@@ -489,9 +467,9 @@ function renderProducts() {
         <p>Rp${Number(product.price || 0).toLocaleString("id-ID")}</p>
       </div>
 
-      <label class="menu-item-toggle">
+      <label class="menu-toggle">
         <input type="checkbox" ${available ? "checked" : ""}>
-        <span></span>
+        <span class="menu-toggle-slider"></span>
       </label>
     `;
 
@@ -507,6 +485,7 @@ function renderProducts() {
         });
 
         products[id].available = toggle.checked;
+
       } catch (error) {
         console.error("Gagal mengubah status hidangan:", error);
         toggle.checked = !toggle.checked;
@@ -553,7 +532,7 @@ document.querySelectorAll(".product-tab").forEach(tab => {
 
     tab.classList.add("active");
 
-    const target = $( `${tab.dataset.tab}-panel` );
+    const target = $(`${tab.dataset.tab}-panel`);
 
     if (target) target.hidden = false;
   });
@@ -563,7 +542,9 @@ async function initializeProductPage() {
   try {
     await loadCategories();
     await loadProducts();
-    updateSaveButton();
+    updateProductButton();
+    updateCategoryButton();
+
   } catch (error) {
     console.error("Gagal memuat halaman produk:", error);
     alert("Gagal mengambil data dari Firebase.");
