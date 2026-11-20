@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Product - Kopicu</title>
+
+  <link rel="stylesheet" href="product.css">
+  <link rel="stylesheet" href="/admin/hamburger/hamburger.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body>
+
+  <div id="hamburger-container"></div>
+
+  <main class="main-content">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger-button" id="hamburger-button" aria-label="Buka menu" aria-expanded="false">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+
+        <div class="greeting">
+          <span>Hallo,</span>
+          <strong id="admin-username">Admin</strong>
+        </div>
+      </div>
+
+      <div class="admin-avatar" id="admin-avatar">A</div>
+    </header>
+
+    <section class="product-content">
+
+      <div class="product-heading">
+        <div>
+          <h1>Daftar Menu</h1>
+          <p>Kelola hidangan dan menu KOPICU kamu.</p>
+        </div>
+
+        <div class="product-heading-actions">
+          <button type="button" class="header-icon-button" id="search-menu-button" aria-label="Cari menu">
+            <i class="fa-solid fa-magnifying-glass"></i>
+          </button>
+
+          <button type="button" class="header-icon-button" id="help-menu-button" aria-label="Bantuan">
+            <i class="fa-regular fa-circle-question"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="product-search" id="product-search" hidden>
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="search" id="search-menu-input" placeholder="Cari nama hidangan...">
+      </div>
+
+      <nav class="product-tabs" aria-label="Pengaturan menu">
+        <button type="button" class="product-tab active" data-tab="hidangan">
+          Hidangan
+        </button>
+
+        <button type="button" class="product-tab" data-tab="kategori">
+          Kategori
+        </button>
+
+        <button type="button" class="product-tab" data-tab="grup-pilihan">
+          Grup Pilihan
+        </button>
+      </nav>
+
+      <section class="product-tab-content" id="hidangan-panel">
+
+        <form id="product-form" class="product-form">
+
+          <div class="form-section">
+            <div class="form-section-heading">
+              <h2>Informasi Hidangan</h2>
+            </div>
+
+            <div class="form-group">
+              <label for="product-name">Nama hidangan atau barang</label>
+              <input
+                type="text"
+                id="product-name"
+                name="productName"
+                placeholder="Beri nama hidangan ini"
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label>Foto hidangan atau barang</label>
+
+              <div class="photo-upload-area">
+                <input
+                  type="file"
+                  id="product-photos"
+                  name="productPhotos"
+                  accept="image/*"
+                  multiple
+                  hidden
+                >
+
+                <label for="product-photos" class="photo-upload-button">
+                  <i class="fa-solid fa-camera"></i>
+                  <span>Tambah Foto</span>
+                </label>
+
+                <div class="photo-upload-info">
+                  <span>Maks. 4 foto, masing-masing hingga 2 MB.</span>
+                  <span>Format JPG, PNG, atau WEBP.</span>
+                </div>
+              </div>
+
+              <div class="photo-preview" id="photo-preview"></div>
+            </div>
+
+            <div class="form-group">
+              <label for="product-description">Deskripsi</label>
+              <textarea
+                id="product-description"
+                name="productDescription"
+                rows="4"
+                placeholder="Masukan deskripsi"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="product-category">Kategori</label>
+              <div class="select-wrapper">
+                <select id="product-category" name="productCategory" required>
+                  <option value="" selected disabled>Pilih kategori</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="product-price">Harga</label>
+
+              <div class="price-input-wrapper">
+                <span>Rp</span>
+                <input
+                  type="text"
+                  id="product-price"
+                  name="productPrice"
+                  inputmode="numeric"
+                  placeholder="Masukan harga"
+                  required
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <div class="form-label-row">
+                <label for="product-option-groups">Grup opsi</label>
+                <span id="selected-option-count">0 terpilih</span>
+              </div>
+
+              <button
+                type="button"
+                class="option-select-button"
+                id="product-option-groups"
+              >
+                <span>Pilih grup opsi</span>
+                <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+
+          </div>
+
+          <div class="form-footer">
+            <button type="submit" id="save-product-button" disabled>
+              <i class="fa-solid fa-check"></i>
+              <span>Simpan Hidangan</span>
+            </button>
+          </div>
+
+        </form>
+
+      </section>
+
+      <section class="product-tab-content" id="kategori-panel" hidden>
+        <div class="tab-placeholder">
+          <i class="fa-solid fa-layer-group"></i>
+          <h2>Kategori</h2>
+          <p>Pengaturan kategori menu akan ditampilkan di sini.</p>
+        </div>
+      </section>
+
+      <section class="product-tab-content" id="grup-pilihan-panel" hidden>
+        <div class="tab-placeholder">
+          <i class="fa-solid fa-list-check"></i>
+          <h2>Grup Pilihan</h2>
+          <p>Pengaturan grup pilihan akan ditampilkan di sini.</p>
+        </div>
+      </section>
+
+      <section class="menu-list-section" id="menu-list-section" hidden>
+
+        <div class="menu-list-heading">
+          <div>
+            <h2>Daftar Menu</h2>
+            <p>Semua hidangan yang tersedia di toko kamu.</p>
+          </div>
+        </div>
+
+        <div class="menu-list" id="menu-list">
+
+          <article class="menu-item">
+
+            <div class="menu-item-image">
+              <img src="" alt="Foto hidangan">
+            </div>
+
+            <div class="menu-item-info">
+              <span class="menu-item-category">Botol 250ml</span>
+              <h3>Kopicu Gula Aren Berempat</h3>
+              <p>Rp68,000</p>
+            </div>
+
+            <label class="menu-toggle">
+              <input type="checkbox" checked>
+              <span class="menu-toggle-slider"></span>
+            </label>
+
+          </article>
+
+        </div>
+
+      </section>
+
+    </section>
+
+  </main>
+
+  <script type="module" src="/admin/hamburger/hamburger.js"></script>
+  <script type="module" src="product.js"></script>
+
+</body>
+</html>
