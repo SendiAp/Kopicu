@@ -6,21 +6,19 @@ const passwordInput = document.getElementById("password");
 const togglePassword = document.getElementById("toggle-password");
 const loginError = document.getElementById("login-error");
 
-if (!adminAccount || !loginForm) {
-  console.error("Data akun atau form login tidak ditemukan.");
-}
+togglePassword.addEventListener("click", (event) => {
+  event.preventDefault();
 
-togglePassword.addEventListener("click", () => {
-  const visible = passwordInput.type === "text";
+  const visible = passwordInput.type === "password";
 
-  passwordInput.type = visible ? "password" : "text";
+  passwordInput.type = visible ? "text" : "password";
 
   togglePassword.innerHTML = visible
-    ? '<i class="fa-regular fa-eye"></i>'
-    : '<i class="fa-regular fa-eye-slash"></i>';
+    ? '<i class="fa-regular fa-eye-slash"></i>'
+    : '<i class="fa-regular fa-eye"></i>';
 });
 
-loginForm.addEventListener("submit", event => {
+loginForm.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const username = usernameInput.value.trim();
@@ -29,13 +27,12 @@ loginForm.addEventListener("submit", event => {
   loginError.hidden = true;
 
   if (
-    username === String(adminAccount.username).trim() &&
-    password === String(adminAccount.password)
+    username === adminAccount.username &&
+    password === adminAccount.password
   ) {
     sessionStorage.setItem("kopicu_admin_login", "true");
     sessionStorage.setItem("kopicu_admin_username", username);
-
-    window.location.replace("dashboard/dashboard.html");
+    window.location.href = "dashboard/dashboard.html";
     return;
   }
 
