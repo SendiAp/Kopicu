@@ -22,6 +22,7 @@ body {
   border-bottom: 1px solid #eeeeee;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0 22px;
   position: sticky;
   top: 0;
@@ -32,6 +33,41 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
+  min-width: 0;
+}
+
+.greeting {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  color: #38251d;
+}
+
+.greeting span {
+  font-weight: 500;
+}
+
+.greeting strong {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-avatar {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 50%;
+  background: #38251d;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
 }
 
 .topbar-title h1 {
@@ -157,6 +193,7 @@ body {
   pointer-events: none;
 }
 
+/* Peta dibatasi agar layer Leaflet tidak menembus menu hamburger */
 .location-map {
   width: 100%;
   height: 190px;
@@ -167,6 +204,16 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+}
+
+.location-map .leaflet-container,
+.location-map .leaflet-pane,
+.location-map .leaflet-top,
+.location-map .leaflet-bottom {
+  z-index: 0;
 }
 
 .map-placeholder {
@@ -404,6 +451,21 @@ body {
     padding: 0 15px;
   }
 
+  .topbar-left {
+    gap: 10px;
+  }
+
+  .greeting {
+    font-size: 13px;
+  }
+
+  .admin-avatar {
+    width: 35px;
+    height: 35px;
+    min-width: 35px;
+    font-size: 14px;
+  }
+
   .topbar-title h1 {
     font-size: 16px;
   }
@@ -473,5 +535,9 @@ body {
   .time-inputs input {
     padding: 0 3px;
     font-size: 10px;
+  }
+
+  .greeting {
+    font-size: 12px;
   }
 }
