@@ -3,45 +3,76 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
   <title>Analisis Makanan</title>
+
   <link rel="stylesheet" href="analytics.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
 <body>
-  <header>
-    <button onclick="goBack()">←</button>
-    <h1>Analisis makanan</h1>
-  </header>
 
-  <main>
-    <section class="period-filter">
-      <button class="period-btn" data-period="yesterday">Kemarin</button>
-      <button class="period-btn active" data-period="7days">7 hari terakhir</button>
-      <button class="period-btn" data-period="30days">30 hari terakhir</button>
-    </section>
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="back-button" id="back-button" aria-label="Kembali">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
 
-    <section class="summary-card">
-      <h2>Jumlah terjual</h2>
-      <h3 id="totalSold">128</h3>
-      <span id="comparison">+18.5%</span>
-    </section>
+        <div class="topbar-title">
+          <h1>Analisis makanan</h1>
+        </div>
+      </div>
+    </header>
 
-    <section class="chart-card">
-      <h2>Grafik penjualan</h2>
-      <svg id="salesChart" viewBox="0 0 600 300" role="img" aria-label="Grafik jumlah makanan terjual">
-        <defs>
-          <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#16a36a" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#16a36a" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <g id="chartGrid"></g>
-        <path id="chartArea" fill="url(#chartGradient)"></path>
-        <path id="chartLine" fill="none" stroke="#16a36a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
-        <g id="chartPoints"></g>
-        <g id="chartLabels"></g>
-      </svg>
-      <p>Jumlah makanan terjual</p>
-    </section>
+    <div class="analytics-content">
+
+      <section class="period-filter">
+        <button type="button" class="period-btn" data-period="yesterday">Kemarin</button>
+        <button type="button" class="period-btn active" data-period="7days">7 hari terakhir</button>
+        <button type="button" class="period-btn" data-period="30days">30 hari terakhir</button>
+      </section>
+
+      <section class="summary-card">
+        <h2>Jumlah terjual</h2>
+        <div class="summary-value">
+          <h3 id="totalSold">0</h3>
+          <span>porsi</span>
+        </div>
+        <span id="comparison">0%</span>
+      </section>
+
+      <section class="chart-card">
+        <h2>Grafik penjualan</h2>
+
+        <div class="chart-wrapper">
+          <svg id="salesChart" viewBox="0 0 600 300" role="img" aria-label="Grafik jumlah makanan terjual">
+            <defs>
+              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#16a36a" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#16a36a" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+
+            <g id="chartGrid"></g>
+            <path id="chartArea" fill="url(#chartGradient)"></path>
+            <path id="chartLine" fill="none" stroke="#16a36a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+            <g id="chartPoints"></g>
+            <g id="chartLabels"></g>
+          </svg>
+        </div>
+
+        <div class="chart-legend">
+          <span></span>
+          <p>Jumlah makanan terjual</p>
+        </div>
+      </section>
+
+    </div>
   </main>
 
   <script src="analytics.js"></script>
