@@ -5,110 +5,194 @@
 }
 
 body {
-  font-family: Arial, sans-serif;
-  background: #f8f6f4;
+  font-family: "DM Sans", sans-serif;
+  background: #f8f8f8;
   color: #38251d;
-  padding: 20px;
 }
 
-header {
+.main-content {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.topbar {
+  width: 100%;
+  height: 68px;
+  background: #ffffff;
+  border-bottom: 1px solid #eeeeee;
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 25px;
+  padding: 0 20px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
-header button {
-  border: none;
-  background: white;
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.back-button {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
-  font-size: 22px;
+  border: none;
+  background: transparent;
+  color: #38251d;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
   cursor: pointer;
+  transition: background 0.2s;
 }
 
-header h1 {
-  font-size: 21px;
+.back-button:active {
+  background: #f1eeec;
+}
+
+.topbar-title h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #38251d;
+}
+
+.analytics-content {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 22px 20px 40px;
 }
 
 .period-filter {
   display: flex;
-  gap: 8px;
+  gap: 9px;
   overflow-x: auto;
   margin-bottom: 20px;
+  scrollbar-width: none;
+}
+
+.period-filter::-webkit-scrollbar {
+  display: none;
 }
 
 .period-btn {
-  border: 1px solid #e8dfd9;
-  background: white;
-  color: #95877f;
-  padding: 11px 15px;
+  border: 1px solid #e9e3df;
+  background: #ffffff;
+  color: #8d817a;
+  padding: 10px 16px;
   border-radius: 10px;
   white-space: nowrap;
   cursor: pointer;
+  font-family: inherit;
   font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s;
 }
 
 .period-btn.active {
   background: #38251d;
-  color: white;
+  color: #ffffff;
   border-color: #38251d;
 }
 
 .summary-card,
 .chart-card {
-  background: white;
-  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #f0ece9;
+  border-radius: 15px;
   padding: 20px;
-  margin-bottom: 18px;
-  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+  margin-bottom: 17px;
 }
 
 .summary-card h2,
 .chart-card h2 {
-  font-size: 15px;
-  font-weight: 500;
-  color: #95877f;
-  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #8d817a;
+  margin-bottom: 13px;
 }
 
-.summary-card h3 {
+.summary-value {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+
+.summary-value h3 {
   font-size: 34px;
-  margin-bottom: 8px;
+  font-weight: 800;
+  color: #38251d;
+}
+
+.summary-value span {
+  font-size: 13px;
+  color: #95877f;
 }
 
 #comparison {
-  color: #16a36a;
-  font-size: 13px;
-  font-weight: bold;
+  font-size: 12px;
+  font-weight: 600;
+  color: #95877f;
 }
 
-#salesChart {
+.chart-wrapper {
   width: 100%;
-  height: auto;
-  overflow: visible;
+  overflow: hidden;
   margin-top: 15px;
 }
 
-.chart-card p {
-  color: #95877f;
+#salesChart {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chart-legend span {
+  width: 9px;
+  height: 9px;
+  background: #16a36a;
+  border-radius: 50%;
+}
+
+.chart-legend p {
   font-size: 12px;
-  text-align: center;
-  margin-top: 10px;
+  color: #95877f;
 }
 
 @media (max-width: 480px) {
-  body {
-    padding: 15px;
+  .topbar {
+    height: 62px;
+    padding: 0 15px;
   }
 
-  header h1 {
-    font-size: 19px;
+  .topbar-title h1 {
+    font-size: 16px;
+  }
+
+  .analytics-content {
+    padding: 18px 15px 30px;
   }
 
   .summary-card,
   .chart-card {
-    padding: 16px;
+    padding: 17px;
+  }
+
+  .period-btn {
+    padding: 10px 13px;
+    font-size: 12px;
   }
 }
