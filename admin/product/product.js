@@ -1227,13 +1227,20 @@ function renderProducts() {
         </div>
 
         <div class="menu-item-info">
-          <h3>${escapeHTML(product.name)}</h3>
-          <p>Rp${Number(product.price || 0).toLocaleString("id-ID")}</p>
-          ${
-            statusText
-              ? `<span class="menu-status ${statusClass}">${statusText}</span>`
-              : ""
-          }
+        <h3>${escapeHTML(product.name)}</h3>
+        <p>
+        Rp${Number(product.price || 0).toLocaleString("id-ID")}
+        ${
+          product.stock?.enabled
+          ? ` <span class="stock-separator">•</span> <span class="menu-stock-info">${Number(product.stock.quantity || 0).toLocaleString("id-ID")} tersisa</span>`
+          : ""
+        }
+        </p>
+        ${
+          statusText
+          ? `<span class="menu-status ${statusClass}">${statusText}</span>`
+          : ""
+        }
         </div>
 
         <label class="menu-toggle">
