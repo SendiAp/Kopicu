@@ -24,6 +24,8 @@ const longitudeInput = $("longitude");
 const locationTypeInput = $("jenis-lokasi");
 const provinceInput = $("provinsi");
 const cityInput = $("kota");
+const districtInput = $("kecamatan");
+const villageInput = $("kelurahan");
 const postalCodeInput = $("kode-pos");
 const addressInput = $("detail-alamat");
 const branchWrapper = $("branch-wrapper");
@@ -144,6 +146,8 @@ function addressComplete() {
     locationTypeInput.value &&
     provinceInput.value &&
     cityInput.value &&
+    districtInput.value &&
+    villageInput.value &&
     postalCodeInput.value.trim() &&
     addressInput.value.trim()
   );
@@ -421,9 +425,7 @@ async function loadProvinces() {
   }
 }
 
-async function loadCities(provinceName, selectedCity = "") {
-  if (!cityInput) return;
-
+async function loadCities(provinceName, selectedCity = "", selectedDistrict = "", selectedVillage = "") {
   const provinceOption = Array.from(provinceInput.options).find(option =>
     option.value === provinceName
   );
@@ -433,6 +435,12 @@ async function loadCities(provinceName, selectedCity = "") {
   cityInput.disabled = true;
   cityInput.innerHTML = '<option value="">Memuat kota/kabupaten...</option>';
 
+  districtInput.disabled = true;
+  districtInput.innerHTML = '<option value="">Pilih kota terlebih dahulu</option>';
+
+  villageInput.disabled = true;
+  villageInput.innerHTML = '<option value="">Pilih kecamatan terlebih dahulu</option>';
+
   if (!provinceId) {
     cityInput.innerHTML = '<option value="">Pilih provinsi terlebih dahulu</option>';
     cityInput.disabled = false;
@@ -441,35 +449,157 @@ async function loadCities(provinceName, selectedCity = "") {
 
   try {
     const response = await fetch(
-      `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${encodeURIComponent(provinceId)}.json`
+      `https://www.emsifa.com/api-wilayah-indonesia/api/regencies/${provinceId}.json`
     );
-    if (!response.ok) throw new Error("Gagal mengambil daftar kota");
+
+    if (!response.ok) throw new Error("Gagal mengambil kota");
 
     const cities = await response.json();
+
     cityInput.innerHTML = '<option value="">Pilih kota/kabupaten</option>';
 
     cities.forEach(city => {
       const option = document.createElement("option");
       option.value = city.name;
       option.textContent = city.name;
+      option.dataset.id = city.id;
       cityInput.appendChild(option);
     });
 
     if (selectedCity) {
       const match = Array.from(cityInput.options).find(option =>
-        option.value.toLowerCase() === selectedCity.toLowerCase()
+        normalizeText(option.value) === normalizeText(selectedCity)
       );
-      if (match) cityInput.value = match.value;
+
+      if (match) {
+        cityInput.value = match.value;
+
+        await loadDistricts(
+          match.value,
+          selectedDistrict,
+          selectedVillage
+        );
+      }
     }
   } catch (error) {
     console.error("Gagal memuat kota:", error);
-    cityInput.innerHTML = '<option value="">Gagal memuat kota/kabupaten</option>';
+    cityInput.innerHTML = '<option value="">Gagal memuat kota</option>';
   } finally {
     cityInput.disabled = false;
   }
 }
 
-async function selectProvinceAndCity(provinceName, cityName) {
+async function loadDistricts(cityName, selectedDistrict = "", selectedVillage = "") {
+  const cityOption = Array.from(cityInput.options).find(option =>
+    option.value === cityName
+  );
+
+  const cityId = cityOption?.dataset.id;
+
+  districtInput.disabled = true;
+  districtInput.innerHTML = '<option value="">Memuat kecamatan...</option>';
+
+  villageInput.disabled = true;
+  villageInput.innerHTML = '<option value="">Pilih kecamatan terlebih dahulu</option>';
+
+  if (!cityId) {
+    districtInput.innerHTML = '<option value="">Pilih kota terlebih dahulu</option>';
+    districtInput.disabled = false;
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.emsifa.com/api-wilayah-indonesia/api/districts/${cityId}.json`
+    );
+
+    if (!response.ok) throw new Error("Gagal mengambil kecamatan");
+
+    const districts = await response.json();
+
+    districtInput.innerHTML = '<option value="">Pilih kecamatan</option>';
+
+    districts.forEach(district => {
+      const option = document.createElement("option");
+      option.value = district.name;
+      option.textContent = district.name;
+      option.dataset.id = district.id;
+      districtInput.appendChild(option);
+    });
+
+    if (selectedDistrict) {
+      const match = Array.from(districtInput.options).find(option =>
+        normalizeText(option.value) === normalizeText(selectedDistrict)
+      );
+
+      if (match) {
+        districtInput.value = match.value;
+        await loadVillages(match.value, selectedVillage);
+      }
+    }
+  } catch (error) {
+    console.error("Gagal memuat kecamatan:", error);
+    districtInput.innerHTML = '<option value="">Gagal memuat kecamatan</option>';
+  } finally {
+    districtInput.disabled = false;
+  }
+}
+
+async function loadVillages(districtName, selectedVillage = "") {
+  const districtOption = Array.from(districtInput.options).find(option =>
+    option.value === districtName
+  );
+
+  const districtId = districtOption?.dataset.id;
+
+  villageInput.disabled = true;
+  villageInput.innerHTML = '<option value="">Memuat kelurahan/desa...</option>';
+
+  if (!districtId) {
+    villageInput.innerHTML = '<option value="">Pilih kecamatan terlebih dahulu</option>';
+    villageInput.disabled = false;
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `https://www.emsifa.com/api-wilayah-indonesia/api/villages/${districtId}.json`
+    );
+
+    if (!response.ok) throw new Error("Gagal mengambil kelurahan");
+
+    const villages = await response.json();
+
+    villageInput.innerHTML = '<option value="">Pilih kelurahan/desa</option>';
+
+    villages.forEach(village => {
+      const option = document.createElement("option");
+      option.value = village.name;
+      option.textContent = village.name;
+      villageInput.appendChild(option);
+    });
+
+    if (selectedVillage) {
+      const match = Array.from(villageInput.options).find(option =>
+        normalizeText(option.value) === normalizeText(selectedVillage)
+      );
+
+      if (match) villageInput.value = match.value;
+    }
+  } catch (error) {
+    console.error("Gagal memuat kelurahan:", error);
+    villageInput.innerHTML = '<option value="">Gagal memuat kelurahan</option>';
+  } finally {
+    villageInput.disabled = false;
+  }
+}
+
+async function selectProvinceAndCity(
+  provinceName,
+  cityName,
+  districtName = "",
+  villageName = ""
+) {
   if (!provinceName) return;
 
   const provinceMatch = Array.from(provinceInput.options).find(option =>
@@ -480,7 +610,12 @@ async function selectProvinceAndCity(provinceName, cityName) {
 
   provinceInput.value = provinceMatch.value;
 
-  await loadCities(provinceMatch.value, cityName || "");
+  await loadCities(
+    provinceMatch.value,
+    cityName,
+    districtName,
+    villageName
+  );
 }
 
 function normalizeText(value) {
@@ -652,7 +787,9 @@ async function fillForm(data) {
 
   await selectProvinceAndCity(
     data.province || data.provinsi || "",
-    data.city || data.kota || ""
+    data.city || data.kota || "",
+    data.district || data.kecamatan || "",
+    data.village || data.kelurahan || ""
   );
 
   applyOpeningHours(data.openingHours || data.jamOperasional || {});
@@ -670,6 +807,8 @@ function collectStoreData() {
     locationType: locationTypeInput.value,
     province: provinceInput.value,
     city: cityInput.value,
+    district: districtInput.value,
+    village: villageInput.value,
     postalCode: postalCodeInput.value.trim(),
     address: addressInput.value.trim(),
 
@@ -719,6 +858,18 @@ function validateStoreData() {
     return false;
   }
 
+  if (!districtInput.value) {
+    popup("Pilih kecamatan toko.");
+    districtInput.focus();
+    return false;
+  }
+  
+  if (!villageInput.value) {
+    popup("Pilih kelurahan atau desa toko.");
+    villageInput.focus();
+    return false;
+  }
+  
   if (!postalCodeInput.value.trim()) {
     popup("Kode pos wajib diisi.");
     postalCodeInput.focus();
@@ -804,11 +955,25 @@ function bindEvents() {
     await loadCities(provinceInput.value);
     markChanged();
   });
+  
+  cityInput?.addEventListener("change", async () => {
+    await loadDistricts(cityInput.value);
+    markChanged();
+  });
+  
+  districtInput?.addEventListener("change", async () => {
+    await loadVillages(districtInput.value);
+    markChanged();
+  });
+
+villageInput?.addEventListener("change", markChanged);
 
   [
     nameInput,
     locationTypeInput,
     cityInput,
+    districtInput,
+    villageInput,
     postalCodeInput,
     addressInput,
     ownerEmailInput,
@@ -820,7 +985,7 @@ function bindEvents() {
     input?.addEventListener("input", markChanged);
     input?.addEventListener("change", markChanged);
   });
-
+  
   addBranchButton?.addEventListener("click", addBranch);
 
   document.querySelectorAll("[data-day]").forEach(row => {
