@@ -39,27 +39,6 @@
 
     <section class="product-content">
 
-      <div class="product-heading">
-        <div>
-          <h1>Daftar Menu</h1>
-        </div>
-
-        <div class="product-heading-actions">
-          <button type="button" class="header-icon-button" id="search-menu-button" aria-label="Cari menu">
-            <i class="fa-solid fa-magnifying-glass"></i>
-          </button>
-
-          <button type="button" class="header-icon-button" id="help-menu-button" aria-label="Bantuan">
-            <i class="fa-regular fa-circle-question"></i>
-          </button>
-        </div>
-      </div>
-
-      <div class="product-search" id="product-search" hidden>
-        <i class="fa-solid fa-magnifying-glass"></i>
-        <input type="search" id="search-menu-input" placeholder="Cari nama hidangan...">
-      </div>
-
       <nav class="product-tabs" aria-label="Pengaturan menu">
         <button type="button" class="product-tab active" data-tab="hidangan">
           Hidangan
@@ -75,6 +54,27 @@
       </nav>
 
       <section class="product-tab-content" id="hidangan-panel">
+
+        <div class="product-heading">
+          <div>
+            <h1>Daftar Menu</h1>
+          </div>
+
+          <div class="product-heading-actions">
+            <button type="button" class="header-icon-button" id="search-menu-button" aria-label="Cari menu">
+              <i class="fa-solid fa-magnifying-glass"></i>
+            </button>
+
+            <button type="button" class="header-icon-button" id="help-menu-button" aria-label="Bantuan">
+              <i class="fa-regular fa-circle-question"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="product-search" id="product-search" hidden>
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="search" id="search-menu-input" placeholder="Cari nama hidangan...">
+        </div>
 
         <form id="product-form" class="product-form">
 
@@ -177,6 +177,19 @@
           </div>
 
         </form>
+
+        <section class="menu-list-section" id="menu-list-section" hidden>
+
+          <div class="menu-list-heading">
+            <div>
+              <h2>Daftar Menu</h2>
+              <p>Semua hidangan yang tersedia di toko kamu.</p>
+            </div>
+          </div>
+
+          <div class="menu-list" id="menu-list"></div>
+
+        </section>
 
       </section>
 
@@ -338,19 +351,6 @@
             </div>
           </div>
         </div>
-
-      </section>
-
-      <section class="menu-list-section" id="menu-list-section" hidden>
-
-        <div class="menu-list-heading">
-          <div>
-            <h2>Daftar Menu</h2>
-            <p>Semua hidangan yang tersedia di toko kamu.</p>
-          </div>
-        </div>
-
-        <div class="menu-list" id="menu-list"></div>
 
       </section>
 
