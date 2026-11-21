@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Edit Hidangan atau Barang - Kopicu</title>
+
+  <link rel="stylesheet" href="edit.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="back-button" id="back-button" aria-label="Kembali">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <div class="topbar-title">
+          <h1>Edit hidangan atau barang</h1>
+          <p>Perbarui informasi menu kamu</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="edit-content">
+      <form id="edit-product-form" class="product-form">
+
+        <section class="form-section">
+          <div class="form-section-heading">
+            <h2>Informasi Produk</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="product-name">Nama hidangan atau barang</label>
+            <input
+              type="text"
+              id="product-name"
+              placeholder="Masukkan nama produk"
+              required
+            >
+          </div>
+
+          <div class="form-group">
+            <label>Foto produk</label>
+
+            <div class="photo-upload-area">
+              <label for="product-photos" class="photo-upload-button">
+                <i class="fa-solid fa-camera"></i>
+                <span>Tambah Foto</span>
+              </label>
+
+              <input
+                type="file"
+                id="product-photos"
+                accept="image/jpeg,image/png,image/webp"
+                multiple
+                hidden
+              >
+
+              <div class="photo-upload-info">
+                <span>Maksimal 4 foto produk</span>
+                <span>JPG, PNG, atau WEBP</span>
+                <span>Maksimal 2 MB per foto</span>
+              </div>
+            </div>
+
+            <div class="photo-preview" id="photo-preview"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="product-description">Deskripsi</label>
+            <textarea
+              id="product-description"
+              placeholder="Tambahkan deskripsi produk"
+              rows="4"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="product-category">Kategori</label>
+            <div class="select-wrapper">
+              <select id="product-category" required>
+                <option value="">Memuat kategori...</option>
+              </select>
+              <i class="fa-solid fa-chevron-down"></i>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="product-price">Harga</label>
+            <div class="price-input-wrapper">
+              <span>Rp</span>
+              <input
+                type="text"
+                id="product-price"
+                inputmode="numeric"
+                placeholder="0"
+                required
+              >
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div class="form-label-row">
+              <label>Grup Opsi</label>
+              <span>Pilih grup opsi produk</span>
+            </div>
+
+            <div class="product-option-groups" id="product-option-groups">
+              <div class="option-group-empty">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Memuat grup opsi...
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="edit-footer">
+          <button type="button" id="delete-product-button" class="delete-product-button">
+            <i class="fa-regular fa-trash-can"></i>
+            <span>Hapus Hidangan</span>
+          </button>
+
+          <button type="submit" id="save-product-button" class="save-product-button">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <script type="module" src="edit.js?v=1"></script>
+</body>
+</html>
