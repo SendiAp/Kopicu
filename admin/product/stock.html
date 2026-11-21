@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Kelola Jumlah Stock - Kopicu</title>
+
+  <link rel="stylesheet" href="stock.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+
+  <main class="main-content">
+
+    <header class="topbar">
+      <div class="topbar-left">
+        <button type="button" class="back-button" id="back-button" aria-label="Kembali">
+          <i class="fa-solid fa-arrow-left"></i>
+        </button>
+
+        <div class="topbar-title">
+          <h1>Kelola Jumlah Stock</h1>
+          <p>Atur ketersediaan stok produk</p>
+        </div>
+      </div>
+    </header>
+
+    <div class="stock-content">
+
+      <section class="product-info-card">
+        <div class="product-image" id="product-image">
+          <i class="fa-solid fa-image"></i>
+        </div>
+
+        <div class="product-info">
+          <h2 id="product-name">Memuat produk...</h2>
+          <p id="product-price">-</p>
+        </div>
+      </section>
+
+      <form id="stock-form">
+
+        <section class="stock-section">
+
+          <div class="section-heading">
+            <div>
+              <h2>Tetapkan jumlah stock</h2>
+              <p>Aktifkan untuk mengelola jumlah stok produk.</p>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" id="stock-enabled">
+              <span class="switch-slider"></span>
+            </label>
+          </div>
+
+          <div id="stock-settings" hidden>
+
+            <div class="form-group">
+              <label for="current-stock">
+                Berapa unit yang anda miliki saat ini?
+              </label>
+
+              <input
+                type="number"
+                id="current-stock"
+                min="0"
+                step="1"
+                placeholder="Contoh: 100"
+                inputmode="numeric"
+              >
+            </div>
+
+            <div class="auto-reset-section">
+
+              <div class="section-heading">
+                <div>
+                  <h3>Setel ulang jumlah stok secara otomatis</h3>
+                  <p>Atur stok agar kembali ke jumlah tertentu secara berkala.</p>
+                </div>
+
+                <label class="switch">
+                  <input type="checkbox" id="auto-reset-enabled">
+                  <span class="switch-slider"></span>
+                </label>
+              </div>
+
+              <div id="auto-reset-settings" hidden>
+
+                <div class="form-group">
+                  <label for="reset-stock">
+                    Atur ulang ke
+                  </label>
+
+                  <input
+                    type="number"
+                    id="reset-stock"
+                    min="0"
+                    step="1"
+                    placeholder="Contoh: 100"
+                    inputmode="numeric"
+                  >
+                </div>
+
+                <div class="form-group">
+                  <label for="reset-frequency">
+                    Seberapa sering level stok harus diatur ulang?
+                  </label>
+
+                  <div class="select-wrapper">
+                    <select id="reset-frequency">
+                      <option value="">Pilih frekuensi</option>
+                      <option value="hourly">Setiap Jam</option>
+                      <option value="daily">Setiap Hari</option>
+                      <option value="weekly">Setiap Minggu</option>
+                    </select>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </div>
+                </div>
+
+                <div class="form-group" id="reset-day-group" hidden>
+                  <label for="reset-day">Pada hari apa?</label>
+
+                  <div class="select-wrapper">
+                    <select id="reset-day">
+                      <option value="">Pilih hari</option>
+                      <option value="1">Senin</option>
+                      <option value="2">Selasa</option>
+                      <option value="3">Rabu</option>
+                      <option value="4">Kamis</option>
+                      <option value="5">Jumat</option>
+                      <option value="6">Sabtu</option>
+                      <option value="0">Minggu</option>
+                    </select>
+
+                    <i class="fa-solid fa-chevron-down"></i>
+                  </div>
+                </div>
+
+                <div class="form-group" id="reset-time-group" hidden>
+                  <label for="reset-time">Pada jam berapa?</label>
+
+                  <input
+                    type="time"
+                    id="reset-time"
+                    value="00:00"
+                  >
+                </div>
+
+                <div class="next-reset-card" id="next-reset-card" hidden>
+                  <div class="next-reset-icon">
+                    <i class="fa-regular fa-clock"></i>
+                  </div>
+
+                  <div>
+                    <span>Jadwal pengisian stok selanjutnya</span>
+                    <p id="next-reset-text">-</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <div class="stock-footer">
+          <button type="submit" id="save-stock-button">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </main>
+
+  <script type="module" src="stock.js?v=1"></script>
+</body>
+</html>
