@@ -912,7 +912,7 @@ function showAvailabilityOptions() {
 
     dialog.innerHTML = `
       <h3 style="margin:0 0 16px;color:#38251d;font-size:17px;">
-        Atur ketersediaan
+      Ganti status
       </h3>
 
       <div class="availability-options">
@@ -983,6 +983,124 @@ function showAvailabilityOptions() {
     overlay.appendChild(dialog);
     document.body.appendChild(overlay);
   });
+}
+
+function showProductActions(id) {
+  const overlay = document.createElement("div");
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    background:rgba(0,0,0,.4);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    backdrop-filter:blur(3px);
+  `;
+
+  const dialog = document.createElement("div");
+
+  dialog.style.cssText = `
+    width:100%;
+    max-width:360px;
+    padding:22px;
+    background:#fff;
+    border-radius:16px;
+    font-family:"DM Sans",sans-serif;
+    box-shadow:0 15px 50px rgba(0,0,0,.15);
+  `;
+
+  const product = products[id];
+
+  dialog.innerHTML = `
+    <h3 style="margin:0 0 5px;color:#38251d;font-size:18px;">
+      ${escapeHTML(product?.name || "Hidangan")}
+    </h3>
+
+    <p style="margin:0 0 20px;color:#999;font-size:13px;">
+      Pilih tindakan yang ingin kamu lakukan.
+    </p>
+
+    <button data-action="edit">
+      <i class="fa-solid fa-pen-to-square"></i>
+      <span>Edit hidangan atau barang</span>
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <button data-action="stock">
+      <i class="fa-solid fa-boxes-stacked"></i>
+      <span>Kelola jumlah stok</span>
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <button data-action="analytics">
+      <i class="fa-solid fa-chart-line"></i>
+      <span>Lihat analisis</span>
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <button class="product-action-cancel">
+      Batal
+    </button>
+  `;
+
+  dialog.querySelectorAll("[data-action]").forEach(button => {
+    button.style.cssText = `
+      display:flex;
+      align-items:center;
+      gap:13px;
+      width:100%;
+      padding:15px 12px;
+      margin-bottom:9px;
+      border:1px solid #eee;
+      border-radius:10px;
+      background:#fff;
+      color:#38251d;
+      font-family:inherit;
+      font-size:13px;
+      font-weight:600;
+      text-align:left;
+      cursor:pointer;
+    `;
+
+    button.querySelector("span").style.flex = "1";
+
+    button.addEventListener("click", () => {
+      const pages = {
+        edit: "edit.html",
+        stock: "stock.html",
+        analytics: "analytics.html"
+      };
+
+      window.location.href =
+        `${pages[button.dataset.action]}?id=${encodeURIComponent(id)}`;
+    });
+  });
+
+  const cancel = dialog.querySelector(".product-action-cancel");
+
+  cancel.style.cssText = `
+    width:100%;
+    padding:12px;
+    margin-top:8px;
+    border:0;
+    border-radius:9px;
+    background:#f3f3f3;
+    color:#555;
+    font-weight:700;
+    cursor:pointer;
+  `;
+
+  cancel.addEventListener("click", () => overlay.remove());
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) overlay.remove();
+  });
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
 }
 
 async function handleProductAvailability(id, toggle, product) {
@@ -1126,6 +1244,12 @@ function renderProducts() {
 
       const toggle = item.querySelector('input[type="checkbox"]');
 
+      item.addEventListener("click", event => {
+        if (event.target.closest(".menu-toggle")) return;
+        
+        showProductActions(id);
+      });
+      
       toggle.addEventListener("change", () => {
         handleProductAvailability(id, toggle, product);
       });
