@@ -28,8 +28,6 @@ const districtInput = $("kecamatan");
 const villageInput = $("kelurahan");
 const postalCodeInput = $("kode-pos");
 const addressInput = $("detail-alamat");
-const branchWrapper = $("branch-wrapper");
-const addBranchButton = $("add-branch-button");
 const ownerEmailInput = $("owner-email");
 const ownerPhoneInput = $("owner-phone");
 const managerEmailInput = $("manager-email");
@@ -44,7 +42,6 @@ let leafletReady = false;
 let isSaving = false;
 let isLoading = true;
 let hasChanges = false;
-let branches = [];
 
 const STORE_PATH = "store";
 
@@ -170,11 +167,6 @@ function addressComplete() {
   );
 }
 
-function updateBranchVisibility() {
-  if (!branchWrapper) return;
-  branchWrapper.hidden = !addressComplete();
-}
-
 function updateSaveButton() {
   if (!saveButton) return;
 
@@ -193,7 +185,6 @@ function updateSaveButton() {
 function markChanged() {
   if (isLoading) return;
   hasChanges = true;
-  updateBranchVisibility();
   updateSaveButton();
 }
 
@@ -699,85 +690,12 @@ function updateDayRow(row) {
   row.classList.toggle("is-closed", closed);
 }
 
-function normalizeBranches(data) {
-  if (!data) return [];
-
-  if (Array.isArray(data)) return data;
-
-  if (typeof data === "object") {
-    return Object.values(data);
-  }
-
-  return [];
-}
-
-function renderBranches() {
-  if (!branchWrapper) return;
-
-  const container = $("branch-list");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  branches.forEach((branch, index) => {
-    const item = document.createElement("div");
-    item.className = "branch-item";
-
-    item.innerHTML = `
-      <div class="branch-item-info">
-        <strong>${escapeHTML(branch.name || "Cabang " + (index + 1))}</strong>
-        <span>${escapeHTML(branch.address || "Alamat belum diisi")}</span>
-      </div>
-      <button type="button" class="remove-branch-button" data-index="${index}" aria-label="Hapus cabang">
-        <i class="fa-solid fa-trash"></i>
-      </button>
-    `;
-
-    container.appendChild(item);
-  });
-
-  container.querySelectorAll(".remove-branch-button").forEach(button => {
-    button.addEventListener("click", async () => {
-      const index = Number(button.dataset.index);
-
-      const confirmed = await popup(
-        "Apakah kamu yakin ingin menghapus cabang ini?",
-        "Hapus Cabang",
-        true
-      );
-
-      if (!confirmed) return;
-
-      branches.splice(index, 1);
-      renderBranches();
-      markChanged();
-    });
-  });
-}
-
-async function addBranch() {
-  const name = prompt("Masukkan nama cabang:");
-  if (name === null || !name.trim()) return;
-
-  const address = prompt("Masukkan alamat cabang:");
-  if (address === null || !address.trim()) return;
-
-  branches.push({
-    name: name.trim(),
-    address: address.trim()
-  });
-
-  renderBranches();
-  markChanged();
-}
-
 async function loadStore() {
   try {
     const snapshot = await get(ref(db, STORE_PATH));
 
     if (!snapshot.exists()) {
       savedData = {};
-      branches = [];
       return;
     }
 
@@ -809,9 +727,6 @@ async function fillForm(data) {
 
   restaurantPhoneInput.value = data.restaurantPhone || "";
 
-  branches = normalizeBranches(data.branches);
-  renderBranches();
-
   await selectProvinceAndCity(
     data.province || data.provinsi || "",
     data.city || data.kota || "",
@@ -820,8 +735,6 @@ async function fillForm(data) {
   );
 
   applyOpeningHours(data.openingHours || data.jamOperasional || {});
-
-  updateBranchVisibility();
 }
 
 function collectStoreData() {
@@ -847,7 +760,7 @@ function collectStoreData() {
 
     restaurantPhone: normalizePhone(restaurantPhoneInput.value),
 
-    branches,
+    branches: savedData.branches || [],
     openingHours: collectOpeningHours(),
 
     createdAt: savedData.createdAt || Date.now(),
@@ -1013,8 +926,6 @@ villageInput?.addEventListener("change", markChanged);
     input?.addEventListener("change", markChanged);
   });
   
-  addBranchButton?.addEventListener("click", addBranch);
-
   document.querySelectorAll("[data-day]").forEach(row => {
     const closedInput = row.querySelector('[data-field="closed"]');
 
@@ -1038,6 +949,10 @@ async function initialize() {
     await loadStore();
     await initializeMap();
 
+    if (!latitudeInput.value || !longitudeInput.value) {
+      requestCurrentLocation();
+    }
+    
   } catch (error) {
     console.error("Inisialisasi halaman toko gagal:", error);
     await popup("Halaman toko gagal dimuat dengan sempurna.");
