@@ -326,6 +326,11 @@ async function initializeMap() {
 
     map = window.L.map(mapElement).setView([defaultLat, defaultLng], 12);
 
+    map.getContainer().style.position = "relative";
+    map.getContainer().style.zIndex = "0";
+    mapElement.style.position = "relative";
+    mapElement.style.zIndex = "0";
+    
     window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       maxZoom: 19,
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>'
