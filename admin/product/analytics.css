@@ -1,0 +1,114 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f6f4;
+  color: #38251d;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+}
+
+header button {
+  border: none;
+  background: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  font-size: 22px;
+  cursor: pointer;
+}
+
+header h1 {
+  font-size: 21px;
+}
+
+.period-filter {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  margin-bottom: 20px;
+}
+
+.period-btn {
+  border: 1px solid #e8dfd9;
+  background: white;
+  color: #95877f;
+  padding: 11px 15px;
+  border-radius: 10px;
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.period-btn.active {
+  background: #38251d;
+  color: white;
+  border-color: #38251d;
+}
+
+.summary-card,
+.chart-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 15px rgba(0, 0, 0, 0.04);
+}
+
+.summary-card h2,
+.chart-card h2 {
+  font-size: 15px;
+  font-weight: 500;
+  color: #95877f;
+  margin-bottom: 12px;
+}
+
+.summary-card h3 {
+  font-size: 34px;
+  margin-bottom: 8px;
+}
+
+#comparison {
+  color: #16a36a;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+#salesChart {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  margin-top: 15px;
+}
+
+.chart-card p {
+  color: #95877f;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 10px;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 15px;
+  }
+
+  header h1 {
+    font-size: 19px;
+  }
+
+  .summary-card,
+  .chart-card {
+    padding: 16px;
+  }
+}
