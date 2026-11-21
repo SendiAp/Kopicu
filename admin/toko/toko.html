@@ -23,14 +23,23 @@
 
     <header class="topbar">
       <div class="topbar-left">
-        <button type="button" class="hamburger-button" id="hamburger-button" aria-label="Buka menu">
+        <button
+          type="button"
+          class="hamburger-button"
+          id="hamburger-button"
+          aria-label="Buka menu"
+          aria-expanded="false"
+        >
           <i class="fa-solid fa-bars"></i>
         </button>
 
-        <div class="topbar-title">
-          <h1>Toko Saya</h1>
+        <div class="greeting">
+          <span>Halo,</span>
+          <strong id="admin-username">Admin</strong>
         </div>
       </div>
+
+      <div class="admin-avatar" id="admin-avatar">A</div>
     </header>
 
     <div class="toko-content">
@@ -124,14 +133,14 @@
               <option value="">Pilih kota/kabupaten terlebih dahulu</option>
             </select>
           </div>
-          
+
           <div class="form-group">
             <label for="kelurahan">Kelurahan/Desa</label>
             <select id="kelurahan" required disabled>
               <option value="">Pilih kecamatan terlebih dahulu</option>
             </select>
           </div>
-          
+
           <div class="form-group">
             <label for="kode-pos">Kode pos</label>
             <input
@@ -402,5 +411,6 @@
 
   <script type="module" src="/admin/hamburger/hamburger.js"></script>
   <script type="module" src="toko.js?v=1"></script>
+
 </body>
 </html>
