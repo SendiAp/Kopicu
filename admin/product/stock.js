@@ -34,6 +34,10 @@ const WIB_OFFSET = 7 * 60 * 60 * 1000;
 const TIME_ZONE = "Asia/Jakarta";
 
 let productData = null;
+let originalFormState = null;
+let isSaving = false;
+
+saveButton.disabled = true;
 
 const rupiah = (value) => {
   return new Intl.NumberFormat("id-ID", {
@@ -42,6 +46,26 @@ const rupiah = (value) => {
     maximumFractionDigits: 0
   }).format(Number(value) || 0);
 };
+
+function getFormState() {
+  return JSON.stringify({
+    stockEnabled: stockEnabled.checked,
+    currentStock: currentStock.value,
+    autoResetEnabled: autoResetEnabled.checked,
+    resetStock: resetStock.value,
+    resetFrequency: resetFrequency.value,
+    resetDay: resetDay.value,
+    resetTime: resetTime.value
+  });
+}
+
+function updateSaveButton() {
+  const hasChanges =
+    originalFormState !== null &&
+    getFormState() !== originalFormState;
+
+  saveButton.disabled = isSaving || !hasChanges;
+}
 
 function getWIBParts(date = new Date()) {
   const wibDate = new Date(date.getTime() + WIB_OFFSET);
@@ -166,7 +190,6 @@ function updateSchedulePreview() {
 
 function updateStockVisibility() {
   stockSettings.hidden = !stockEnabled.checked;
-
   autoResetSettings.hidden = !autoResetEnabled.checked;
 
   updateSchedulePreview();
@@ -184,6 +207,7 @@ function displayProduct(product) {
     const image = document.createElement("img");
     image.src = imageUrl;
     image.alt = product.name || "Foto produk";
+
     image.onerror = () => {
       productImage.innerHTML = '<i class="fa-solid fa-image"></i>';
     };
@@ -246,6 +270,9 @@ async function loadProduct() {
 
     displayProduct(productData);
     loadStockSettings(productData.stock);
+
+    originalFormState = getFormState();
+    updateSaveButton();
   } catch (error) {
     console.error("Gagal memuat produk:", error);
 
@@ -264,6 +291,9 @@ resetFrequency.addEventListener("change", updateSchedulePreview);
 resetDay.addEventListener("change", updateSchedulePreview);
 resetTime.addEventListener("input", updateSchedulePreview);
 
+stockForm.addEventListener("input", updateSaveButton);
+stockForm.addEventListener("change", updateSaveButton);
+
 document.getElementById("back-button").addEventListener("click", () => {
   if (window.history.length > 1) {
     window.history.back();
@@ -275,7 +305,7 @@ document.getElementById("back-button").addEventListener("click", () => {
 stockForm.addEventListener("submit", async (event) => {
   event.preventDefault();
 
-  if (!productData || !productId) {
+  if (!productData || !productId || isSaving) {
     return;
   }
 
@@ -379,6 +409,7 @@ stockForm.addEventListener("submit", async (event) => {
     autoReset: autoResetData
   };
 
+  isSaving = true;
   saveButton.disabled = true;
   saveButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Menyimpan...</span>';
 
@@ -389,12 +420,12 @@ stockForm.addEventListener("submit", async (event) => {
     });
 
     productData.stock = stockData;
+    originalFormState = getFormState();
 
     await Swal.fire({
       icon: "success",
       title: "Berhasil disimpan",
-      text: "Pengaturan stok produk berhasil diperbarui.",
-      confirmButtonColor: "#16a36a"
+      text: "Pengaturan stok produk berhasil diperbarui."
     });
   } catch (error) {
     console.error("Gagal menyimpan stok:", error);
@@ -405,8 +436,9 @@ stockForm.addEventListener("submit", async (event) => {
       text: "Terjadi kesalahan saat menyimpan pengaturan stok."
     });
   } finally {
-    saveButton.disabled = false;
+    isSaving = false;
     saveButton.innerHTML = '<i class="fa-solid fa-floppy-disk"></i><span>Simpan Perubahan</span>';
+    updateSaveButton();
   }
 });
 
