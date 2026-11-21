@@ -209,13 +209,6 @@ body {
   isolation: isolate;
 }
 
-.location-map .leaflet-container,
-.location-map .leaflet-pane,
-.location-map .leaflet-top,
-.location-map .leaflet-bottom {
-  z-index: 0;
-}
-
 .map-placeholder {
   display: flex;
   flex-direction: column;
