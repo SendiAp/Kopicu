@@ -48,6 +48,23 @@ let branches = [];
 
 const STORE_PATH = "store";
 
+function loadAdminHeader() {
+  const usernameElement = $("admin-username");
+  const avatarElement = $("admin-avatar");
+
+  const username = (
+    sessionStorage.getItem("kopicu_admin_username") || "Admin"
+  ).trim();
+
+  if (usernameElement) {
+    usernameElement.textContent = username;
+  }
+
+  if (avatarElement) {
+    avatarElement.textContent = username.charAt(0).toUpperCase() || "A";
+  }
+}
+
 function popup(message, title = "Informasi", confirmMode = false) {
   return new Promise(resolve => {
     const overlay = document.createElement("div");
@@ -324,8 +341,13 @@ async function initializeMap() {
     const defaultLat = Number(latitudeInput.value) || -6.200000;
     const defaultLng = Number(longitudeInput.value) || 106.816666;
 
+    mapElement.style.position = "relative";
+    mapElement.style.zIndex = "0";
+    mapElement.style.isolation = "isolate";
+    mapElement.style.overflow = "hidden";
+    
     map = window.L.map(mapElement).setView([defaultLat, defaultLng], 12);
-
+    
     map.getContainer().style.position = "relative";
     map.getContainer().style.zIndex = "0";
     mapElement.style.position = "relative";
@@ -1009,6 +1031,7 @@ villageInput?.addEventListener("change", markChanged);
 
 async function initialize() {
   try {
+    loadAdminHeader();
     bindEvents();
 
     await loadProvinces();
