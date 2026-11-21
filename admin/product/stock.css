@@ -368,3 +368,76 @@ select {
     width: 100%;
   }
 }
+
+
+/* SweetAlert2 - Product Style */
+.swal2-popup {
+  border-radius: 14px !important;
+  padding: 25px 22px !important;
+  font-family: "DM Sans", sans-serif !important;
+}
+
+.swal2-title {
+  padding: 0 !important;
+  color: #38251d !important;
+  font-size: 17px !important;
+  font-weight: 800 !important;
+}
+
+.swal2-html-container {
+  margin: 12px 0 0 !important;
+  color: #777 !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+.swal2-actions {
+  gap: 9px !important;
+  width: 100% !important;
+}
+
+.swal2-styled {
+  min-height: 42px !important;
+  margin: 0 !important;
+  padding: 0 18px !important;
+  border-radius: 8px !important;
+  font-family: "DM Sans", sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+.swal2-confirm {
+  background: #38251d !important;
+}
+
+.swal2-cancel {
+  background: #eeeeee !important;
+  color: #555 !important;
+}
+
+.swal2-input,
+.swal2-textarea,
+.swal2-select {
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+  font-size: 13px !important;
+}
+
+/* Tombol Simpan Perubahan */
+.stock-footer button:disabled {
+  background: #e5e5e5 !important;
+  color: #aaa !important;
+  opacity: 1 !important;
+  cursor: not-allowed !important;
+}
+
+.stock-footer button:not(:disabled) {
+  background: #38251d;
+  color: #fff;
+}
+
+.stock-footer button:not(:disabled):hover {
+  background: #50372d;
+}
