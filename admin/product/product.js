@@ -1076,7 +1076,7 @@ function renderProducts() {
     heading.className = "menu-category-heading";
     heading.textContent = categoryName;
 
-    section.appendChild(heading);
+    menuList.appendChild(heading);
 
     items.forEach(([id, product]) => {
       const image = product.image || product.images?.[0] || "";
