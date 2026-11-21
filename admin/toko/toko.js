@@ -468,3 +468,391 @@ async function loadCities(provinceName, selectedCity = "") {
     cityInput.disabled = false;
   }
 }
+
+async function selectProvinceAndCity(provinceName, cityName) {
+  if (!provinceName) return;
+
+  const provinceMatch = Array.from(provinceInput.options).find(option =>
+    normalizeText(option.value) === normalizeText(provinceName)
+  );
+
+  if (!provinceMatch) return;
+
+  provinceInput.value = provinceMatch.value;
+
+  await loadCities(provinceMatch.value, cityName || "");
+}
+
+function normalizeText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/^(kota|kabupaten)\s+/i, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function collectOpeningHours() {
+  const result = {};
+
+  document.querySelectorAll("[data-day]").forEach(row => {
+    const day = row.dataset.day;
+    const closed = row.querySelector('[data-field="closed"]')?.checked || false;
+    const open = row.querySelector('[data-field="open"]')?.value || "";
+    const close = row.querySelector('[data-field="close"]')?.value || "";
+
+    result[day] = {
+      closed,
+      open: closed ? "" : open,
+      close: closed ? "" : close
+    };
+  });
+
+  return result;
+}
+
+function applyOpeningHours(hours = {}) {
+  document.querySelectorAll("[data-day]").forEach(row => {
+    const day = row.dataset.day;
+    const data = hours[day] || {};
+
+    const closedInput = row.querySelector('[data-field="closed"]');
+    const openInput = row.querySelector('[data-field="open"]');
+    const closeInput = row.querySelector('[data-field="close"]');
+
+    if (closedInput) closedInput.checked = Boolean(data.closed);
+    if (openInput) openInput.value = data.open || "";
+    if (closeInput) closeInput.value = data.close || "";
+
+    updateDayRow(row);
+  });
+}
+
+function updateDayRow(row) {
+  const closed = row.querySelector('[data-field="closed"]')?.checked || false;
+  const openInput = row.querySelector('[data-field="open"]');
+  const closeInput = row.querySelector('[data-field="close"]');
+
+  if (openInput) openInput.disabled = closed;
+  if (closeInput) closeInput.disabled = closed;
+
+  row.classList.toggle("is-closed", closed);
+}
+
+function normalizeBranches(data) {
+  if (!data) return [];
+
+  if (Array.isArray(data)) return data;
+
+  if (typeof data === "object") {
+    return Object.values(data);
+  }
+
+  return [];
+}
+
+function renderBranches() {
+  if (!branchWrapper) return;
+
+  const container = $("branch-list");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  branches.forEach((branch, index) => {
+    const item = document.createElement("div");
+    item.className = "branch-item";
+
+    item.innerHTML = `
+      <div class="branch-item-info">
+        <strong>${escapeHTML(branch.name || "Cabang " + (index + 1))}</strong>
+        <span>${escapeHTML(branch.address || "Alamat belum diisi")}</span>
+      </div>
+      <button type="button" class="remove-branch-button" data-index="${index}" aria-label="Hapus cabang">
+        <i class="fa-solid fa-trash"></i>
+      </button>
+    `;
+
+    container.appendChild(item);
+  });
+
+  container.querySelectorAll(".remove-branch-button").forEach(button => {
+    button.addEventListener("click", async () => {
+      const index = Number(button.dataset.index);
+
+      const confirmed = await popup(
+        "Apakah kamu yakin ingin menghapus cabang ini?",
+        "Hapus Cabang",
+        true
+      );
+
+      if (!confirmed) return;
+
+      branches.splice(index, 1);
+      renderBranches();
+      markChanged();
+    });
+  });
+}
+
+async function addBranch() {
+  const name = prompt("Masukkan nama cabang:");
+  if (name === null || !name.trim()) return;
+
+  const address = prompt("Masukkan alamat cabang:");
+  if (address === null || !address.trim()) return;
+
+  branches.push({
+    name: name.trim(),
+    address: address.trim()
+  });
+
+  renderBranches();
+  markChanged();
+}
+
+async function loadStore() {
+  try {
+    const snapshot = await get(ref(db, STORE_PATH));
+
+    if (!snapshot.exists()) {
+      savedData = {};
+      branches = [];
+      return;
+    }
+
+    savedData = snapshot.val() || {};
+
+    fillForm(savedData);
+  } catch (error) {
+    console.error("Gagal memuat data toko:", error);
+    await popup("Data toko gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
+  }
+}
+
+async function fillForm(data) {
+  nameInput.value = data.name || data.nama || "";
+
+  latitudeInput.value = data.latitude || "";
+  longitudeInput.value = data.longitude || "";
+
+  locationTypeInput.value = data.locationType || data.jenisLokasi || "";
+
+  postalCodeInput.value = data.postalCode || data.kodePos || "";
+  addressInput.value = data.address || data.alamat || "";
+
+  ownerEmailInput.value = data.ownerEmail || "";
+  ownerPhoneInput.value = data.ownerPhone || "";
+
+  managerEmailInput.value = data.managerEmail || "";
+  managerPhoneInput.value = data.managerPhone || "";
+
+  restaurantPhoneInput.value = data.restaurantPhone || "";
+
+  branches = normalizeBranches(data.branches);
+  renderBranches();
+
+  await selectProvinceAndCity(
+    data.province || data.provinsi || "",
+    data.city || data.kota || ""
+  );
+
+  applyOpeningHours(data.openingHours || data.jamOperasional || {});
+
+  updateBranchVisibility();
+}
+
+function collectStoreData() {
+  return {
+    name: nameInput.value.trim(),
+
+    latitude: Number(latitudeInput.value),
+    longitude: Number(longitudeInput.value),
+
+    locationType: locationTypeInput.value,
+    province: provinceInput.value,
+    city: cityInput.value,
+    postalCode: postalCodeInput.value.trim(),
+    address: addressInput.value.trim(),
+
+    ownerEmail: ownerEmailInput.value.trim(),
+    ownerPhone: normalizePhone(ownerPhoneInput.value),
+
+    managerEmail: managerEmailInput.value.trim(),
+    managerPhone: normalizePhone(managerPhoneInput.value),
+
+    restaurantPhone: normalizePhone(restaurantPhoneInput.value),
+
+    branches,
+    openingHours: collectOpeningHours(),
+
+    createdAt: savedData.createdAt || Date.now(),
+    updatedAt: Date.now()
+  };
+}
+
+function validateStoreData() {
+  if (!nameInput.value.trim()) {
+    popup("Nama toko wajib diisi.");
+    nameInput.focus();
+    return false;
+  }
+
+  if (!latitudeInput.value || !longitudeInput.value) {
+    popup("Tentukan titik koordinat toko pada peta.");
+    return false;
+  }
+
+  if (!locationTypeInput.value) {
+    popup("Pilih jenis lokasi toko.");
+    locationTypeInput.focus();
+    return false;
+  }
+
+  if (!provinceInput.value) {
+    popup("Pilih provinsi toko.");
+    provinceInput.focus();
+    return false;
+  }
+
+  if (!cityInput.value) {
+    popup("Pilih kota atau kabupaten toko.");
+    cityInput.focus();
+    return false;
+  }
+
+  if (!postalCodeInput.value.trim()) {
+    popup("Kode pos wajib diisi.");
+    postalCodeInput.focus();
+    return false;
+  }
+
+  if (!addressInput.value.trim()) {
+    popup("Detail alamat toko wajib diisi.");
+    addressInput.focus();
+    return false;
+  }
+
+  if (!validEmail(ownerEmailInput.value, true)) {
+    popup("Email pemilik tidak valid.");
+    ownerEmailInput.focus();
+    return false;
+  }
+
+  if (!validPhone(ownerPhoneInput.value, true)) {
+    popup("Nomor telepon pemilik harus menggunakan format +628.");
+    ownerPhoneInput.focus();
+    return false;
+  }
+
+  if (!validEmail(managerEmailInput.value)) {
+    popup("Email pengelola tidak valid.");
+    managerEmailInput.focus();
+    return false;
+  }
+
+  if (!validPhone(managerPhoneInput.value)) {
+    popup("Nomor telepon pengelola harus menggunakan format +628.");
+    managerPhoneInput.focus();
+    return false;
+  }
+
+  if (!validPhone(restaurantPhoneInput.value)) {
+    popup("Nomor telepon restoran harus menggunakan format +628.");
+    restaurantPhoneInput.focus();
+    return false;
+  }
+
+  return true;
+}
+
+async function saveStore() {
+  if (isSaving || !validateStoreData()) return;
+
+  isSaving = true;
+  updateSaveButton();
+  setButtonLoading(true);
+
+  try {
+    const data = collectStoreData();
+
+    await set(ref(db, STORE_PATH), data);
+
+    savedData = data;
+    hasChanges = false;
+
+    await popup("Perubahan data toko berhasil disimpan.", "Berhasil");
+  } catch (error) {
+    console.error("Gagal menyimpan toko:", error);
+    await popup("Data toko gagal disimpan. Periksa koneksi internet dan coba lagi.", "Gagal");
+  } finally {
+    isSaving = false;
+    setButtonLoading(false);
+    updateSaveButton();
+  }
+}
+
+function bindEvents() {
+  if (form) {
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      saveStore();
+    });
+  }
+
+  selectLocationButton?.addEventListener("click", requestCurrentLocation);
+
+  provinceInput?.addEventListener("change", async () => {
+    await loadCities(provinceInput.value);
+    markChanged();
+  });
+
+  [
+    nameInput,
+    locationTypeInput,
+    cityInput,
+    postalCodeInput,
+    addressInput,
+    ownerEmailInput,
+    ownerPhoneInput,
+    managerEmailInput,
+    managerPhoneInput,
+    restaurantPhoneInput
+  ].forEach(input => {
+    input?.addEventListener("input", markChanged);
+    input?.addEventListener("change", markChanged);
+  });
+
+  addBranchButton?.addEventListener("click", addBranch);
+
+  document.querySelectorAll("[data-day]").forEach(row => {
+    const closedInput = row.querySelector('[data-field="closed"]');
+
+    closedInput?.addEventListener("change", () => {
+      updateDayRow(row);
+      markChanged();
+    });
+
+    row.querySelectorAll("input").forEach(input => {
+      input.addEventListener("change", markChanged);
+    });
+  });
+}
+
+async function initialize() {
+  try {
+    bindEvents();
+
+    await loadProvinces();
+    await loadStore();
+    await initializeMap();
+
+  } catch (error) {
+    console.error("Inisialisasi halaman toko gagal:", error);
+    await popup("Halaman toko gagal dimuat dengan sempurna.");
+  } finally {
+    isLoading = false;
+    updateBranchVisibility();
+    updateSaveButton();
+  }
+}
+
+initialize();
