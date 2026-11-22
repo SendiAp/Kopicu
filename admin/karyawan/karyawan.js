@@ -1,7 +1,10 @@
 import { db } from "../../database/firebase.js";
+import { adminAccount } from "../akun.js";
 import {
   ref,
-  get
+  get,
+  push,
+  set
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const loginStatus = sessionStorage.getItem("kopicu_admin_login");
@@ -77,18 +80,23 @@ function validateForm() {
   const username = usernameInput.value.trim();
   const password = passwordInput.value;
   const name = nameInput.value.trim();
-  const email = emailInput.value.trim();
+  const email = emailInput.value.trim().toLowerCase();
   const phone = normalizePhone(phoneInput.value);
   const role = getSelectedRole();
   const storeId = storeSelect.value;
 
-  const usernameExists = Object.values(employees).some(employee =>
-    String(employee.username || "").toLowerCase() === username.toLowerCase()
-  );
+  const usernameExists =
+    username.toLowerCase() === String(adminAccount.username || "").toLowerCase() ||
+    Object.values(employees).some(employee =>
+      String(employee?.username || "").toLowerCase() === username.toLowerCase()
+    );
 
-  const emailExists = Object.values(employees).some(employee =>
-    String(employee.email || "").toLowerCase() === email.toLowerCase()
-  );
+  const emailExists =
+    Boolean(adminAccount.email) &&
+    email === adminAccount.email.toLowerCase() ||
+    Object.values(employees).some(employee =>
+      String(employee?.email || "").toLowerCase() === email
+    );
 
   const valid =
     /^[a-zA-Z0-9._-]{4,30}$/.test(username) &&
@@ -166,6 +174,7 @@ async function loadEmployees() {
 
 function getRoleName(role) {
   const roles = {
+    pemilik: "Pemilik",
     manajer: "Manajer",
     kasir: "Kasir",
     driver: "Driver"
@@ -327,7 +336,7 @@ employeeList.addEventListener("keydown", event => {
   showEmployeeDetail(card.dataset.id);
 });
 
-form.addEventListener("submit", event => {
+form.addEventListener("submit", async event => {
   event.preventDefault();
 
   if (!validateForm()) {
@@ -338,10 +347,48 @@ form.addEventListener("submit", event => {
     return;
   }
 
-  showMessage(
-    "Formulir sudah valid. Penyimpanan akun belum diaktifkan karena backend autentikasi karyawan belum tersedia.",
-    "warning"
-  );
+  saveButton.disabled = true;
+
+  try {
+    const selectedStore = storeSelect.options[storeSelect.selectedIndex];
+
+    const employeeData = {
+      username: usernameInput.value.trim(),
+      password: passwordInput.value,
+      name: nameInput.value.trim(),
+      email: emailInput.value.trim().toLowerCase(),
+      phone: formatPhone(phoneInput.value),
+      role: getSelectedRole(),
+      storeId: storeSelect.value,
+      storeName: selectedStore.textContent.trim(),
+      createdAt: Date.now()
+    };
+
+    const employeeRef = push(ref(db, "employees"));
+
+    await set(employeeRef, employeeData);
+
+    await loadEmployees();
+
+    form.reset();
+
+    validateForm();
+
+    showMessage(
+      "Akun karyawan berhasil dibuat dan disimpan.",
+      "success"
+    );
+
+  } catch (error) {
+    console.error("Gagal menyimpan karyawan:", error);
+
+    showMessage(
+      "Gagal menyimpan akun karyawan. Periksa koneksi dan Firebase Database Rules.",
+      "error"
+    );
+
+    validateForm();
+  }
 });
 
 async function initializePage() {
