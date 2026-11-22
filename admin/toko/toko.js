@@ -4,7 +4,8 @@ import {
   ref,
   get,
   set,
-  update
+  update,
+  remove
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const loginStatus = sessionStorage.getItem("kopicu_admin_login");
@@ -176,7 +177,12 @@ function updateSaveButton() {
   if (!saveButton) return;
 
   if (resetButton) {
-    resetButton.disabled = !hasChanges || isSaving || isLoading;
+    const hasSavedData = Object.keys(savedData || {}).length > 0;
+    
+    resetButton.disabled =
+      (!hasSavedData && !hasChanges) ||
+      isSaving ||
+      isLoading;
   }
   
   const valid =
@@ -949,11 +955,15 @@ async function saveStore() {
 }
 
 async function resetStoreChanges() {
-  if (!hasChanges || isSaving || isLoading) return;
+  if (isSaving || isLoading) return;
+
+  const hasSavedData = Object.keys(savedData || {}).length > 0;
+
+  if (!hasSavedData && !hasChanges) return;
 
   const confirmed = await popup(
-    "Semua perubahan yang belum disimpan akan dikembalikan ke data terakhir. Lanjutkan?",
-    "Reset Perubahan",
+    "PERINGATAN! Seluruh data toko yang tersimpan akan dihapus permanen dari database, termasuk alamat, koordinat, layanan, jam buka, dan informasi kontak. Tindakan ini tidak dapat dibatalkan. Apakah kamu yakin?",
+    "Hapus Seluruh Data Toko",
     true
   );
 
@@ -963,33 +973,50 @@ async function resetStoreChanges() {
   updateSaveButton();
 
   try {
-    await fillForm(savedData);
+    await remove(ref(db, STORE_PATH));
 
-    const lat = Number(latitudeInput.value);
-    const lng = Number(longitudeInput.value);
+    savedData = {};
+    hasChanges = false;
 
-    if (map && latitudeInput.value && longitudeInput.value) {
-      const position = [lat, lng];
+    form.reset();
 
-      if (marker) {
-        marker.setLatLng(position);
-      } else {
-        marker = window.L.marker(position).addTo(map);
-      }
+    latitudeInput.value = "";
+    longitudeInput.value = "";
 
-      map.setView(position, 16);
-    } else if (marker && map) {
+    provinceInput.selectedIndex = 0;
+    cityInput.innerHTML = '<option value="">Pilih kota / kabupaten</option>';
+    cityInput.disabled = true;
+
+    districtInput.innerHTML = '<option value="">Pilih kota/kabupaten terlebih dahulu</option>';
+    districtInput.disabled = true;
+
+    villageInput.innerHTML = '<option value="">Pilih kecamatan terlebih dahulu</option>';
+    villageInput.disabled = true;
+
+    if (marker && map) {
       map.removeLayer(marker);
       marker = null;
     }
 
-    hasChanges = false;
+    if (map) {
+      map.setView([-6.200000, 106.816666], 12);
+    }
+
     updateDineInOptions();
 
-    await popup("Perubahan berhasil dikembalikan ke data terakhir.");
+    await popup(
+      "Seluruh data toko berhasil dihapus dari database.",
+      "Berhasil"
+    );
+
   } catch (error) {
-    console.error("Gagal mereset perubahan:", error);
-    await popup("Gagal mengembalikan data. Silakan muat ulang halaman.");
+    console.error("Gagal menghapus data toko:", error);
+
+    await popup(
+      "Data toko gagal dihapus. Periksa koneksi internet dan coba lagi.",
+      "Gagal"
+    );
+
   } finally {
     isLoading = false;
     updateSaveButton();
