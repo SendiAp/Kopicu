@@ -40,6 +40,13 @@ const pickupInput = $("service-pickup");
 const dineInInput = $("service-dinein");
 const dineInOptions = $("dinein-options");
 const resetButton = $("reset-toko-button");
+const addressEditor = $("address-editor");
+const locationsSummary = $("locations-summary");
+const locationsList = $("locations-list");
+const addBranchButton = $("add-branch-button");
+const saveAddressButton = $("save-address-button");
+const cancelAddressButton = $("cancel-address-button");
+const confirmAddressInput = $("confirm-address");
 
 let savedData = {};
 let map;
@@ -48,6 +55,9 @@ let leafletReady = false;
 let isSaving = false;
 let isLoading = true;
 let hasChanges = false;
+let primaryLocation = null;
+let branchesData = [];
+let isAddingBranch = false;
 
 const STORE_PATH = "store";
 
@@ -169,8 +179,165 @@ function addressComplete() {
     districtInput.value &&
     villageInput.value &&
     postalCodeInput.value.trim() &&
-    addressInput.value.trim()
+    addressInput.value.trim() &&
+    confirmAddressInput?.checked
   );
+}
+
+function getAddressFromForm() {
+  return {
+    latitude: Number(latitudeInput.value),
+    longitude: Number(longitudeInput.value),
+    locationType: locationTypeInput.value,
+    province: provinceInput.value,
+    city: cityInput.value,
+    district: districtInput.value,
+    village: villageInput.value,
+    postalCode: postalCodeInput.value.trim(),
+    address: addressInput.value.trim()
+  };
+}
+
+function renderLocations() {
+  if (!locationsList || !locationsSummary || !addressEditor) return;
+
+  locationsList.innerHTML = "";
+
+  const locations = [];
+
+  if (primaryLocation) {
+    locations.push({
+      ...primaryLocation,
+      title: "Lokasi Utama",
+      tag: "Utama"
+    });
+  }
+
+  branchesData.forEach((branch, index) => {
+    locations.push({
+      ...branch,
+      title: `Cabang ${index + 1}`,
+      tag: "Cabang"
+    });
+  });
+
+  locations.forEach(location => {
+    const card = document.createElement("div");
+    card.className = "location-card";
+
+    const detail = [
+      location.province,
+      location.city,
+      location.district,
+      location.village,
+      location.postalCode,
+      location.address
+    ].filter(Boolean).join(", ");
+
+    card.innerHTML = `
+      <div class="location-card-top">
+        <strong>${escapeHTML(location.title)}</strong>
+        <span class="location-card-tag">${escapeHTML(location.tag)}</span>
+      </div>
+      <p>${escapeHTML(location.locationType || "")}</p>
+      <p>${escapeHTML(detail)}</p>
+      <p>Koordinat: ${escapeHTML(location.latitude)}, ${escapeHTML(location.longitude)}</p>
+    `;
+
+    locationsList.appendChild(card);
+  });
+
+  const hasLocation = Boolean(primaryLocation);
+
+  locationsSummary.hidden = !hasLocation;
+  addressEditor.hidden = hasLocation && !isAddingBranch;
+  addBranchButton.hidden = !hasLocation || isAddingBranch;
+}
+
+function clearAddressForm() {
+  latitudeInput.value = "";
+  longitudeInput.value = "";
+
+  locationTypeInput.value = "";
+  provinceInput.value = "";
+
+  cityInput.innerHTML = '<option value="">Pilih kota / kabupaten</option>';
+  cityInput.disabled = true;
+
+  districtInput.innerHTML = '<option value="">Pilih kecamatan terlebih dahulu</option>';
+  districtInput.disabled = true;
+
+  villageInput.innerHTML = '<option value="">Pilih kelurahan terlebih dahulu</option>';
+  villageInput.disabled = true;
+
+  postalCodeInput.value = "";
+  addressInput.value = "";
+
+  if (confirmAddressInput) {
+    confirmAddressInput.checked = false;
+  }
+
+  if (marker && map) {
+    map.removeLayer(marker);
+    marker = null;
+  }
+
+  if (map) {
+    map.setView([-6.200000, 106.816666], 12);
+  }
+}
+
+function openAddressEditor(branchMode = false) {
+  isAddingBranch = branchMode;
+
+  if (branchMode) {
+    clearAddressForm();
+
+    $("address-editor-title").textContent = "Alamat Cabang Baru";
+    $("address-editor-description").textContent =
+      "Tentukan titik koordinat dan lengkapi alamat cabang.";
+  } else {
+    $("address-editor-title").textContent = "Lokasi utama toko";
+    $("address-editor-description").textContent =
+      "Tentukan titik koordinat dan lengkapi alamat toko.";
+  }
+
+  addressEditor.hidden = false;
+  locationsSummary.hidden = !primaryLocation;
+  addBranchButton.hidden = true;
+  cancelAddressButton.hidden = !primaryLocation;
+
+  updateSaveButton();
+}
+
+function saveAddressDraft() {
+  if (!addressComplete()) {
+    popup(
+      "Lengkapi semua data alamat, tentukan koordinat, dan centang konfirmasi alamat sebelum menyimpan."
+    );
+    return;
+  }
+
+  const addressData = getAddressFromForm();
+
+  if (isAddingBranch) {
+    branchesData.push({
+      ...addressData,
+      id: `branch_${Date.now()}`
+    });
+  } else {
+    primaryLocation = addressData;
+  }
+
+  isAddingBranch = false;
+
+  renderLocations();
+  clearAddressForm();
+
+  hasChanges = true;
+  updateSaveButton();
+
+  popup("Alamat berhasil ditambahkan. Jangan lupa tekan Simpan Perubahan untuk menyimpan ke database.", "Berhasil");
 }
 
 function updateSaveButton() {
@@ -188,7 +355,7 @@ function updateSaveButton() {
   const valid =
     nameInput?.value.trim() &&
     hasSelectedService() &&
-    addressComplete() &&
+    Boolean(primaryLocation) &&
     validEmail(ownerEmailInput?.value, true) &&
     validPhone(ownerPhoneInput?.value, true) &&
     validEmail(managerEmailInput?.value) &&
@@ -280,11 +447,19 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
-function fillAddressFromGeocode(result) {
-  if (!result?.address) return;
+async function fillAddressFromGeocode(result) {
+  if (!result?.address) {
+    await popup("Alamat otomatis belum ditemukan. Silakan isi alamat secara manual.");
+    return;
+  }
 
   const data = result.address;
-  const province = data.state || data.province || "";
+
+  const province =
+    data.state ||
+    data.province ||
+    "";
+
   const city =
     data.city ||
     data.town ||
@@ -293,29 +468,45 @@ function fillAddressFromGeocode(result) {
     data.regency ||
     "";
 
+  const district =
+    data.city_district ||
+    data.district ||
+    data.suburb ||
+    "";
+
+  const village =
+    data.village ||
+    data.hamlet ||
+    data.neighbourhood ||
+    "";
+
   if (province) {
-    provinceInput.value = province;
-    provinceInput.dispatchEvent(new Event("change", { bubbles: true }));
+    await selectProvinceAndCity(
+      province,
+      city,
+      district,
+      village
+    );
   }
 
-  if (city) {
-    cityInput.value = city;
-    cityInput.dispatchEvent(new Event("change", { bubbles: true }));
+  if (data.postcode) {
+    postalCodeInput.value = data.postcode;
   }
-
-  const postcode = data.postcode || "";
-  if (postcode) postalCodeInput.value = postcode;
 
   const detail = [
     data.road,
     data.house_number,
     data.neighbourhood,
     data.suburb,
-    data.village,
-    data.hamlet
+    data.residential,
+    data.building
   ].filter(Boolean).join(", ");
 
-  if (detail) addressInput.value = detail;
+  if (detail) {
+    addressInput.value = detail;
+  }
+
+  confirmAddressInput.checked = false;
 
   markChanged();
 }
@@ -326,9 +517,18 @@ async function setSelectedLocation(lat, lng, reverse = true) {
 
   if (map && window.L) {
     const position = [Number(lat), Number(lng)];
-    if (marker) marker.setLatLng(position);
-    else marker = window.L.marker(position).addTo(map);
+
+    if (marker) {
+      marker.setLatLng(position);
+    } else {
+      marker = window.L.marker(position).addTo(map);
+    }
+
     map.setView(position, 16);
+  }
+
+  if (confirmAddressInput) {
+    confirmAddressInput.checked = false;
   }
 
   markChanged();
@@ -336,15 +536,19 @@ async function setSelectedLocation(lat, lng, reverse = true) {
   if (reverse) {
     if (selectLocationButton) {
       selectLocationButton.disabled = true;
-      selectLocationButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>Mengambil detail lokasi...</span>';
+      selectLocationButton.innerHTML =
+        '<i class="fa-solid fa-spinner fa-spin"></i><span>Mengambil detail lokasi...</span>';
     }
 
-    const result = await reverseGeocode(lat, lng);
-    fillAddressFromGeocode(result);
-
-    if (selectLocationButton) {
-      selectLocationButton.disabled = false;
-      selectLocationButton.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i><span>Tentukan titik lokasi toko</span>';
+    try {
+      const result = await reverseGeocode(lat, lng);
+      await fillAddressFromGeocode(result);
+    } finally {
+      if (selectLocationButton) {
+        selectLocationButton.disabled = false;
+        selectLocationButton.innerHTML =
+          '<i class="fa-solid fa-location-crosshairs"></i><span>Tentukan titik koordinat</span>';
+      }
     }
   }
 }
@@ -678,14 +882,18 @@ function collectOpeningHours() {
 
   document.querySelectorAll("[data-day]").forEach(row => {
     const day = row.dataset.day;
-    const closed = row.querySelector('[data-field="closed"]')?.checked || false;
-    const open = row.querySelector('[data-field="open"]')?.value || "";
-    const close = row.querySelector('[data-field="close"]')?.value || "";
+
+    const active = row.querySelector(".day-active")?.checked || false;
+    const allDay = row.querySelector(".all-day-checkbox")?.checked || false;
+
+    const open = row.querySelector(".open-time")?.value || "";
+    const close = row.querySelector(".close-time")?.value || "";
 
     result[day] = {
-      closed,
-      open: closed ? "" : open,
-      close: closed ? "" : close
+      closed: !active,
+      allDay,
+      open: !active || allDay ? "" : open,
+      close: !active || allDay ? "" : close
     };
   });
 
@@ -697,27 +905,48 @@ function applyOpeningHours(hours = {}) {
     const day = row.dataset.day;
     const data = hours[day] || {};
 
-    const closedInput = row.querySelector('[data-field="closed"]');
-    const openInput = row.querySelector('[data-field="open"]');
-    const closeInput = row.querySelector('[data-field="close"]');
+    const activeInput = row.querySelector(".day-active");
+    const allDayInput = row.querySelector(".all-day-checkbox");
+    const openInput = row.querySelector(".open-time");
+    const closeInput = row.querySelector(".close-time");
 
-    if (closedInput) closedInput.checked = Boolean(data.closed);
-    if (openInput) openInput.value = data.open || "";
-    if (closeInput) closeInput.value = data.close || "";
+    if (activeInput) {
+      activeInput.checked = data.closed !== true;
+    }
+
+    if (allDayInput) {
+      allDayInput.checked = Boolean(data.allDay);
+    }
+
+    if (openInput) {
+      openInput.value = data.open || "08:00";
+    }
+
+    if (closeInput) {
+      closeInput.value = data.close || "22:00";
+    }
 
     updateDayRow(row);
   });
 }
 
 function updateDayRow(row) {
-  const closed = row.querySelector('[data-field="closed"]')?.checked || false;
-  const openInput = row.querySelector('[data-field="open"]');
-  const closeInput = row.querySelector('[data-field="close"]');
+  const active = row.querySelector(".day-active")?.checked || false;
+  const allDay = row.querySelector(".all-day-checkbox")?.checked || false;
 
-  if (openInput) openInput.disabled = closed;
-  if (closeInput) closeInput.disabled = closed;
+  const openInput = row.querySelector(".open-time");
+  const closeInput = row.querySelector(".close-time");
 
-  row.classList.toggle("is-closed", closed);
+  if (openInput) {
+    openInput.disabled = !active || allDay;
+  }
+
+  if (closeInput) {
+    closeInput.disabled = !active || allDay;
+  }
+
+  row.classList.toggle("is-closed", !active);
+  row.classList.toggle("is-all-day", active && allDay);
 }
 
 async function loadStore() {
@@ -731,7 +960,7 @@ async function loadStore() {
 
     savedData = snapshot.val() || {};
 
-    fillForm(savedData);
+    await fillForm(savedData);
   } catch (error) {
     console.error("Gagal memuat data toko:", error);
     await popup("Data toko gagal dimuat. Periksa koneksi internet lalu muat ulang halaman.");
@@ -742,60 +971,66 @@ async function fillForm(data) {
   nameInput.value = data.name || data.nama || "";
 
   const services = data.services || {};
-  
-  if (deliveryInput) {
-    deliveryInput.checked = Boolean(services.delivery);
-  }
-  
-  if (pickupInput) {
-    pickupInput.checked = Boolean(services.pickup);
-  }
-  
-  if (dineInInput) {
-    dineInInput.checked = Boolean(services.dineIn);
-  }
-  
+
+  deliveryInput.checked = Boolean(services.delivery);
+  pickupInput.checked = Boolean(services.pickup);
+  dineInInput.checked = Boolean(services.dineIn);
+
   const identifier = services.dineInIdentifier || "tableNumber";
-  
+
   const identifierInput = document.querySelector(
     `input[name="dineInIdentifier"][value="${identifier}"]`
   );
-  
+
   if (identifierInput) {
     identifierInput.checked = true;
   }
-  
+
   updateDineInOptions();
-  
-  latitudeInput.value = data.latitude || "";
-  longitudeInput.value = data.longitude || "";
 
-  locationTypeInput.value = data.locationType || data.jenisLokasi || "";
+  primaryLocation = data.latitude && data.longitude
+    ? {
+        latitude: data.latitude,
+        longitude: data.longitude,
+        locationType: data.locationType || data.jenisLokasi || "",
+        province: data.province || data.provinsi || "",
+        city: data.city || data.kota || "",
+        district: data.district || data.kecamatan || "",
+        village: data.village || data.kelurahan || "",
+        postalCode: data.postalCode || data.kodePos || "",
+        address: data.address || data.alamat || ""
+      }
+    : null;
 
-  postalCodeInput.value = data.postalCode || data.kodePos || "";
-  addressInput.value = data.address || data.alamat || "";
+  branchesData = Array.isArray(data.branches)
+    ? data.branches
+    : Object.values(data.branches || {});
+
+  if (primaryLocation) {
+    latitudeInput.value = primaryLocation.latitude;
+    longitudeInput.value = primaryLocation.longitude;
+  }
 
   ownerEmailInput.value = data.ownerEmail || "";
   ownerPhoneInput.value = data.ownerPhone || "";
-  
+
   if (managerEmailInput) {
     managerEmailInput.value = data.managerEmail || "";
   }
-  
+
   if (managerPhoneInput) {
     managerPhoneInput.value = data.managerPhone || "";
   }
 
   restaurantPhoneInput.value = data.restaurantPhone || "";
 
-  await selectProvinceAndCity(
-    data.province || data.provinsi || "",
-    data.city || data.kota || "",
-    data.district || data.kecamatan || "",
-    data.village || data.kelurahan || ""
-  );
-
   applyOpeningHours(data.openingHours || data.jamOperasional || {});
+
+  renderLocations();
+
+  if (!primaryLocation) {
+    openAddressEditor(false);
+  }
 }
 
 function collectStoreData() {
@@ -803,34 +1038,34 @@ function collectStoreData() {
     name: nameInput.value.trim(),
 
     services: {
-      delivery: deliveryInput?.checked || false,
-      pickup: pickupInput?.checked || false,
-      dineIn: dineInInput?.checked || false,
+      delivery: deliveryInput.checked,
+      pickup: pickupInput.checked,
+      dineIn: dineInInput.checked,
       dineInIdentifier:
         document.querySelector('input[name="dineInIdentifier"]:checked')?.value
         || "tableNumber"
     },
-    
-    latitude: Number(latitudeInput.value),
-    longitude: Number(longitudeInput.value),
 
-    locationType: locationTypeInput.value,
-    province: provinceInput.value,
-    city: cityInput.value,
-    district: districtInput.value,
-    village: villageInput.value,
-    postalCode: postalCodeInput.value.trim(),
-    address: addressInput.value.trim(),
+    latitude: primaryLocation.latitude,
+    longitude: primaryLocation.longitude,
+
+    locationType: primaryLocation.locationType,
+    province: primaryLocation.province,
+    city: primaryLocation.city,
+    district: primaryLocation.district,
+    village: primaryLocation.village,
+    postalCode: primaryLocation.postalCode,
+    address: primaryLocation.address,
 
     ownerEmail: ownerEmailInput.value.trim(),
     ownerPhone: normalizePhone(ownerPhoneInput.value),
-    
+
     managerEmail: managerEmailInput?.value.trim() || "",
     managerPhone: normalizePhone(managerPhoneInput?.value || ""),
 
     restaurantPhone: normalizePhone(restaurantPhoneInput.value),
 
-    branches: savedData.branches || [],
+    branches: branchesData,
     openingHours: collectOpeningHours(),
 
     createdAt: savedData.createdAt || Date.now(),
@@ -850,51 +1085,9 @@ function validateStoreData() {
     deliveryInput?.focus();
     return false;
   }
-  
-  if (!latitudeInput.value || !longitudeInput.value) {
-    popup("Tentukan titik koordinat toko pada peta.");
-    return false;
-  }
 
-  if (!locationTypeInput.value) {
-    popup("Pilih jenis lokasi toko.");
-    locationTypeInput.focus();
-    return false;
-  }
-
-  if (!provinceInput.value) {
-    popup("Pilih provinsi toko.");
-    provinceInput.focus();
-    return false;
-  }
-
-  if (!cityInput.value) {
-    popup("Pilih kota atau kabupaten toko.");
-    cityInput.focus();
-    return false;
-  }
-
-  if (!districtInput.value) {
-    popup("Pilih kecamatan toko.");
-    districtInput.focus();
-    return false;
-  }
-  
-  if (!villageInput.value) {
-    popup("Pilih kelurahan atau desa toko.");
-    villageInput.focus();
-    return false;
-  }
-  
-  if (!postalCodeInput.value.trim()) {
-    popup("Kode pos wajib diisi.");
-    postalCodeInput.focus();
-    return false;
-  }
-
-  if (!addressInput.value.trim()) {
-    popup("Detail alamat toko wajib diisi.");
-    addressInput.focus();
+  if (!primaryLocation) {
+    popup("Simpan alamat utama toko terlebih dahulu.");
     return false;
   }
 
@@ -969,10 +1162,17 @@ async function resetStoreChanges() {
     await remove(ref(db, STORE_PATH));
 
     savedData = {};
+    primaryLocation = null;
+    branchesData = [];
+    isAddingBranch = false;
     hasChanges = false;
 
     form.reset();
 
+    clearAddressForm();
+    renderLocations();
+    openAddressEditor(false);
+    
     latitudeInput.value = "";
     longitudeInput.value = "";
 
@@ -1042,6 +1242,20 @@ updateDineInOptions();
 
   selectLocationButton?.addEventListener("click", requestCurrentLocation);
 
+  saveAddressButton?.addEventListener("click", saveAddressDraft);
+  
+  addBranchButton?.addEventListener("click", () => {
+    openAddressEditor(true);
+  });
+  
+  cancelAddressButton?.addEventListener("click", () => {
+    isAddingBranch = false;
+    clearAddressForm();
+    renderLocations();
+  });
+  
+  confirmAddressInput?.addEventListener("change", markChanged);
+  
   provinceInput?.addEventListener("change", async () => {
     await loadCities(provinceInput.value);
     markChanged();
@@ -1078,7 +1292,8 @@ villageInput?.addEventListener("change", markChanged);
   });
   
   document.querySelectorAll("[data-day]").forEach(row => {
-    const closedInput = row.querySelector('[data-field="closed"]');
+    const activeInput = row.querySelector(".day-active");
+    const allDayInput = row.querySelector(".all-day-checkbox");
 
     closedInput?.addEventListener("change", () => {
       updateDayRow(row);
