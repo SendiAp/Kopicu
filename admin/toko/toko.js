@@ -777,9 +777,14 @@ async function fillForm(data) {
 
   ownerEmailInput.value = data.ownerEmail || "";
   ownerPhoneInput.value = data.ownerPhone || "";
-
-  managerEmailInput.value = data.managerEmail || "";
-  managerPhoneInput.value = data.managerPhone || "";
+  
+  if (managerEmailInput) {
+    managerEmailInput.value = data.managerEmail || "";
+  }
+  
+  if (managerPhoneInput) {
+    managerPhoneInput.value = data.managerPhone || "";
+  }
 
   restaurantPhoneInput.value = data.restaurantPhone || "";
 
@@ -819,9 +824,9 @@ function collectStoreData() {
 
     ownerEmail: ownerEmailInput.value.trim(),
     ownerPhone: normalizePhone(ownerPhoneInput.value),
-
-    managerEmail: managerEmailInput.value.trim(),
-    managerPhone: normalizePhone(managerPhoneInput.value),
+    
+    managerEmail: managerEmailInput?.value.trim() || "",
+    managerPhone: normalizePhone(managerPhoneInput?.value || ""),
 
     restaurantPhone: normalizePhone(restaurantPhoneInput.value),
 
@@ -902,18 +907,6 @@ function validateStoreData() {
   if (!validPhone(ownerPhoneInput.value, true)) {
     popup("Nomor telepon pemilik harus menggunakan format +628.");
     ownerPhoneInput.focus();
-    return false;
-  }
-
-  if (!validEmail(managerEmailInput.value)) {
-    popup("Email pengelola tidak valid.");
-    managerEmailInput.focus();
-    return false;
-  }
-
-  if (!validPhone(managerPhoneInput.value)) {
-    popup("Nomor telepon pengelola harus menggunakan format +628.");
-    managerPhoneInput.focus();
     return false;
   }
 
