@@ -4,7 +4,8 @@ import {
   ref,
   get,
   push,
-  set
+  set,
+  remove
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const loginStatus = sessionStorage.getItem("kopicu_admin_login");
@@ -325,6 +326,44 @@ async function loadEmployees() {
   validateForm();
 }
 
+async function revokeEmployeeAccess(id, overlay) {
+  if (!id || id === "owner") return;
+
+  const button = overlay.querySelector(".employee-revoke-access");
+
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+  }
+
+  try {
+    await remove(ref(db, `employees/${id}`));
+
+    overlay.remove();
+
+    await loadEmployees();
+
+    await popup(
+      "Seluruh data karyawan berhasil dihapus. Akun tersebut tidak dapat digunakan untuk login kembali.",
+      "Akses Dicabut",
+      "success"
+    );
+  } catch (error) {
+    console.error("Gagal mencabut akses karyawan:", error);
+
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = '<i class="fa-solid fa-key"></i> Cabut Access';
+    }
+
+    await popup(
+      "Gagal mencabut akses. Periksa koneksi dan Firebase Database Rules.",
+      "Gagal",
+      "error"
+    );
+  }
+}
+
 function getRoleName(role) {
   const roles = {
     pemilik: "Pemilik",
@@ -481,6 +520,25 @@ function showEmployeeDetail(id) {
       `).join("")}
     </div>
 
+    ${!employee.isOwner ? `
+    <button type="button" class="employee-revoke-access" style="
+    width:100%;
+    min-height:42px;
+    margin-top:20px;
+    border:1px solid #f1d5d5;
+    border-radius:8px;
+    background:#fff5f5;
+    color:#dc4545;
+    font-family:inherit;
+    font-size:12px;
+    font-weight:700;
+    cursor:pointer;
+    ">
+    <i class="fa-solid fa-key"></i>
+    Cabut Access
+    </button>
+    ` : ""}
+
     <button type="button" class="employee-detail-close" style="
       width:100%;
       min-height:42px;
@@ -501,6 +559,12 @@ function showEmployeeDetail(id) {
   dialog.querySelector(".employee-detail-close")
     .addEventListener("click", close);
 
+  const revokeButton = dialog.querySelector(".employee-revoke-access");
+  
+  revokeButton?.addEventListener("click", () => {
+    revokeEmployeeAccess(id, overlay);
+  });
+  
   overlay.addEventListener("click", event => {
     if (event.target === overlay) close();
   });
