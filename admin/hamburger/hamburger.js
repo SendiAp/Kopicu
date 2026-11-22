@@ -1,8 +1,8 @@
 import { db } from "../../database/firebase.js";
 import {
   ref,
-  onValue,
-  get
+  get,
+  onValue
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const container = document.getElementById("hamburger-container");
@@ -12,9 +12,10 @@ if (!container) {
 }
 
 let storeComplete = false;
+let productExists = false;
 let lockPopupOpen = false;
 
-const lockedMenuNames = [
+const restrictedMenus = [
   "menu",
   "karyawan",
   "product",
@@ -22,99 +23,7 @@ const lockedMenuNames = [
   "notifikasi"
 ];
 
-function addLockStyles() {
-  if (document.getElementById("store-lock-styles")) return;
-
-  const style = document.createElement("style");
-  style.id = "store-lock-styles";
-  style.textContent = `
-    .sidebar-menu a.store-setup-locked {
-      opacity: .42 !important;
-      color: #999 !important;
-      cursor: not-allowed !important;
-      pointer-events: auto !important;
-      filter: grayscale(1);
-    }
-
-    .sidebar-menu a.store-setup-locked:hover {
-      background: transparent !important;
-      color: #999 !important;
-    }
-
-    .store-lock-icon {
-      margin-left: auto;
-      font-size: 12px;
-      color: #999;
-    }
-
-    .store-lock-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      background: rgba(0, 0, 0, .4);
-      backdrop-filter: blur(3px);
-    }
-
-    .store-lock-dialog {
-      width: 100%;
-      max-width: 360px;
-      padding: 25px 22px 20px;
-      border-radius: 16px;
-      background: #fff;
-      box-shadow: 0 15px 50px rgba(0,0,0,.15);
-      font-family: "DM Sans", sans-serif;
-      text-align: center;
-    }
-
-    .store-lock-symbol {
-      width: 54px;
-      height: 54px;
-      margin: 0 auto 15px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: #f3f3f3;
-      color: #888;
-      font-size: 21px;
-    }
-
-    .store-lock-dialog h3 {
-      margin: 0;
-      color: #38251d;
-      font-size: 17px;
-      font-weight: 800;
-    }
-
-    .store-lock-dialog p {
-      margin: 11px 0 20px;
-      color: #777;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    .store-lock-dialog button {
-      width: 100%;
-      min-height: 43px;
-      border: 0;
-      border-radius: 9px;
-      background: #38251d;
-      color: #fff;
-      font-family: inherit;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-  `;
-
-  document.head.appendChild(style);
-}
-
-function showLockedPopup() {
+function showLockedPopup(title, message) {
   if (lockPopupOpen) return;
 
   lockPopupOpen = true;
@@ -125,25 +34,26 @@ function showLockedPopup() {
   const dialog = document.createElement("div");
   dialog.className = "store-lock-dialog";
 
-  dialog.innerHTML = `
-    <div class="store-lock-symbol">
-      <i class="fa-solid fa-lock"></i>
-    </div>
-    <h3>Lengkapi Informasi Toko</h3>
-    <p>
-      Menu ini belum dapat digunakan karena masih ada informasi
-      atau data toko yang belum lengkap. Silakan lengkapi seluruh
-      informasi toko terlebih dahulu.
-    </p>
-    <button type="button">Mengerti</button>
-  `;
+  const symbol = document.createElement("div");
+  symbol.className = "store-lock-symbol";
+  symbol.innerHTML = '<i class="fa-solid fa-lock"></i>';
+
+  const heading = document.createElement("h3");
+  heading.textContent = title;
+
+  const description = document.createElement("p");
+  description.textContent = message;
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "Mengerti";
 
   function closePopup() {
     overlay.remove();
     lockPopupOpen = false;
   }
 
-  dialog.querySelector("button").addEventListener("click", closePopup);
+  button.addEventListener("click", closePopup);
 
   overlay.addEventListener("click", event => {
     if (event.target === overlay) {
@@ -151,6 +61,7 @@ function showLockedPopup() {
     }
   });
 
+  dialog.append(symbol, heading, description, button);
   overlay.appendChild(dialog);
   document.body.appendChild(overlay);
 }
@@ -178,14 +89,14 @@ function isValidOpeningHours(hours) {
 
   const days = Object.values(hours);
 
-  if (days.length < 7) return false;
+  if (days.length !== 7) return false;
 
   return days.every(day => {
     if (!day || typeof day !== "object") return false;
 
-    if (day.closed === true) return true;
-
-    if (day.allDay === true) return true;
+    if (day.closed === true || day.allDay === true) {
+      return true;
+    }
 
     return Boolean(
       day.open &&
@@ -251,41 +162,127 @@ function checkStoreCompleteness(data) {
   );
 }
 
+function getMenuType(link) {
+  const href = link.getAttribute("href") || "";
+  const path = href.toLowerCase();
+  const label = link.textContent
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+  if (
+    path.includes("/product/") ||
+    path.endsWith("/product.html") ||
+    label === "product"
+  ) {
+    return "product";
+  }
+
+  if (
+    path.includes("/karyawan/") ||
+    label === "karyawan"
+  ) {
+    return "karyawan";
+  }
+
+  if (
+    path.includes("/picture/") ||
+    path.endsWith("/picture.html") ||
+    label === "picture"
+  ) {
+    return "picture";
+  }
+
+  if (
+    path.includes("/notifikasi/") ||
+    path.endsWith("/notifikasi.html") ||
+    label === "notifikasi"
+  ) {
+    return "notifikasi";
+  }
+
+  if (
+    path.includes("/menu/") ||
+    path.endsWith("/menu.html") ||
+    label === "menu"
+  ) {
+    return "menu";
+  }
+
+  return null;
+}
+
+function reorderProductMenu() {
+  const links = Array.from(
+    document.querySelectorAll(".sidebar-menu a[href]")
+  );
+
+  const storeLink = links.find(link => {
+    const label = link.textContent
+      .replace(/\s+/g, " ")
+      .trim()
+      .toLowerCase();
+
+    return label.includes("toko saya");
+  });
+
+  const productLink = links.find(link => {
+    return getMenuType(link) === "product";
+  });
+
+  if (!storeLink || !productLink) return;
+
+  const storeItem = storeLink.closest("li") || storeLink;
+  const productItem = productLink.closest("li") || productLink;
+
+  if (
+    storeItem.parentElement &&
+    storeItem.parentElement === productItem.parentElement
+  ) {
+    storeItem.parentElement.insertBefore(
+      productItem,
+      storeItem.nextSibling
+    );
+  }
+}
+
 function updateLockedMenus() {
-  const links = document.querySelectorAll(".sidebar-menu a");
+  const links = document.querySelectorAll(".sidebar-menu a[href]");
 
   links.forEach(link => {
-    const label = [
-      link.textContent,
-      link.getAttribute("aria-label"),
-      link.getAttribute("title")
-    ].join(" ").toLowerCase().trim();
+    const menuType = getMenuType(link);
 
-    const shouldLock = lockedMenuNames.some(name => {
-      return label.includes(name);
-    });
+    if (!menuType || !restrictedMenus.includes(menuType)) {
+      return;
+    }
 
-    if (!shouldLock) return;
-
-    const icon = link.querySelector(".store-lock-icon");
+    let shouldLock = false;
 
     if (!storeComplete) {
+      shouldLock = true;
+    } else if (!productExists && menuType !== "product") {
+      shouldLock = true;
+    }
+
+    const existingIcon = link.querySelector(".store-lock-icon");
+
+    if (shouldLock) {
       link.classList.add("store-setup-locked");
       link.setAttribute("aria-disabled", "true");
       link.dataset.storeLocked = "true";
 
-      if (!icon) {
-        const lockIcon = document.createElement("i");
-        lockIcon.className = "fa-solid fa-lock store-lock-icon";
-        lockIcon.setAttribute("aria-hidden", "true");
-        link.appendChild(lockIcon);
+      if (!existingIcon) {
+        const icon = document.createElement("i");
+        icon.className = "fa-solid fa-lock store-lock-icon";
+        icon.setAttribute("aria-hidden", "true");
+        link.appendChild(icon);
       }
     } else {
       link.classList.remove("store-setup-locked");
       link.removeAttribute("aria-disabled");
       delete link.dataset.storeLocked;
 
-      icon?.remove();
+      existingIcon?.remove();
     }
   });
 }
@@ -302,12 +299,25 @@ function bindLockedMenuEvents() {
   sidebarMenu.addEventListener("click", event => {
     const link = event.target.closest("a[data-store-locked='true']");
 
-    if (!link || storeComplete) return;
+    if (!link) return;
 
     event.preventDefault();
     event.stopPropagation();
 
-    showLockedPopup();
+    if (!storeComplete) {
+      showLockedPopup(
+        "Lengkapi Informasi Toko",
+        "Seluruh informasi toko wajib dilengkapi terlebih dahulu sebelum menggunakan menu ini."
+      );
+      return;
+    }
+
+    if (!productExists) {
+      showLockedPopup(
+        "Buat Product Terlebih Dahulu",
+        "Tambahkan minimal satu product di halaman Product. Setelah product berhasil dibuat, seluruh menu akan terbuka."
+      );
+    }
   }, true);
 }
 
@@ -322,6 +332,29 @@ function watchStoreData() {
     console.error("Gagal memeriksa kelengkapan data toko:", error);
 
     storeComplete = false;
+    updateLockedMenus();
+  });
+}
+
+function watchProducts() {
+  onValue(ref(db, "products"), snapshot => {
+    if (!snapshot.exists()) {
+      productExists = false;
+    } else {
+      const products = snapshot.val();
+
+      productExists = Boolean(
+        products &&
+        typeof products === "object" &&
+        Object.keys(products).length > 0
+      );
+    }
+
+    updateLockedMenus();
+  }, error => {
+    console.error("Gagal memeriksa data product:", error);
+
+    productExists = false;
     updateLockedMenus();
   });
 }
@@ -397,10 +430,12 @@ function initializeHamburger() {
     link.classList.toggle("active", linkPath === currentPath);
   });
 
-  addLockStyles();
+  reorderProductMenu();
   bindLockedMenuEvents();
   updateLockedMenus();
+
   watchStoreData();
+  watchProducts();
 
   loadSidebarLogo(sidebar, sidebarLogo);
 }
