@@ -4,13 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ffffff">
-  <title>Karyawan - KOPICU</title>
+  <title>Kopicu</title>
 
   <link rel="stylesheet" href="karyawan.css">
   <link rel="stylesheet" href="/admin/hamburger/hamburger.css">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -35,6 +37,7 @@
           <h2>Tambah Karyawan Baru</h2>
           <p>Buat akun dan tentukan akses untuk karyawan baru.</p>
         </div>
+
         <span class="section-icon">
           <i class="fa-solid fa-user-plus"></i>
         </span>
@@ -63,6 +66,7 @@
 
           <div class="form-group">
             <label for="employee-password">Password</label>
+
             <div class="password-wrapper">
               <input
                 type="password"
@@ -71,10 +75,12 @@
                 autocomplete="new-password"
                 required
               >
-              <button type="button" class="toggle-password" id="toggle-password">
+
+              <button type="button" class="toggle-password" id="toggle-password" aria-label="Tampilkan password">
                 <i class="fa-regular fa-eye"></i>
               </button>
             </div>
+
             <small>Buatkan password untuk karyawan kamu.</small>
           </div>
 
@@ -113,6 +119,7 @@
 
           <div class="form-group">
             <label for="employee-phone">Nomor HP</label>
+
             <div class="phone-wrapper">
               <span>+62</span>
               <input
@@ -123,6 +130,7 @@
                 required
               >
             </div>
+
             <small>Masukkan nomor HP tanpa angka 0 di depan.</small>
           </div>
 
@@ -144,11 +152,13 @@
           <label class="role-option">
             <input type="radio" name="employee-role" value="manajer" required>
             <span class="role-radio"></span>
+
             <span class="role-content">
               <span class="role-title">
                 <i class="fa-solid fa-user-tie"></i>
                 Manajer
               </span>
+
               <span class="role-description">
                 Diizinkan menggunakan semua fitur, kecuali menambahkan karyawan.
               </span>
@@ -158,11 +168,13 @@
           <label class="role-option">
             <input type="radio" name="employee-role" value="kasir">
             <span class="role-radio"></span>
+
             <span class="role-content">
               <span class="role-title">
                 <i class="fa-solid fa-cash-register"></i>
                 Kasir
               </span>
+
               <span class="role-description">
                 Hanya diizinkan untuk mengelola pesanan dan menerima pembayaran.
               </span>
@@ -172,13 +184,15 @@
           <label class="role-option">
             <input type="radio" name="employee-role" value="driver">
             <span class="role-radio"></span>
+
             <span class="role-content">
               <span class="role-title">
                 <i class="fa-solid fa-motorcycle"></i>
                 Driver
               </span>
+
               <span class="role-description">
-                Hanya diizinkan melihat lokasi customer pesanan dan informasi pengantaran, kecuali mengelola pesanan.
+                Hanya diizinkan melihat lokasi customer dan informasi pengantaran, tanpa mengelola pesanan.
               </span>
             </span>
           </label>
@@ -193,13 +207,14 @@
         </div>
 
         <p class="section-description">
-          Tentukan toko mana yang dapat diakses oleh karyawan ini dan menjadi penempatannya.
+          Tentukan toko atau cabang yang dapat diakses oleh karyawan ini sekaligus menjadi tempat penempatannya.
         </p>
 
         <div class="form-group">
           <label for="employee-store">Pilih Toko</label>
+
           <select id="employee-store" required>
-            <option value="">Pilih (default)</option>
+            <option value="">Pilih toko</option>
           </select>
         </div>
 
@@ -231,6 +246,7 @@
           <div class="empty-icon">
             <i class="fa-solid fa-users"></i>
           </div>
+
           <h3>Belum Ada Karyawan</h3>
           <p>Karyawan yang berhasil ditambahkan akan muncul di sini.</p>
         </div>
@@ -241,7 +257,7 @@
 
   </main>
 
-  <script src="/admin/hamburger/hamburger.js"></script>
+  <script type="module" src="/admin/hamburger/hamburger.js"></script>
   <script type="module" src="karyawan.js"></script>
 
 </body>
