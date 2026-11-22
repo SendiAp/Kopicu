@@ -41,9 +41,10 @@ const employeeCount = document.getElementById("employee-count");
 
 let storeData = {};
 let employees = {};
+let isSavingEmployee = false;
 
 function escapeHTML(value = "") {
-  return String(value).replace(/[&<>"']/g, char => ({
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
@@ -76,8 +77,21 @@ function formatPhone(value) {
   return `+62${normalizePhone(value)}`;
 }
 
+function getOwnerData() {
+  return {
+    id: "owner",
+    username: adminAccount.username || "Pemilik",
+    name: adminAccount.name || "Pemilik",
+    email: adminAccount.email || "-",
+    phone: adminAccount.phone || "-",
+    role: "pemilik",
+    storeName: storeData.name || "Toko Utama",
+    isOwner: true
+  };
+}
+
 function validateForm() {
-  const username = usernameInput.value.trim();
+  const employeeUsername = usernameInput.value.trim();
   const password = passwordInput.value;
   const name = nameInput.value.trim();
   const email = emailInput.value.trim().toLowerCase();
@@ -85,21 +99,23 @@ function validateForm() {
   const role = getSelectedRole();
   const storeId = storeSelect.value;
 
+  const ownerUsername = String(adminAccount.username || "").toLowerCase();
+  const ownerEmail = String(adminAccount.email || "").toLowerCase();
+
   const usernameExists =
-    username.toLowerCase() === String(adminAccount.username || "").toLowerCase() ||
+    employeeUsername.toLowerCase() === ownerUsername ||
     Object.values(employees).some(employee =>
-      String(employee?.username || "").toLowerCase() === username.toLowerCase()
+      String(employee?.username || "").toLowerCase() === employeeUsername.toLowerCase()
     );
 
   const emailExists =
-    Boolean(adminAccount.email) &&
-    email === adminAccount.email.toLowerCase() ||
+    (Boolean(ownerEmail) && email === ownerEmail) ||
     Object.values(employees).some(employee =>
       String(employee?.email || "").toLowerCase() === email
     );
 
   const valid =
-    /^[a-zA-Z0-9._-]{4,30}$/.test(username) &&
+    /^[a-zA-Z0-9._-]{4,30}$/.test(employeeUsername) &&
     password.length >= 8 &&
     name.length >= 3 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
@@ -107,11 +123,148 @@ function validateForm() {
     Boolean(role) &&
     Boolean(storeId) &&
     !usernameExists &&
-    !emailExists;
+    !emailExists &&
+    !isSavingEmployee;
 
   saveButton.disabled = !valid;
 
   return valid;
+}
+
+function popup(message, title = "Informasi", type = "info") {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+
+    overlay.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(0,0,0,.38);
+      backdrop-filter:blur(3px);
+    `;
+
+    const dialog = document.createElement("div");
+
+    dialog.style.cssText = `
+      width:100%;
+      max-width:370px;
+      padding:25px 22px 20px;
+      border:1px solid #eeeeee;
+      border-radius:15px;
+      background:#fff;
+      box-shadow:0 15px 50px rgba(0,0,0,.15);
+      font-family:"DM Sans",sans-serif;
+      text-align:center;
+      animation:employeePopupAppear .2s ease;
+    `;
+
+    const icons = {
+      success: {
+        icon: "fa-circle-check",
+        color: "#16a36a",
+        background: "#eaf8f1"
+      },
+      error: {
+        icon: "fa-circle-xmark",
+        color: "#dc4545",
+        background: "#fff0f0"
+      },
+      warning: {
+        icon: "fa-triangle-exclamation",
+        color: "#d99425",
+        background: "#fff7e8"
+      },
+      info: {
+        icon: "fa-circle-info",
+        color: "#6b7280",
+        background: "#f2f3f5"
+      }
+    };
+
+    const selectedIcon = icons[type] || icons.info;
+
+    const iconWrapper = document.createElement("div");
+
+    iconWrapper.style.cssText = `
+      width:48px;
+      height:48px;
+      margin:0 auto 15px;
+      display:grid;
+      place-items:center;
+      border-radius:50%;
+      background:${selectedIcon.background};
+      color:${selectedIcon.color};
+      font-size:21px;
+    `;
+
+    iconWrapper.innerHTML = `<i class="fa-solid ${selectedIcon.icon}"></i>`;
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+
+    heading.style.cssText = `
+      margin:0;
+      color:#38251d;
+      font-size:17px;
+      font-weight:800;
+    `;
+
+    const description = document.createElement("p");
+    description.textContent = message;
+
+    description.style.cssText = `
+      margin:12px 0 22px;
+      color:#777;
+      font-size:13px;
+      line-height:1.6;
+    `;
+
+    const actions = document.createElement("div");
+
+    actions.style.cssText = `
+      display:flex;
+      gap:9px;
+      justify-content:center;
+    `;
+
+    const button = document.createElement("button");
+    button.type = "button";
+    button.textContent = "Mengerti";
+
+    button.style.cssText = `
+      flex:1;
+      min-height:42px;
+      border:0;
+      border-radius:8px;
+      background:#38251d;
+      color:#fff;
+      font-family:inherit;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    `;
+
+    button.addEventListener("click", () => {
+      overlay.remove();
+      resolve(true);
+    });
+
+    actions.appendChild(button);
+    dialog.append(iconWrapper, heading, description, actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
 }
 
 async function loadStores() {
@@ -184,22 +337,13 @@ function getRoleName(role) {
 }
 
 function renderEmployees() {
-  const entries = Object.entries(employees);
+  const owner = getOwnerData();
+  const entries = [
+    ["owner", owner],
+    ...Object.entries(employees).filter(([id]) => id !== "owner")
+  ];
 
   employeeCount.textContent = `${entries.length} Karyawan`;
-
-  if (!entries.length) {
-    employeeList.innerHTML = `
-      <div class="employee-empty">
-        <div class="empty-icon">
-          <i class="fa-solid fa-users"></i>
-        </div>
-        <h3>Belum Ada Karyawan</h3>
-        <p>Karyawan yang berhasil ditambahkan akan muncul di sini.</p>
-      </div>
-    `;
-    return;
-  }
 
   employeeList.innerHTML = entries.map(([id, employee]) => {
     const name = escapeHTML(employee.name || "Tanpa Nama");
@@ -207,7 +351,7 @@ function renderEmployees() {
     const phone = escapeHTML(employee.phone || "-");
     const role = escapeHTML(getRoleName(employee.role));
     const initial = escapeHTML(
-      (employee.name || "K").charAt(0).toUpperCase()
+      (employee.name || employee.username || "K").charAt(0).toUpperCase()
     );
 
     return `
@@ -228,20 +372,10 @@ function renderEmployees() {
   }).join("");
 }
 
-function showMessage(message, icon = "info") {
-  if (window.Swal) {
-    Swal.fire({
-      text: message,
-      icon,
-      confirmButtonText: "Mengerti"
-    });
-  } else {
-    alert(message);
-  }
-}
-
 function showEmployeeDetail(id) {
-  const employee = employees[id];
+  const employee = id === "owner"
+    ? getOwnerData()
+    : employees[id];
 
   if (!employee) return;
 
@@ -250,25 +384,129 @@ function showEmployeeDetail(id) {
     employee.storeId ||
     "-";
 
-  if (window.Swal) {
-    Swal.fire({
-      title: escapeHTML(employee.name || "Detail Karyawan"),
-      html: `
-        <div style="text-align:left;line-height:1.9">
-          <p><strong>Username:</strong> ${escapeHTML(employee.username || "-")}</p>
-          <p><strong>Email:</strong> ${escapeHTML(employee.email || "-")}</p>
-          <p><strong>Nomor HP:</strong> ${escapeHTML(employee.phone || "-")}</p>
-          <p><strong>Peran:</strong> ${escapeHTML(getRoleName(employee.role))}</p>
-          <p><strong>Toko:</strong> ${escapeHTML(storeName)}</p>
+  const detailRows = [
+    ["Username", employee.username || "-"],
+    ["Email", employee.email || "-"],
+    ["Nomor HP", employee.phone || "-"],
+    ["Peran", getRoleName(employee.role)],
+    ["Toko", storeName]
+  ];
+
+  const overlay = document.createElement("div");
+
+  overlay.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:99999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    background:rgba(0,0,0,.38);
+    backdrop-filter:blur(3px);
+  `;
+
+  const dialog = document.createElement("div");
+
+  dialog.style.cssText = `
+    width:100%;
+    max-width:390px;
+    padding:24px 22px 20px;
+    border:1px solid #eeeeee;
+    border-radius:15px;
+    background:#fff;
+    box-shadow:0 15px 50px rgba(0,0,0,.15);
+    font-family:"DM Sans",sans-serif;
+    animation:employeePopupAppear .2s ease;
+  `;
+
+  const initial = (employee.name || employee.username || "K")
+    .charAt(0)
+    .toUpperCase();
+
+  dialog.innerHTML = `
+    <div style="display:flex;align-items:center;gap:13px;margin-bottom:21px;">
+      <div style="
+        width:46px;
+        height:46px;
+        flex-shrink:0;
+        display:grid;
+        place-items:center;
+        border-radius:50%;
+        background:#f1e9e3;
+        color:#38251d;
+        font-size:17px;
+        font-weight:800;
+      ">${escapeHTML(initial)}</div>
+
+      <div style="min-width:0;flex:1;">
+        <h3 style="
+          margin:0 0 4px;
+          color:#38251d;
+          font-size:17px;
+          font-weight:800;
+          overflow-wrap:anywhere;
+        ">${escapeHTML(employee.name || "Detail Karyawan")}</h3>
+
+        <span style="
+          display:inline-block;
+          padding:4px 9px;
+          border-radius:20px;
+          background:${employee.isOwner ? "#f1e9e3" : "#edf7f1"};
+          color:${employee.isOwner ? "#38251d" : "#168653"};
+          font-size:11px;
+          font-weight:700;
+        ">${escapeHTML(getRoleName(employee.role))}</span>
+      </div>
+    </div>
+
+    <div class="employee-detail-rows">
+      ${detailRows.map(([label, value]) => `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          gap:15px;
+          padding:11px 0;
+          border-bottom:1px solid #f0f0f0;
+          font-size:12px;
+        ">
+          <span style="color:#888;flex-shrink:0;">${escapeHTML(label)}</span>
+          <strong style="
+            color:#38251d;
+            text-align:right;
+            overflow-wrap:anywhere;
+            font-weight:700;
+          ">${escapeHTML(value)}</strong>
         </div>
-      `,
-      confirmButtonText: "Tutup"
-    });
-  } else {
-    showMessage(
-      `Nama: ${employee.name || "-"}\nUsername: ${employee.username || "-"}\nEmail: ${employee.email || "-"}\nNomor HP: ${employee.phone || "-"}\nPeran: ${getRoleName(employee.role)}\nToko: ${storeName}`
-    );
-  }
+      `).join("")}
+    </div>
+
+    <button type="button" class="employee-detail-close" style="
+      width:100%;
+      min-height:42px;
+      margin-top:20px;
+      border:0;
+      border-radius:8px;
+      background:#38251d;
+      color:#fff;
+      font-family:inherit;
+      font-size:12px;
+      font-weight:700;
+      cursor:pointer;
+    ">Tutup</button>
+  `;
+
+  const close = () => overlay.remove();
+
+  dialog.querySelector(".employee-detail-close")
+    .addEventListener("click", close);
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) close();
+  });
+
+  overlay.appendChild(dialog);
+  document.body.appendChild(overlay);
 }
 
 togglePassword?.addEventListener("click", () => {
@@ -339,15 +577,26 @@ employeeList.addEventListener("keydown", event => {
 form.addEventListener("submit", async event => {
   event.preventDefault();
 
+  if (isSavingEmployee) return;
+
   if (!validateForm()) {
-    showMessage(
+    await popup(
       "Periksa kembali data karyawan. Pastikan username dan email belum digunakan.",
+      "Data belum valid",
       "warning"
     );
     return;
   }
 
+  isSavingEmployee = true;
   saveButton.disabled = true;
+
+  const originalButtonHTML = saveButton.innerHTML;
+
+  saveButton.innerHTML = `
+    <i class="fa-solid fa-spinner fa-spin"></i>
+    <span>Menyimpan...</span>
+  `;
 
   try {
     const selectedStore = storeSelect.options[storeSelect.selectedIndex];
@@ -372,21 +621,24 @@ form.addEventListener("submit", async event => {
 
     form.reset();
 
-    validateForm();
-
-    showMessage(
+    await popup(
       "Akun karyawan berhasil dibuat dan disimpan.",
+      "Berhasil",
       "success"
     );
 
   } catch (error) {
     console.error("Gagal menyimpan karyawan:", error);
 
-    showMessage(
-      "Gagal menyimpan akun karyawan. Periksa koneksi dan Firebase Database Rules.",
+    await popup(
+      "Akun karyawan gagal disimpan. Periksa koneksi dan Firebase Database Rules.",
+      "Gagal menyimpan",
       "error"
     );
 
+  } finally {
+    isSavingEmployee = false;
+    saveButton.innerHTML = originalButtonHTML;
     validateForm();
   }
 });
@@ -399,14 +651,34 @@ async function initializePage() {
       loadStores(),
       loadEmployees()
     ]);
+
   } catch (error) {
     console.error("Gagal memuat halaman karyawan:", error);
 
-    showMessage(
+    await popup(
       "Gagal memuat data toko atau karyawan. Silakan periksa koneksi Firebase.",
+      "Gagal memuat data",
       "error"
     );
   }
+}
+
+if (!document.getElementById("employee-popup-animation")) {
+  const style = document.createElement("style");
+  style.id = "employee-popup-animation";
+  style.textContent = `
+    @keyframes employeePopupAppear {
+      from {
+        opacity:0;
+        transform:translateY(8px) scale(.98);
+      }
+      to {
+        opacity:1;
+        transform:translateY(0) scale(1);
+      }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 initializePage();
