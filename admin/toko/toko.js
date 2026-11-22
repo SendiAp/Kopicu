@@ -1295,11 +1295,16 @@ villageInput?.addEventListener("change", markChanged);
     const activeInput = row.querySelector(".day-active");
     const allDayInput = row.querySelector(".all-day-checkbox");
 
-    closedInput?.addEventListener("change", () => {
+    activeInput?.addEventListener("change", () => {
       updateDayRow(row);
       markChanged();
     });
-
+    
+    allDayInput?.addEventListener("change", () => {
+      updateDayRow(row);
+      markChanged();
+    });
+    
     row.querySelectorAll("input").forEach(input => {
       input.addEventListener("change", markChanged);
     });
