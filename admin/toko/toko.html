@@ -18,18 +18,10 @@
 </head>
 
 <body>
-
   <main class="main-content">
-
     <header class="topbar">
       <div class="topbar-left">
-        <button
-          type="button"
-          class="hamburger-button"
-          id="hamburger-button"
-          aria-label="Buka menu"
-          aria-expanded="false"
-        >
+        <button type="button" class="hamburger-button" id="hamburger-button" aria-label="Buka menu" aria-expanded="false">
           <i class="fa-solid fa-bars"></i>
         </button>
 
@@ -43,8 +35,7 @@
     </header>
 
     <div class="toko-content">
-
-      <form id="toko-form">
+      <form id="toko-form" novalidate>
 
         <section class="form-section">
           <div class="section-heading">
@@ -54,151 +45,163 @@
 
           <div class="form-group">
             <label for="nama-toko">Nama toko</label>
-            <input
-              type="text"
-              id="nama-toko"
-              name="namaToko"
-              placeholder="Masukkan nama toko"
-              required
-            >
+            <input type="text" id="nama-toko" name="namaToko" placeholder="Masukkan nama toko" required>
           </div>
         </section>
-        
+
         <section class="form-section">
           <div class="section-heading">
             <h2>Melayani?</h2>
             <p>Pilih jenis layanan yang tersedia di toko kamu. Bisa memilih lebih dari satu.</p>
           </div>
-          
+
           <div class="service-options">
             <label class="service-option">
               <input type="checkbox" id="service-delivery" value="delivery">
               <span>Delivery</span>
             </label>
-            
+
             <label class="service-option">
               <input type="checkbox" id="service-pickup" value="pickup">
               <span>Pickup</span>
             </label>
-            
+
             <label class="service-option">
               <input type="checkbox" id="service-dinein" value="dineIn">
               <span>Dine In</span>
             </label>
           </div>
-          
+
           <div class="form-group" id="dinein-options" hidden>
             <label class="service-option">
               <input type="radio" name="dineInIdentifier" value="tableNumber" checked>
               <span>Menggunakan nomor meja</span>
             </label>
-            
+
             <label class="service-option">
               <input type="radio" name="dineInIdentifier" value="customerName">
               <span>Menggunakan nama customer</span>
             </label>
           </div>
         </section>
-        
+
         <section class="form-section">
           <div class="section-heading">
             <h2>Alamat Toko</h2>
             <p>Tentukan lokasi toko agar pelanggan mudah menemukan toko kamu.</p>
           </div>
 
-          <div class="form-group">
-            <label>Lokasi toko</label>
+          <div id="locations-summary" class="locations-summary" hidden>
+            <div id="locations-list"></div>
 
-            <div class="location-map" id="location-map">
-              <div class="map-placeholder">
-                <i class="fa-solid fa-map-location-dot"></i>
-                <span>Titik koordinat toko belum ditentukan</span>
+            <button type="button" id="add-branch-button" class="add-branch-button">
+              <i class="fa-solid fa-plus"></i>
+              <span>Tambah Cabang</span>
+            </button>
+          </div>
+
+          <div id="address-editor">
+            <div class="address-editor-heading">
+              <strong id="address-editor-title">Lokasi utama toko</strong>
+              <p id="address-editor-description">Tentukan titik koordinat dan lengkapi alamat toko.</p>
+            </div>
+
+            <div class="form-group">
+              <label>Lokasi toko</label>
+
+              <div class="location-map" id="location-map">
+                <div class="map-placeholder">
+                  <i class="fa-solid fa-map-location-dot"></i>
+                  <span>Titik koordinat toko belum ditentukan</span>
+                </div>
+              </div>
+
+              <button type="button" class="location-button" id="select-location-button">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span>Tentukan titik koordinat</span>
+              </button>
+
+              <input type="hidden" id="latitude" name="latitude">
+              <input type="hidden" id="longitude" name="longitude">
+            </div>
+
+            <div class="form-group">
+              <label for="jenis-lokasi">Jenis lokasi</label>
+              <div class="select-wrapper">
+                <select id="jenis-lokasi" name="jenisLokasi" required>
+                  <option value="">Pilih jenis lokasi</option>
+                  <option value="Rumah">Rumah</option>
+                  <option value="Toko">Toko</option>
+                  <option value="Ruko">Ruko</option>
+                  <option value="Restoran">Restoran</option>
+                  <option value="Kantor">Kantor</option>
+                  <option value="Mall">Mall</option>
+                  <option value="Bandara">Bandara</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
               </div>
             </div>
 
-            <button type="button" class="location-button" id="select-location-button">
-              <i class="fa-solid fa-location-crosshairs"></i>
-              <span>Tentukan titik koordinat</span>
-            </button>
-
-            <input type="hidden" id="latitude" name="latitude">
-            <input type="hidden" id="longitude" name="longitude">
-          </div>
-
-          <div class="form-group">
-            <label for="jenis-lokasi">Jenis lokasi</label>
-            <div class="select-wrapper">
-              <select id="jenis-lokasi" name="jenisLokasi" required>
-                <option value="">Pilih jenis lokasi</option>
-                <option value="Rumah">Rumah</option>
-                <option value="Toko">Toko</option>
-                <option value="Ruko">Ruko</option>
-                <option value="Restoran">Restoran</option>
-                <option value="Kantor">Kantor</option>
-                <option value="Mall">Mall</option>
-                <option value="Bandara">Bandara</option>
-                <option value="Lainnya">Lainnya</option>
-              </select>
-              <i class="fa-solid fa-chevron-down"></i>
+            <div class="form-group">
+              <label for="provinsi">Provinsi</label>
+              <div class="select-wrapper">
+                <select id="provinsi" name="provinsi" required>
+                  <option value="">Pilih provinsi</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="provinsi">Provinsi</label>
-            <div class="select-wrapper">
-              <select id="provinsi" name="provinsi" required>
-                <option value="">Pilih provinsi</option>
-              </select>
-              <i class="fa-solid fa-chevron-down"></i>
+            <div class="form-group">
+              <label for="kota">Kota / Kabupaten</label>
+              <div class="select-wrapper">
+                <select id="kota" name="kota" required disabled>
+                  <option value="">Pilih kota / kabupaten</option>
+                </select>
+                <i class="fa-solid fa-chevron-down"></i>
+              </div>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="kota">Kota / Kabupaten</label>
-            <div class="select-wrapper">
-              <select id="kota" name="kota" required disabled>
-                <option value="">Pilih kota / kabupaten</option>
+            <div class="form-group">
+              <label for="kecamatan">Kecamatan</label>
+              <select id="kecamatan" required disabled>
+                <option value="">Pilih kota/kabupaten terlebih dahulu</option>
               </select>
-              <i class="fa-solid fa-chevron-down"></i>
             </div>
-          </div>
 
-          <div class="form-group">
-            <label for="kecamatan">Kecamatan</label>
-            <select id="kecamatan" required disabled>
-              <option value="">Pilih kota/kabupaten terlebih dahulu</option>
-            </select>
-          </div>
+            <div class="form-group">
+              <label for="kelurahan">Kelurahan/Desa</label>
+              <select id="kelurahan" required disabled>
+                <option value="">Pilih kecamatan terlebih dahulu</option>
+              </select>
+            </div>
 
-          <div class="form-group">
-            <label for="kelurahan">Kelurahan/Desa</label>
-            <select id="kelurahan" required disabled>
-              <option value="">Pilih kecamatan terlebih dahulu</option>
-            </select>
-          </div>
+            <div class="form-group">
+              <label for="kode-pos">Kode pos</label>
+              <input type="text" id="kode-pos" name="kodePos" inputmode="numeric" maxlength="5" placeholder="Masukkan kode pos" required>
+            </div>
 
-          <div class="form-group">
-            <label for="kode-pos">Kode pos</label>
-            <input
-              type="text"
-              id="kode-pos"
-              name="kodePos"
-              inputmode="numeric"
-              maxlength="5"
-              placeholder="Masukkan kode pos"
-              required
-            >
-          </div>
+            <div class="form-group">
+              <label for="detail-alamat">Detail alamat</label>
+              <textarea id="detail-alamat" name="detailAlamat" rows="4" placeholder="Nama jalan, nomor bangunan, RT/RW, patokan lokasi, dan detail lainnya" required></textarea>
+            </div>
 
-          <div class="form-group">
-            <label for="detail-alamat">Detail alamat</label>
-            <textarea
-              id="detail-alamat"
-              name="detailAlamat"
-              rows="4"
-              placeholder="Nama jalan, nomor bangunan, RT/RW, patokan lokasi, dan detail lainnya"
-              required
-            ></textarea>
+            <label class="address-confirmation">
+              <input type="checkbox" id="confirm-address">
+              <span>Saya sudah memeriksa dan memastikan alamat di atas sudah benar.</span>
+            </label>
+
+            <div class="address-editor-actions">
+              <button type="button" id="cancel-address-button" class="cancel-address-button" hidden>
+                Batal
+              </button>
+
+              <button type="button" id="save-address-button" class="save-address-button">
+                <i class="fa-solid fa-check"></i>
+                <span>Simpan Alamat</span>
+              </button>
+            </div>
           </div>
         </section>
 
@@ -209,7 +212,6 @@
           </div>
 
           <div class="opening-hours" id="opening-hours">
-
             <div class="day-row" data-day="senin">
               <div class="day-info">
                 <strong>Senin</strong>
@@ -230,119 +232,40 @@
             </div>
 
             <div class="day-row" data-day="selasa">
-              <div class="day-info">
-                <strong>Selasa</strong>
-                <label class="switch">
-                  <input type="checkbox" class="day-active" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="time-inputs">
-                <input type="time" class="open-time" value="08:00">
-                <span>sampai</span>
-                <input type="time" class="close-time" value="22:00">
-              </div>
-              <label class="all-day">
-                <input type="checkbox" class="all-day-checkbox">
-                <span>24 jam</span>
-              </label>
+              <div class="day-info"><strong>Selasa</strong><label class="switch"><input type="checkbox" class="day-active" checked><span class="slider"></span></label></div>
+              <div class="time-inputs"><input type="time" class="open-time" value="08:00"><span>sampai</span><input type="time" class="close-time" value="22:00"></div>
+              <label class="all-day"><input type="checkbox" class="all-day-checkbox"><span>24 jam</span></label>
             </div>
 
             <div class="day-row" data-day="rabu">
-              <div class="day-info">
-                <strong>Rabu</strong>
-                <label class="switch">
-                  <input type="checkbox" class="day-active" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="time-inputs">
-                <input type="time" class="open-time" value="08:00">
-                <span>sampai</span>
-                <input type="time" class="close-time" value="22:00">
-              </div>
-              <label class="all-day">
-                <input type="checkbox" class="all-day-checkbox">
-                <span>24 jam</span>
-              </label>
+              <div class="day-info"><strong>Rabu</strong><label class="switch"><input type="checkbox" class="day-active" checked><span class="slider"></span></label></div>
+              <div class="time-inputs"><input type="time" class="open-time" value="08:00"><span>sampai</span><input type="time" class="close-time" value="22:00"></div>
+              <label class="all-day"><input type="checkbox" class="all-day-checkbox"><span>24 jam</span></label>
             </div>
 
             <div class="day-row" data-day="kamis">
-              <div class="day-info">
-                <strong>Kamis</strong>
-                <label class="switch">
-                  <input type="checkbox" class="day-active" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="time-inputs">
-                <input type="time" class="open-time" value="08:00">
-                <span>sampai</span>
-                <input type="time" class="close-time" value="22:00">
-              </div>
-              <label class="all-day">
-                <input type="checkbox" class="all-day-checkbox">
-                <span>24 jam</span>
-              </label>
+              <div class="day-info"><strong>Kamis</strong><label class="switch"><input type="checkbox" class="day-active" checked><span class="slider"></span></label></div>
+              <div class="time-inputs"><input type="time" class="open-time" value="08:00"><span>sampai</span><input type="time" class="close-time" value="22:00"></div>
+              <label class="all-day"><input type="checkbox" class="all-day-checkbox"><span>24 jam</span></label>
             </div>
 
             <div class="day-row" data-day="jumat">
-              <div class="day-info">
-                <strong>Jumat</strong>
-                <label class="switch">
-                  <input type="checkbox" class="day-active" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="time-inputs">
-                <input type="time" class="open-time" value="08:00">
-                <span>sampai</span>
-                <input type="time" class="close-time" value="22:00">
-              </div>
-              <label class="all-day">
-                <input type="checkbox" class="all-day-checkbox">
-                <span>24 jam</span>
-              </label>
+              <div class="day-info"><strong>Jumat</strong><label class="switch"><input type="checkbox" class="day-active" checked><span class="slider"></span></label></div>
+              <div class="time-inputs"><input type="time" class="open-time" value="08:00"><span>sampai</span><input type="time" class="close-time" value="22:00"></div>
+              <label class="all-day"><input type="checkbox" class="all-day-checkbox"><span>24 jam</span></label>
             </div>
 
             <div class="day-row" data-day="sabtu">
-              <div class="day-info">
-                <strong>Sabtu</strong>
-                <label class="switch">
-                  <input type="checkbox" class="day-active" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="time-inputs">
-                <input type="time" class="open-time" value="08:00">
-                <span>sampai</span>
-                <input type="time" class="close-time" value="22:00">
-              </div>
-              <label class="all-day">
-                <input type="checkbox" class="all-day-checkbox">
-                <span>24 jam</span>
-              </label>
+              <div class="day-info"><strong>Sabtu</strong><label class="switch"><input type="checkbox" class="day-active" checked><span class="slider"></span></label></div>
+              <div class="time-inputs"><input type="time" class="open-time" value="08:00"><span>sampai</span><input type="time" class="close-time" value="22:00"></div>
+              <label class="all-day"><input type="checkbox" class="all-day-checkbox"><span>24 jam</span></label>
             </div>
 
             <div class="day-row" data-day="minggu">
-              <div class="day-info">
-                <strong>Minggu</strong>
-                <label class="switch">
-                  <input type="checkbox" class="day-active" checked>
-                  <span class="slider"></span>
-                </label>
-              </div>
-              <div class="time-inputs">
-                <input type="time" class="open-time" value="08:00">
-                <span>sampai</span>
-                <input type="time" class="close-time" value="22:00">
-              </div>
-              <label class="all-day">
-                <input type="checkbox" class="all-day-checkbox">
-                <span>24 jam</span>
-              </label>
+              <div class="day-info"><strong>Minggu</strong><label class="switch"><input type="checkbox" class="day-active" checked><span class="slider"></span></label></div>
+              <div class="time-inputs"><input type="time" class="open-time" value="08:00"><span>sampai</span><input type="time" class="close-time" value="22:00"></div>
+              <label class="all-day"><input type="checkbox" class="all-day-checkbox"><span>24 jam</span></label>
             </div>
-
           </div>
         </section>
 
@@ -354,26 +277,12 @@
 
           <div class="form-group">
             <label for="owner-email">Email pemilik</label>
-            <input
-              type="email"
-              id="owner-email"
-              name="ownerEmail"
-              placeholder="contoh@email.com"
-              required
-            >
+            <input type="email" id="owner-email" name="ownerEmail" placeholder="contoh@email.com" required>
           </div>
 
           <div class="form-group">
             <label for="owner-phone">Nomor telepon pemilik</label>
-            <input
-              type="tel"
-              id="owner-phone"
-              name="ownerPhone"
-              placeholder="+628xxxxxxxxxx"
-              pattern="\+628[0-9]{7,12}"
-              title="Nomor harus diawali +628"
-              required
-            >
+            <input type="tel" id="owner-phone" name="ownerPhone" placeholder="+628xxxxxxxxxx" pattern="\+628[0-9]{7,12}" title="Nomor harus diawali +628" required>
           </div>
         </section>
 
@@ -384,39 +293,21 @@
           </div>
 
           <div class="form-group">
-            <input
-              type="tel"
-              id="restaurant-phone"
-              name="restaurantPhone"
-              placeholder="+628xxxxxxxxxx"
-              pattern="\+628[0-9]{7,12}"
-              title="Nomor harus diawali +628"
-            >
+            <input type="tel" id="restaurant-phone" name="restaurantPhone" placeholder="+628xxxxxxxxxx" pattern="\+628[0-9]{7,12}" title="Nomor harus diawali +628">
           </div>
         </section>
-        
+
         <div class="form-footer">
-          <button
-            type="button"
-            id="reset-toko-button"
-            class="reset-toko-button"
-            disabled
-            >
+          <button type="button" id="reset-toko-button" class="reset-toko-button" disabled>
             <i class="fa-solid fa-rotate-left"></i>
             <span>Reset Perubahan</span>
           </button>
-          
-          <button
-            type="submit"
-            id="save-toko-button"
-            class="save-toko-button"
-            disabled
-            >
+
+          <button type="submit" id="save-toko-button" class="save-toko-button" disabled>
             <i class="fa-solid fa-floppy-disk"></i>
             <span>Simpan Perubahan</span>
           </button>
         </div>
-
       </form>
     </div>
   </main>
@@ -424,7 +315,6 @@
   <div id="hamburger-container"></div>
 
   <script type="module" src="/admin/hamburger/hamburger.js"></script>
-  <script type="module" src="toko.js?v=1"></script>
-
+  <script type="module" src="toko.js?v=2"></script>
 </body>
 </html>
