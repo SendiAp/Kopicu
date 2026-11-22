@@ -67,59 +67,93 @@ function showLockedPopup(title, message) {
 }
 
 function isValidEmail(value) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-    String(value || "").trim()
-  );
+  const email = String(value || "").trim();
+
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 function isValidPhone(value) {
   const phone = String(value || "").replace(/[\s()-]/g, "");
+
   return /^\+628[0-9]{7,12}$/.test(phone);
 }
 
+function isValidOptionalEmail(value) {
+  const email = String(value || "").trim();
+
+  return email === "" || isValidEmail(email);
+}
+
+function isValidOptionalPhone(value) {
+  const phone = String(value || "").trim();
+
+  return phone === "" || isValidPhone(phone);
+}
+
 function isValidCoordinate(value) {
-  return value !== undefined &&
+  return (
+    value !== undefined &&
     value !== null &&
     value !== "" &&
-    Number.isFinite(Number(value));
+    Number.isFinite(Number(value))
+  );
 }
 
 function isValidOpeningHours(hours) {
-  if (!hours || typeof hours !== "object") return false;
+  if (!hours || typeof hours !== "object" || Array.isArray(hours)) {
+    return false;
+  }
 
   const days = Object.values(hours);
 
-  if (days.length !== 7) return false;
+  if (days.length !== 7) {
+    return false;
+  }
 
   return days.every(day => {
-    if (!day || typeof day !== "object") return false;
+    if (!day || typeof day !== "object") {
+      return false;
+    }
 
     if (day.closed === true || day.allDay === true) {
       return true;
     }
 
-    return Boolean(
-      day.open &&
-      day.close &&
-      /^\d{2}:\d{2}$/.test(day.open) &&
-      /^\d{2}:\d{2}$/.test(day.close) &&
+    if (
+      typeof day.open !== "string" ||
+      typeof day.close !== "string"
+    ) {
+      return false;
+    }
+
+    const validTime = value => {
+      if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+        return false;
+      }
+
+      return true;
+    };
+
+    return (
+      validTime(day.open) &&
+      validTime(day.close) &&
       day.open < day.close
     );
   });
 }
 
-
 function checkStoreCompleteness(data) {
   if (!data || typeof data !== "object") {
-    console.log("Data toko tidak ditemukan.");
     return false;
   }
 
   const services = data.services || {};
-  const hours = data.openingHours || data.jamOperasional || {};
+  const hours = data.openingHours || {};
 
   const checks = {
-    namaToko: Boolean(String(data.name || data.nama || "").trim()),
+    namaToko: Boolean(
+      String(data.name || "").trim()
+    ),
 
     layanan: Boolean(
       services.delivery ||
@@ -133,84 +167,92 @@ function checkStoreCompleteness(data) {
     ),
 
     alamat: Boolean(
-      data.locationType &&
-      data.province &&
-      data.city &&
-      data.district &&
-      data.village &&
+      String(data.locationType || "").trim() &&
+      String(data.province || "").trim() &&
+      String(data.city || "").trim() &&
+      String(data.district || "").trim() &&
+      String(data.village || "").trim() &&
       String(data.postalCode || "").trim() &&
       String(data.address || "").trim()
     ),
 
     emailOwner: isValidEmail(data.ownerEmail),
+
     teleponOwner: isValidPhone(data.ownerPhone),
 
-    emailManager: isValidEmail(data.managerEmail),
-    teleponManager: isValidPhone(data.managerPhone),
+    emailManager: isValidOptionalEmail(data.managerEmail),
 
-    teleponRestoran: isValidPhone(data.restaurantPhone),
+    teleponManager: isValidOptionalPhone(data.managerPhone),
 
-    identitasDineIn: !services.dineIn ||
-      Boolean(services.dineInIdentifier),
+    teleponRestoran: isValidOptionalPhone(data.restaurantPhone),
+
+    identitasDineIn: (
+      !services.dineIn ||
+      Boolean(String(services.dineInIdentifier || "").trim())
+    ),
 
     jamOperasional: isValidOpeningHours(hours)
   };
 
   console.table(checks);
 
-  const complete = Object.values(checks).every(Boolean);
+  const incomplete = Object.entries(checks)
+    .filter(([, valid]) => !valid)
+    .map(([name]) => name);
 
-  console.log(
-    complete
-      ? "Informasi toko lengkap."
-      : "Masih ada informasi toko yang belum valid."
-  );
+  if (incomplete.length > 0) {
+    console.warn("Data toko yang belum valid:", incomplete);
+    return false;
+  }
 
-  return complete;
+  console.log("Semua informasi toko sudah lengkap.");
+
+  return true;
 }
 
 function getMenuType(link) {
-  const href = link.getAttribute("href") || "";
-  const path = href.toLowerCase();
+  const href = (link.getAttribute("href") || "").toLowerCase();
+
   const label = link.textContent
     .replace(/\s+/g, " ")
     .trim()
     .toLowerCase();
 
   if (
-    path.includes("/product/") ||
-    path.endsWith("/product.html") ||
+    href.includes("/product/") ||
+    href.endsWith("/product.html") ||
     label === "product"
   ) {
     return "product";
   }
 
   if (
-    path.includes("/karyawan/") ||
-    label === "karyawan"
+    href.includes("/karyawan/") ||
+    href.endsWith("/karyawan.html") ||
+    label.includes("karyawan")
   ) {
     return "karyawan";
   }
 
   if (
-    path.includes("/picture/") ||
-    path.endsWith("/picture.html") ||
+    href.includes("/picture/") ||
+    href.endsWith("/picture.html") ||
     label === "picture"
   ) {
     return "picture";
   }
 
   if (
-    path.includes("/notifikasi/") ||
-    path.endsWith("/notifikasi.html") ||
+    href.includes("/notifikasi/") ||
+    href.endsWith("/notifikasi.html") ||
     label === "notifikasi"
   ) {
     return "notifikasi";
   }
 
   if (
-    path.includes("/menu/") ||
-    path.endsWith("/menu.html") ||
+    href.includes("/menu/") ||
+    href.endsWith("/menu.html") ||
     label === "menu"
   ) {
     return "menu";
@@ -219,23 +261,26 @@ function getMenuType(link) {
   return null;
 }
 
-function reorderProductMenu() {
-  const links = Array.from(
+function getSidebarLinks() {
+  return Array.from(
     document.querySelectorAll(".sidebar-menu a[href]")
   );
+}
 
-  const storeLink = links.find(link => {
-    const label = link.textContent
+function reorderProductMenu() {
+  const links = getSidebarLinks();
+
+  const storeLink = links.find(link =>
+    link.textContent
       .replace(/\s+/g, " ")
       .trim()
-      .toLowerCase();
+      .toLowerCase()
+      .includes("toko saya")
+  );
 
-    return label.includes("toko saya");
-  });
-
-  const productLink = links.find(link => {
-    return getMenuType(link) === "product";
-  });
+  const productLink = links.find(link =>
+    getMenuType(link) === "product"
+  );
 
   if (!storeLink || !productLink) return;
 
@@ -254,22 +299,17 @@ function reorderProductMenu() {
 }
 
 function updateLockedMenus() {
-  const links = document.querySelectorAll(".sidebar-menu a[href]");
-
-  links.forEach(link => {
+  getSidebarLinks().forEach(link => {
     const menuType = getMenuType(link);
 
     if (!menuType || !restrictedMenus.includes(menuType)) {
       return;
     }
 
-    let shouldLock = false;
-
-    if (!storeComplete) {
-      shouldLock = true;
-    } else if (!productExists && menuType !== "product") {
-      shouldLock = true;
-    }
+    const shouldLock = (
+      !storeComplete ||
+      (!productExists && menuType !== "product")
+    );
 
     const existingIcon = link.querySelector(".store-lock-icon");
 
@@ -280,8 +320,10 @@ function updateLockedMenus() {
 
       if (!existingIcon) {
         const icon = document.createElement("i");
+
         icon.className = "fa-solid fa-lock store-lock-icon";
         icon.setAttribute("aria-hidden", "true");
+
         link.appendChild(icon);
       }
     } else {
@@ -314,56 +356,69 @@ function bindLockedMenuEvents() {
     if (!storeComplete) {
       showLockedPopup(
         "Lengkapi Informasi Toko",
-        "Seluruh informasi toko wajib dilengkapi terlebih dahulu sebelum menggunakan menu ini."
+        "Seluruh informasi wajib yang ada di halaman Toko Saya harus dilengkapi dan disimpan terlebih dahulu."
       );
+
       return;
     }
 
     if (!productExists) {
       showLockedPopup(
         "Buat Product Terlebih Dahulu",
-        "Tambahkan minimal satu product di halaman Product. Setelah product berhasil dibuat, seluruh menu akan terbuka."
+        "Tambahkan minimal satu product di halaman Product. Setelah berhasil dibuat, seluruh menu akan terbuka."
       );
     }
   }, true);
 }
 
 function watchStoreData() {
-  onValue(ref(db, "store"), snapshot => {
-    const data = snapshot.exists() ? snapshot.val() : null;
+  onValue(
+    ref(db, "store"),
+    snapshot => {
+      const data = snapshot.exists()
+        ? snapshot.val()
+        : null;
 
-    storeComplete = checkStoreCompleteness(data);
+      storeComplete = checkStoreCompleteness(data);
 
-    updateLockedMenus();
-  }, error => {
-    console.error("Gagal memeriksa kelengkapan data toko:", error);
+      console.log("Status informasi toko:", storeComplete);
 
-    storeComplete = false;
-    updateLockedMenus();
-  });
+      updateLockedMenus();
+    },
+    error => {
+      console.error("Gagal memeriksa informasi toko:", error);
+
+      storeComplete = false;
+      updateLockedMenus();
+    }
+  );
 }
 
 function watchProducts() {
-  onValue(ref(db, "products"), snapshot => {
-    if (!snapshot.exists()) {
-      productExists = false;
-    } else {
-      const products = snapshot.val();
+  onValue(
+    ref(db, "products"),
+    snapshot => {
+      const products = snapshot.exists()
+        ? snapshot.val()
+        : null;
 
       productExists = Boolean(
         products &&
         typeof products === "object" &&
         Object.keys(products).length > 0
       );
+
+      console.log("Status product:", productExists);
+
+      updateLockedMenus();
+    },
+    error => {
+      console.error("Gagal memeriksa product:", error);
+
+      productExists = false;
+      updateLockedMenus();
     }
-
-    updateLockedMenus();
-  }, error => {
-    console.error("Gagal memeriksa data product:", error);
-
-    productExists = false;
-    updateLockedMenus();
-  });
+  );
 }
 
 async function loadHamburger() {
@@ -394,18 +449,14 @@ function initializeHamburger() {
     sidebar?.classList.add("open");
     overlay?.classList.add("show");
 
-    if (openButton) {
-      openButton.setAttribute("aria-expanded", "true");
-    }
+    openButton?.setAttribute("aria-expanded", "true");
   }
 
   function closeSidebar() {
     sidebar?.classList.remove("open");
     overlay?.classList.remove("show");
 
-    if (openButton) {
-      openButton.setAttribute("aria-expanded", "false");
-    }
+    openButton?.setAttribute("aria-expanded", "false");
   }
 
   openButton?.addEventListener("click", openSidebar);
@@ -431,10 +482,14 @@ function initializeHamburger() {
 
   const currentPath = window.location.pathname.replace(/\/+$/, "");
 
-  document.querySelectorAll(".sidebar-menu a").forEach(link => {
-    const linkPath = new URL(link.href).pathname.replace(/\/+$/, "");
+  document.querySelectorAll(".sidebar-menu a[href]").forEach(link => {
+    try {
+      const linkPath = new URL(link.href).pathname.replace(/\/+$/, "");
 
-    link.classList.toggle("active", linkPath === currentPath);
+      link.classList.toggle("active", linkPath === currentPath);
+    } catch (error) {
+      console.warn("Link sidebar tidak valid:", link.href);
+    }
   });
 
   reorderProductMenu();
