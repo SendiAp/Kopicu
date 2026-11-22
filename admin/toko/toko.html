@@ -63,7 +63,45 @@
             >
           </div>
         </section>
-
+        
+        <section class="form-section">
+          <div class="section-heading">
+            <h2>Melayani?</h2>
+            <p>Pilih jenis layanan yang tersedia di toko kamu. Bisa memilih lebih dari satu.</p>
+          </div>
+          
+          <div class="service-options">
+            <label class="service-option">
+              <input type="checkbox" id="service-delivery" value="delivery">
+              <span>Delivery</span>
+            </label>
+            
+            <label class="service-option">
+              <input type="checkbox" id="service-pickup" value="pickup">
+              <span>Pickup</span>
+            </label>
+            
+            <label class="service-option">
+              <input type="checkbox" id="service-dinein" value="dineIn">
+              <span>Dine In</span>
+            </label>
+          </div>
+          
+          <div class="form-group" id="dinein-options" hidden>
+            <label>Identitas pesanan Dine In</label>
+            
+            <label class="service-option">
+              <input type="radio" name="dineInIdentifier" value="tableNumber" checked>
+              <span>Menggunakan nomor meja</span>
+            </label>
+            
+            <label class="service-option">
+              <input type="radio" name="dineInIdentifier" value="customerName">
+              <span>Menggunakan nama customer</span>
+            </label>
+          </div>
+        </section>
+        
         <section class="form-section">
           <div class="section-heading">
             <h2>Alamat Toko</h2>
