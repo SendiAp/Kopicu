@@ -1,3 +1,4 @@
+
 * {
   margin: 0;
   padding: 0;
@@ -23,10 +24,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-button,
-input,
-select,
-textarea {
+button, input, select, textarea {
   font-family: inherit;
 }
 
@@ -93,12 +91,6 @@ button {
   font-size: 15px;
   font-weight: 700;
   text-transform: uppercase;
-}
-
-.topbar-title h1 {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--primary);
 }
 
 .toko-content {
@@ -249,7 +241,8 @@ button {
   color: #b7a69b;
 }
 
-.location-button {
+.location-button,
+.save-address-button {
   width: 100%;
   min-height: 47px;
   border: 1px solid #e5dcd6;
@@ -266,13 +259,156 @@ button {
   transition: .2s;
 }
 
-.location-button:hover {
+.location-button:hover,
+.save-address-button:hover {
   background: #f3eeea;
   border-color: #cbb9ad;
 }
 
-.location-button:active {
-  transform: scale(.99);
+.location-button:disabled,
+.save-address-button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.address-editor-heading {
+  margin-bottom: 18px;
+}
+
+.address-editor-heading strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  margin-bottom: 5px;
+}
+
+.address-editor-heading p {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
+.address-confirmation {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px;
+  margin: 5px 0 16px;
+  border: 1px solid #eee7e1;
+  border-radius: 10px;
+  background: #faf8f6;
+  color: #62534b;
+  font-size: 12px;
+  line-height: 1.6;
+  cursor: pointer;
+}
+
+.address-confirmation input {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  margin-top: 1px;
+  accent-color: var(--primary);
+}
+
+.address-editor-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.address-editor-actions button {
+  min-height: 46px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cancel-address-button {
+  flex: 1;
+  border: 1px solid #e1d9d3;
+  background: #fff;
+  color: var(--primary-light);
+}
+
+.save-address-button {
+  flex: 2;
+  border: 0;
+  background: var(--primary);
+  color: #fff;
+}
+
+.save-address-button:hover {
+  background: #51382c;
+}
+
+.locations-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.location-card {
+  border: 1px solid #eee7e1;
+  border-radius: 12px;
+  padding: 15px;
+  background: #fff;
+}
+
+.location-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.location-card-top strong {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.location-card-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: #806b5e;
+  background: #f5efea;
+  padding: 5px 9px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+
+.location-card p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #75675f;
+  overflow-wrap: anywhere;
+}
+
+.add-branch-button {
+  display: flex;
+  width: 100%;
+  min-height: 45px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed #bda99c;
+  border-radius: 10px;
+  background: #faf8f6;
+  color: var(--primary-light);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.add-branch-button:hover {
+  background: #f3eeea;
+}
+
+#address-editor[hidden],
+.locations-summary[hidden],
+[hidden] {
+  display: none !important;
 }
 
 .opening-hours {
@@ -460,24 +596,10 @@ button {
   display: none !important;
 }
 
-#dinein-options > label:first-child {
-  margin-bottom: 2px;
-  color: var(--primary);
-  font-size: 13px;
-  font-weight: 800;
-}
-
 #dinein-options .service-option {
   min-height: 48px;
   padding: 11px 12px;
   background: var(--white);
-}
-
-.optional-label {
-  color: #aaa;
-  font-size: 11px;
-  font-weight: 500;
-  margin-left: 4px;
 }
 
 .form-footer {
@@ -552,11 +674,6 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
-.branch-wrapper,
-.add-branch-button {
-  display: none;
-}
-
 @media (min-width: 700px) {
   .form-footer {
     flex-direction: row;
@@ -593,10 +710,6 @@ textarea:focus-visible {
     font-size: 14px;
   }
 
-  .topbar-title h1 {
-    font-size: 16px;
-  }
-
   .toko-content {
     padding: 17px 14px 35px;
   }
@@ -620,12 +733,6 @@ textarea:focus-visible {
 
   .form-group {
     margin-bottom: 17px;
-  }
-
-  .form-group input,
-  .form-group textarea,
-  .form-group select {
-    font-size: 13px;
   }
 
   .location-map {
@@ -657,6 +764,15 @@ textarea:focus-visible {
   .save-toko-button,
   .reset-toko-button {
     width: 100%;
+  }
+
+  .address-editor-actions {
+    flex-direction: column-reverse;
+  }
+
+  .address-editor-actions button {
+    width: 100%;
+    flex: auto;
   }
 }
 
