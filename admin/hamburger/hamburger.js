@@ -108,58 +108,65 @@ function isValidOpeningHours(hours) {
   });
 }
 
+
 function checkStoreCompleteness(data) {
-  if (!data || typeof data !== "object") return false;
+  if (!data || typeof data !== "object") {
+    console.log("Data toko tidak ditemukan.");
+    return false;
+  }
 
   const services = data.services || {};
+  const hours = data.openingHours || data.jamOperasional || {};
 
-  const hasService = Boolean(
-    services.delivery ||
-    services.pickup ||
-    services.dineIn
+  const checks = {
+    namaToko: Boolean(String(data.name || data.nama || "").trim()),
+
+    layanan: Boolean(
+      services.delivery ||
+      services.pickup ||
+      services.dineIn
+    ),
+
+    koordinat: (
+      isValidCoordinate(data.latitude) &&
+      isValidCoordinate(data.longitude)
+    ),
+
+    alamat: Boolean(
+      data.locationType &&
+      data.province &&
+      data.city &&
+      data.district &&
+      data.village &&
+      String(data.postalCode || "").trim() &&
+      String(data.address || "").trim()
+    ),
+
+    emailOwner: isValidEmail(data.ownerEmail),
+    teleponOwner: isValidPhone(data.ownerPhone),
+
+    emailManager: isValidEmail(data.managerEmail),
+    teleponManager: isValidPhone(data.managerPhone),
+
+    teleponRestoran: isValidPhone(data.restaurantPhone),
+
+    identitasDineIn: !services.dineIn ||
+      Boolean(services.dineInIdentifier),
+
+    jamOperasional: isValidOpeningHours(hours)
+  };
+
+  console.table(checks);
+
+  const complete = Object.values(checks).every(Boolean);
+
+  console.log(
+    complete
+      ? "Informasi toko lengkap."
+      : "Masih ada informasi toko yang belum valid."
   );
 
-  const addressComplete = Boolean(
-    isValidCoordinate(data.latitude) &&
-    isValidCoordinate(data.longitude) &&
-    data.locationType &&
-    data.province &&
-    data.city &&
-    data.district &&
-    data.village &&
-    String(data.postalCode || "").trim() &&
-    String(data.address || "").trim()
-  );
-
-  const ownerComplete = Boolean(
-    isValidEmail(data.ownerEmail) &&
-    isValidPhone(data.ownerPhone)
-  );
-
-  const managerComplete = Boolean(
-    isValidEmail(data.managerEmail) &&
-    isValidPhone(data.managerPhone)
-  );
-
-  const restaurantComplete = isValidPhone(data.restaurantPhone);
-
-  const dineInComplete = !services.dineIn ||
-    Boolean(services.dineInIdentifier);
-
-  const openingHoursComplete = isValidOpeningHours(
-    data.openingHours || data.jamOperasional
-  );
-
-  return Boolean(
-    String(data.name || data.nama || "").trim() &&
-    hasService &&
-    addressComplete &&
-    ownerComplete &&
-    managerComplete &&
-    restaurantComplete &&
-    dineInComplete &&
-    openingHoursComplete
-  );
+  return complete;
 }
 
 function getMenuType(link) {
