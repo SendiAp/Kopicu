@@ -11,6 +11,19 @@ if (loginStatus !== "true") {
   throw new Error("Akses tidak diizinkan.");
 }
 
+const username = sessionStorage.getItem("kopicu_admin_username") || "Admin";
+
+const adminUsername = document.getElementById("admin-username");
+const adminAvatar = document.getElementById("admin-avatar");
+
+if (adminUsername) {
+  adminUsername.textContent = username;
+}
+
+if (adminAvatar) {
+  adminAvatar.textContent = username.charAt(0).toUpperCase();
+}
+
 const form = document.getElementById("employee-form");
 const usernameInput = document.getElementById("employee-username");
 const passwordInput = document.getElementById("employee-password");
