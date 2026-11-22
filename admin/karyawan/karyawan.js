@@ -1,16 +1,14 @@
 import { db } from "../../database/firebase.js";
 import {
   ref,
-  get,
-  set,
-  push,
-  remove
+  get
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const loginStatus = sessionStorage.getItem("kopicu_admin_login");
 
 if (loginStatus !== "true") {
   window.location.replace("/admin/login.html");
+  throw new Error("Akses tidak diizinkan.");
 }
 
 const form = document.getElementById("employee-form");
@@ -39,11 +37,27 @@ function escapeHTML(value = "") {
 }
 
 function getSelectedRole() {
-  return document.querySelector('input[name="employee-role"]:checked')?.value || "";
+  return document.querySelector(
+    'input[name="employee-role"]:checked'
+  )?.value || "";
 }
 
 function normalizePhone(value) {
-  return value.replace(/\D/g, "").replace(/^0/, "");
+  let phone = String(value || "").replace(/\D/g, "");
+
+  if (phone.startsWith("62")) {
+    phone = phone.substring(2);
+  }
+
+  if (phone.startsWith("0")) {
+    phone = phone.substring(1);
+  }
+
+  return phone;
+}
+
+function formatPhone(value) {
+  return `+62${normalizePhone(value)}`;
 }
 
 function validateForm() {
@@ -55,16 +69,27 @@ function validateForm() {
   const role = getSelectedRole();
   const storeId = storeSelect.value;
 
+  const usernameExists = Object.values(employees).some(employee =>
+    String(employee.username || "").toLowerCase() === username.toLowerCase()
+  );
+
+  const emailExists = Object.values(employees).some(employee =>
+    String(employee.email || "").toLowerCase() === email.toLowerCase()
+  );
+
   const valid =
-    username.length >= 4 &&
+    /^[a-zA-Z0-9._-]{4,30}$/.test(username) &&
     password.length >= 8 &&
     name.length >= 3 &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
-    /^(\+?62)?8[0-9]{8,12}$/.test(phoneInput.value.replace(/\s/g, "").replace(/^\+/, "")) &&
+    /^8[0-9]{8,12}$/.test(phone) &&
     Boolean(role) &&
-    Boolean(storeId);
+    Boolean(storeId) &&
+    !usernameExists &&
+    !emailExists;
 
   saveButton.disabled = !valid;
+
   return valid;
 }
 
@@ -72,7 +97,11 @@ async function loadStores() {
   const snapshot = await get(ref(db, "store"));
 
   if (!snapshot.exists()) {
-    storeSelect.innerHTML = '<option value="">Toko belum tersedia</option>';
+    storeSelect.innerHTML = `
+      <option value="">Toko belum tersedia</option>
+    `;
+    storeSelect.disabled = true;
+    validateForm();
     return;
   }
 
@@ -83,19 +112,25 @@ async function loadStores() {
     name: storeData.name || "Toko Utama"
   }];
 
-  (storeData.branches || []).forEach((branch, index) => {
-    stores.push({
-      id: branch.id || `branch_${index}`,
-      name: branch.name || branch.address || `Cabang ${index + 1}`
-    });
-  });
+  (Array.isArray(storeData.branches) ? storeData.branches : []).forEach(
+    (branch, index) => {
+      stores.push({
+        id: branch.id || `branch_${index}`,
+        name: branch.name || branch.address || `Cabang ${index + 1}`
+      });
+    }
+  );
 
-  storeSelect.innerHTML = stores.map(store => `
-    <option value="${escapeHTML(store.id)}">
-      ${escapeHTML(store.name)}
-    </option>
-  `).join("");
+  storeSelect.innerHTML = `
+    <option value="">Pilih toko</option>
+    ${stores.map(store => `
+      <option value="${escapeHTML(store.id)}">
+        ${escapeHTML(store.name)}
+      </option>
+    `).join("")}
+  `;
 
+  storeSelect.disabled = false;
   validateForm();
 }
 
@@ -104,19 +139,41 @@ async function loadEmployees() {
 
   employees = snapshot.exists() ? snapshot.val() : {};
 
+  if (
+    typeof employees !== "object" ||
+    employees === null ||
+    Array.isArray(employees)
+  ) {
+    employees = {};
+  }
+
   renderEmployees();
+  validateForm();
+}
+
+function getRoleName(role) {
+  const roles = {
+    manajer: "Manajer",
+    kasir: "Kasir",
+    driver: "Driver"
+  };
+
+  return roles[role] || "Tidak diketahui";
 }
 
 function renderEmployees() {
   const entries = Object.entries(employees);
 
-  employeeCount.textContent = entries.length;
+  employeeCount.textContent = `${entries.length} Karyawan`;
 
   if (!entries.length) {
     employeeList.innerHTML = `
       <div class="employee-empty">
-        <i class="fa-solid fa-users"></i>
-        <p>Belum ada karyawan.</p>
+        <div class="empty-icon">
+          <i class="fa-solid fa-users"></i>
+        </div>
+        <h3>Belum Ada Karyawan</h3>
+        <p>Karyawan yang berhasil ditambahkan akan muncul di sini.</p>
       </div>
     `;
     return;
@@ -126,11 +183,13 @@ function renderEmployees() {
     const name = escapeHTML(employee.name || "Tanpa Nama");
     const email = escapeHTML(employee.email || "-");
     const phone = escapeHTML(employee.phone || "-");
-    const role = escapeHTML(employee.role || "-");
-    const initial = escapeHTML((employee.name || "K").charAt(0).toUpperCase());
+    const role = escapeHTML(getRoleName(employee.role));
+    const initial = escapeHTML(
+      (employee.name || "K").charAt(0).toUpperCase()
+    );
 
     return `
-      <div class="employee-card" data-id="${escapeHTML(id)}">
+      <div class="employee-card" data-id="${escapeHTML(id)}" role="button" tabindex="0">
         <div class="employee-avatar">${initial}</div>
 
         <div class="employee-info">
@@ -140,6 +199,7 @@ function renderEmployees() {
         </div>
 
         <span class="employee-role-badge">${role}</span>
+
         <i class="fa-solid fa-chevron-right employee-arrow"></i>
       </div>
     `;
@@ -158,8 +218,40 @@ function showMessage(message, icon = "info") {
   }
 }
 
+function showEmployeeDetail(id) {
+  const employee = employees[id];
+
+  if (!employee) return;
+
+  const storeName =
+    employee.storeName ||
+    employee.storeId ||
+    "-";
+
+  if (window.Swal) {
+    Swal.fire({
+      title: escapeHTML(employee.name || "Detail Karyawan"),
+      html: `
+        <div style="text-align:left;line-height:1.9">
+          <p><strong>Username:</strong> ${escapeHTML(employee.username || "-")}</p>
+          <p><strong>Email:</strong> ${escapeHTML(employee.email || "-")}</p>
+          <p><strong>Nomor HP:</strong> ${escapeHTML(employee.phone || "-")}</p>
+          <p><strong>Peran:</strong> ${escapeHTML(getRoleName(employee.role))}</p>
+          <p><strong>Toko:</strong> ${escapeHTML(storeName)}</p>
+        </div>
+      `,
+      confirmButtonText: "Tutup"
+    });
+  } else {
+    showMessage(
+      `Nama: ${employee.name || "-"}\nUsername: ${employee.username || "-"}\nEmail: ${employee.email || "-"}\nNomor HP: ${employee.phone || "-"}\nPeran: ${getRoleName(employee.role)}\nToko: ${storeName}`
+    );
+  }
+}
+
 togglePassword?.addEventListener("click", () => {
   const visible = passwordInput.type === "password";
+
   passwordInput.type = visible ? "text" : "password";
 
   togglePassword.innerHTML = visible
@@ -198,37 +290,62 @@ phoneInput.addEventListener("input", () => {
   validateForm();
 });
 
-form.addEventListener("submit", async event => {
-  event.preventDefault();
-
-  if (!validateForm()) return;
-
-  showMessage(
-    "Pembuatan akun karyawan belum diaktifkan. Sistem autentikasi backend perlu disiapkan terlebih dahulu.",
-    "warning"
-  );
-});
-
 employeeList.addEventListener("click", event => {
   const card = event.target.closest(".employee-card");
+
   if (!card) return;
 
-  const employee = employees[card.dataset.id];
-  if (!employee) return;
+  showEmployeeDetail(card.dataset.id);
+});
+
+employeeList.addEventListener("keydown", event => {
+  if (
+    event.key !== "Enter" &&
+    event.key !== " "
+  ) {
+    return;
+  }
+
+  const card = event.target.closest(".employee-card");
+
+  if (!card) return;
+
+  event.preventDefault();
+  showEmployeeDetail(card.dataset.id);
+});
+
+form.addEventListener("submit", event => {
+  event.preventDefault();
+
+  if (!validateForm()) {
+    showMessage(
+      "Periksa kembali data karyawan. Pastikan username dan email belum digunakan.",
+      "warning"
+    );
+    return;
+  }
 
   showMessage(
-    `${employee.name || "-"}\nUsername: ${employee.username || "-"}\nPeran: ${employee.role || "-"}`,
-    "info"
+    "Formulir sudah valid. Penyimpanan akun belum diaktifkan karena backend autentikasi karyawan belum tersedia.",
+    "warning"
   );
 });
 
 async function initializePage() {
   try {
-    await loadStores();
-    await loadEmployees();
+    saveButton.disabled = true;
+
+    await Promise.all([
+      loadStores(),
+      loadEmployees()
+    ]);
   } catch (error) {
-    console.error("Gagal memuat data karyawan:", error);
-    showMessage("Gagal memuat data toko atau karyawan.", "error");
+    console.error("Gagal memuat halaman karyawan:", error);
+
+    showMessage(
+      "Gagal memuat data toko atau karyawan. Silakan periksa koneksi Firebase.",
+      "error"
+    );
   }
 }
 
