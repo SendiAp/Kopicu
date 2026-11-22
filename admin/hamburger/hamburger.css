@@ -251,3 +251,103 @@
     min-height: 40px;
   }
 }
+
+.sidebar-menu a.store-setup-locked {
+  opacity: 0.42;
+  color: #999 !important;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.sidebar-menu a.store-setup-locked:hover {
+  background: transparent !important;
+  color: #999 !important;
+}
+
+.store-lock-icon {
+  margin-left: auto;
+  font-size: 12px;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.store-lock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(3px);
+}
+
+.store-lock-dialog {
+  width: 100%;
+  max-width: 360px;
+  padding: 25px 22px 20px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.15);
+  font-family: "DM Sans", sans-serif;
+  text-align: center;
+  animation: storeLockAppear 0.2s ease;
+}
+
+.store-lock-symbol {
+  width: 54px;
+  height: 54px;
+  margin: 0 auto 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f3f3f3;
+  color: #888;
+  font-size: 21px;
+}
+
+.store-lock-dialog h3 {
+  margin: 0;
+  color: #38251d;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.store-lock-dialog p {
+  margin: 11px 0 20px;
+  color: #777;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.store-lock-dialog button {
+  width: 100%;
+  min-height: 43px;
+  border: 0;
+  border-radius: 9px;
+  background: #38251d;
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.store-lock-dialog button:hover {
+  background: #50372b;
+}
+
+@keyframes storeLockAppear {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
