@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Karyawan - KOPICU</title>
+
+  <link rel="stylesheet" href="karyawan.css">
+  <link rel="stylesheet" href="/admin/hamburger/hamburger.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+
+  <div id="hamburger-container"></div>
+
+  <main class="main-content">
+
+    <header class="page-header">
+      <div>
+        <h1>Karyawan</h1>
+        <p>Kelola akun dan akses karyawan toko kamu.</p>
+      </div>
+    </header>
+
+    <section class="employee-form-section">
+
+      <div class="section-heading">
+        <div>
+          <h2>Tambah Karyawan Baru</h2>
+          <p>Buat akun dan tentukan akses untuk karyawan baru.</p>
+        </div>
+        <span class="section-icon">
+          <i class="fa-solid fa-user-plus"></i>
+        </span>
+      </div>
+
+      <form id="employee-form">
+
+        <div class="form-group-heading">
+          <i class="fa-solid fa-key"></i>
+          <h3>Create Account</h3>
+        </div>
+
+        <div class="form-grid">
+
+          <div class="form-group">
+            <label for="employee-username">Username</label>
+            <input
+              type="text"
+              id="employee-username"
+              placeholder="Buat username karyawan"
+              autocomplete="off"
+              required
+            >
+            <small>Buatkan username untuk karyawan kamu.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="employee-password">Password</label>
+            <div class="password-wrapper">
+              <input
+                type="password"
+                id="employee-password"
+                placeholder="Buat password karyawan"
+                autocomplete="new-password"
+                required
+              >
+              <button type="button" class="toggle-password" id="toggle-password">
+                <i class="fa-regular fa-eye"></i>
+              </button>
+            </div>
+            <small>Buatkan password untuk karyawan kamu.</small>
+          </div>
+
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-group-heading">
+          <i class="fa-solid fa-id-card"></i>
+          <h3>Profile</h3>
+        </div>
+
+        <div class="form-grid">
+
+          <div class="form-group full-width">
+            <label for="employee-name">Nama Lengkap</label>
+            <input
+              type="text"
+              id="employee-name"
+              placeholder="Masukkan nama lengkap karyawan"
+              required
+            >
+            <small>Masukkan nama lengkap karyawan kamu.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="employee-email">Email</label>
+            <input
+              type="email"
+              id="employee-email"
+              placeholder="contoh@email.com"
+              required
+            >
+            <small>Masukkan email karyawan kamu.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="employee-phone">Nomor HP</label>
+            <div class="phone-wrapper">
+              <span>+62</span>
+              <input
+                type="tel"
+                id="employee-phone"
+                placeholder="833563356"
+                inputmode="numeric"
+                required
+              >
+            </div>
+            <small>Masukkan nomor HP tanpa angka 0 di depan.</small>
+          </div>
+
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-group-heading">
+          <i class="fa-solid fa-user-shield"></i>
+          <h3>Peran</h3>
+        </div>
+
+        <p class="section-description">
+          Peran mereka menentukan akses yang dapat digunakan.
+        </p>
+
+        <div class="role-list">
+
+          <label class="role-option">
+            <input type="radio" name="employee-role" value="manajer" required>
+            <span class="role-radio"></span>
+            <span class="role-content">
+              <span class="role-title">
+                <i class="fa-solid fa-user-tie"></i>
+                Manajer
+              </span>
+              <span class="role-description">
+                Diizinkan menggunakan semua fitur, kecuali menambahkan karyawan.
+              </span>
+            </span>
+          </label>
+
+          <label class="role-option">
+            <input type="radio" name="employee-role" value="kasir">
+            <span class="role-radio"></span>
+            <span class="role-content">
+              <span class="role-title">
+                <i class="fa-solid fa-cash-register"></i>
+                Kasir
+              </span>
+              <span class="role-description">
+                Hanya diizinkan untuk mengelola pesanan dan menerima pembayaran.
+              </span>
+            </span>
+          </label>
+
+          <label class="role-option">
+            <input type="radio" name="employee-role" value="driver">
+            <span class="role-radio"></span>
+            <span class="role-content">
+              <span class="role-title">
+                <i class="fa-solid fa-motorcycle"></i>
+                Driver
+              </span>
+              <span class="role-description">
+                Hanya diizinkan melihat lokasi customer pesanan dan informasi pengantaran, kecuali mengelola pesanan.
+              </span>
+            </span>
+          </label>
+
+        </div>
+
+        <div class="form-divider"></div>
+
+        <div class="form-group-heading">
+          <i class="fa-solid fa-store"></i>
+          <h3>Akses Toko</h3>
+        </div>
+
+        <p class="section-description">
+          Tentukan toko mana yang dapat diakses oleh karyawan ini dan menjadi penempatannya.
+        </p>
+
+        <div class="form-group">
+          <label for="employee-store">Pilih Toko</label>
+          <select id="employee-store" required>
+            <option value="">Pilih (default)</option>
+          </select>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" id="save-employee" disabled>
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Simpan Perubahan</span>
+          </button>
+        </div>
+
+      </form>
+
+    </section>
+
+    <section class="employee-list-section">
+
+      <div class="section-heading">
+        <div>
+          <h2>Semua Karyawan</h2>
+          <p>Daftar akun karyawan yang terdaftar.</p>
+        </div>
+
+        <span class="employee-count" id="employee-count">0 Karyawan</span>
+      </div>
+
+      <div class="employee-list" id="employee-list">
+
+        <div class="employee-empty">
+          <div class="empty-icon">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <h3>Belum Ada Karyawan</h3>
+          <p>Karyawan yang berhasil ditambahkan akan muncul di sini.</p>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script src="/admin/hamburger/hamburger.js"></script>
+  <script type="module" src="karyawan.js"></script>
+
+</body>
+</html>
