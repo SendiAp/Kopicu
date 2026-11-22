@@ -14,7 +14,65 @@ body {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 35px 30px 60px;
+  padding: 0 30px 60px;
+}
+
+.topbar {
+  height: 70px;
+  margin: 0 -30px 30px;
+  padding: 0 30px;
+  background: #fff;
+  border-bottom: 1px solid #eeeeee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.hamburger-button {
+  width: 39px;
+  height: 39px;
+  border: 1px solid #eeeeee;
+  border-radius: 10px;
+  background: #fff;
+  color: #38251d;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.greeting {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.greeting span {
+  color: #777;
+}
+
+.greeting strong {
+  color: #38251d;
+  font-weight: 800;
+}
+
+.admin-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #f1e9e3;
+  color: #38251d;
+  font-weight: 800;
+  font-size: 14px;
 }
 
 .page-header {
@@ -474,7 +532,21 @@ body {
 
 @media (max-width: 768px) {
   .main-content {
-    padding: 25px 18px 45px;
+    padding: 0 18px 45px;
+  }
+
+  .topbar {
+    height: 62px;
+    margin: 0 -18px 25px;
+    padding: 0 18px;
+  }
+
+  .topbar-left {
+    gap: 11px;
+  }
+
+  .greeting {
+    font-size: 13px;
   }
 
   .page-header h1 {
@@ -498,7 +570,12 @@ body {
 
 @media (max-width: 520px) {
   .main-content {
-    padding: 22px 14px 40px;
+    padding: 0 14px 40px;
+  }
+
+  .topbar {
+    margin: 0 -14px 22px;
+    padding: 0 14px;
   }
 
   .form-grid {
