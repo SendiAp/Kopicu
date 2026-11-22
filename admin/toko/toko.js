@@ -34,6 +34,11 @@ const managerEmailInput = $("manager-email");
 const managerPhoneInput = $("manager-phone");
 const restaurantPhoneInput = $("restaurant-phone");
 const saveButton = $("save-toko-button");
+const deliveryInput = $("service-delivery");
+const pickupInput = $("service-pickup");
+const dineInInput = $("service-dinein");
+const dineInOptions = $("dinein-options");
+const resetButton = $("reset-toko-button");
 
 let savedData = {};
 let map;
@@ -170,15 +175,20 @@ function addressComplete() {
 function updateSaveButton() {
   if (!saveButton) return;
 
+  if (resetButton) {
+    resetButton.disabled = !hasChanges || isSaving || isLoading;
+  }
+  
   const valid =
     nameInput?.value.trim() &&
+    hasSelectedService() &&
     addressComplete() &&
     validEmail(ownerEmailInput?.value, true) &&
     validPhone(ownerPhoneInput?.value, true) &&
     validEmail(managerEmailInput?.value) &&
     validPhone(managerPhoneInput?.value) &&
     validPhone(restaurantPhoneInput?.value);
-
+  
   saveButton.disabled = !valid || isSaving || isLoading || !hasChanges;
 }
 
@@ -186,6 +196,20 @@ function markChanged() {
   if (isLoading) return;
   hasChanges = true;
   updateSaveButton();
+}
+
+function updateDineInOptions() {
+  if (!dineInInput || !dineInOptions) return;
+
+  dineInOptions.hidden = !dineInInput.checked;
+}
+
+function hasSelectedService() {
+  return Boolean(
+    deliveryInput?.checked ||
+    pickupInput?.checked ||
+    dineInInput?.checked
+  );
 }
 
 function setButtonLoading(loading) {
@@ -711,6 +735,32 @@ async function loadStore() {
 async function fillForm(data) {
   nameInput.value = data.name || data.nama || "";
 
+  const services = data.services || {};
+  
+  if (deliveryInput) {
+    deliveryInput.checked = Boolean(services.delivery);
+  }
+  
+  if (pickupInput) {
+    pickupInput.checked = Boolean(services.pickup);
+  }
+  
+  if (dineInInput) {
+    dineInInput.checked = Boolean(services.dineIn);
+  }
+  
+  const identifier = services.dineInIdentifier || "tableNumber";
+  
+  const identifierInput = document.querySelector(
+    `input[name="dineInIdentifier"][value="${identifier}"]`
+  );
+  
+  if (identifierInput) {
+    identifierInput.checked = true;
+  }
+  
+  updateDineInOptions();
+  
   latitudeInput.value = data.latitude || "";
   longitudeInput.value = data.longitude || "";
 
@@ -741,6 +791,15 @@ function collectStoreData() {
   return {
     name: nameInput.value.trim(),
 
+    services: {
+      delivery: deliveryInput?.checked || false,
+      pickup: pickupInput?.checked || false,
+      dineIn: dineInInput?.checked || false,
+      dineInIdentifier:
+        document.querySelector('input[name="dineInIdentifier"]:checked')?.value
+        || "tableNumber"
+    },
+    
     latitude: Number(latitudeInput.value),
     longitude: Number(longitudeInput.value),
 
@@ -775,6 +834,12 @@ function validateStoreData() {
     return false;
   }
 
+  if (!hasSelectedService()) {
+    popup("Pilih minimal satu layanan toko: Delivery, Pickup, atau Dine In.");
+    deliveryInput?.focus();
+    return false;
+  }
+  
   if (!latitudeInput.value || !longitudeInput.value) {
     popup("Tentukan titik koordinat toko pada peta.");
     return false;
@@ -870,6 +935,8 @@ async function saveStore() {
     savedData = data;
     hasChanges = false;
 
+    updateSaveButton();
+    
     await popup("Perubahan data toko berhasil disimpan.", "Berhasil");
   } catch (error) {
     console.error("Gagal menyimpan toko:", error);
@@ -881,7 +948,71 @@ async function saveStore() {
   }
 }
 
+async function resetStoreChanges() {
+  if (!hasChanges || isSaving || isLoading) return;
+
+  const confirmed = await popup(
+    "Semua perubahan yang belum disimpan akan dikembalikan ke data terakhir. Lanjutkan?",
+    "Reset Perubahan",
+    true
+  );
+
+  if (!confirmed) return;
+
+  isLoading = true;
+  updateSaveButton();
+
+  try {
+    await fillForm(savedData);
+
+    const lat = Number(latitudeInput.value);
+    const lng = Number(longitudeInput.value);
+
+    if (map && latitudeInput.value && longitudeInput.value) {
+      const position = [lat, lng];
+
+      if (marker) {
+        marker.setLatLng(position);
+      } else {
+        marker = window.L.marker(position).addTo(map);
+      }
+
+      map.setView(position, 16);
+    } else if (marker && map) {
+      map.removeLayer(marker);
+      marker = null;
+    }
+
+    hasChanges = false;
+    updateDineInOptions();
+
+    await popup("Perubahan berhasil dikembalikan ke data terakhir.");
+  } catch (error) {
+    console.error("Gagal mereset perubahan:", error);
+    await popup("Gagal mengembalikan data. Silakan muat ulang halaman.");
+  } finally {
+    isLoading = false;
+    updateSaveButton();
+  }
+}
+
 function bindEvents() {
+  resetButton?.addEventListener("click", resetStoreChanges);
+  
+  deliveryInput?.addEventListener("change", markChanged);
+  pickupInput?.addEventListener("change", markChanged);
+  
+  dineInInput?.addEventListener("change", () => {
+    updateDineInOptions();
+    markChanged();
+  });
+  
+  document.querySelectorAll('input[name="dineInIdentifier"]').forEach(input => {
+    input.addEventListener("change", markChanged);
+  });
+
+updateDineInOptions();
+  
   if (form) {
     form.addEventListener("submit", event => {
       event.preventDefault();
@@ -958,7 +1089,6 @@ async function initialize() {
     await popup("Halaman toko gagal dimuat dengan sempurna.");
   } finally {
     isLoading = false;
-    updateBranchVisibility();
     updateSaveButton();
   }
 }
