@@ -17,24 +17,51 @@
 </head>
 <body>
 
-  <header class="topbar">
-    <a class="brand" href="index.html" aria-label="KOPICU">
-      <img id="store-logo" src="" alt="KOPICU" hidden>
-      <span id="brand-fallback">KOPICU</span>
-    </a>
+  <header class="outlet-header">
 
-    <label class="search-box">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input
-        id="product-search"
-        type="search"
-        placeholder="Cari kopi atau menu favoritmu..."
-        autocomplete="off"
+    <div class="outlet-decoration">
+      <span class="decoration-star star-one">✦</span>
+      <span class="decoration-star star-two">✧</span>
+      <span class="decoration-star star-three">✦</span>
+
+      <span class="decoration-moon">
+        <i class="fa-solid fa-moon"></i>
+      </span>
+
+      <span class="decoration-cloud cloud-one"></span>
+      <span class="decoration-cloud cloud-two"></span>
+    </div>
+
+    <div class="outlet-content">
+
+      <button
+        id="outlet-selector"
+        class="outlet-selector"
+        type="button"
+        aria-label="Pilih outlet toko"
       >
-      <button id="clear-search" class="clear-search" type="button" hidden>
-        <i class="fa-solid fa-xmark"></i>
+        <span class="outlet-selector-text">
+          <span id="outlet-title">Pilih outlet</span>
+          <span id="outlet-address" hidden></span>
+        </span>
+
+        <span class="outlet-selector-icon">
+          <i class="fa-solid fa-chevron-down"></i>
+        </span>
       </button>
-    </label>
+
+      <div id="outlet-services" class="outlet-services" hidden>
+        <span class="outlet-services-icon">
+          <i class="fa-solid fa-store"></i>
+        </span>
+
+        <p id="outlet-services-text">
+          Melayani Delivery / Pickup / Dine In
+        </p>
+      </div>
+
+    </div>
+
   </header>
 
   <main class="page">
