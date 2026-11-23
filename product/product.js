@@ -1,25 +1,27 @@
 import { db } from "../database/firebase.js";
+
 import {
   ref,
   get
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-const bannerList = document.getElementById("banner-list");
-const bannerDots = document.getElementById("banner-dots");
-const categoryList = document.getElementById("category-list");
-const productList = document.getElementById("product-list");
-const searchInput = document.getElementById("product-search");
-const clearSearch = document.getElementById("clear-search");
-const emptyState = document.getElementById("empty-state");
-const productsHeading = document.getElementById("products-heading");
-const resetCategory = document.getElementById("reset-category");
-const showAllCategories = document.getElementById("show-all-categories");
-const storeLogo = document.getElementById("store-logo");
-const brandFallback = document.getElementById("brand-fallback");
+const $ = id => document.getElementById(id);
+
+const bannerList = $("banner-list");
+const bannerDots = $("banner-dots");
+const categoryList = $("category-list");
+const productList = $("product-list");
+const emptyState = $("empty-state");
+const productsHeading = $("products-heading");
+const resetCategory = $("reset-category");
+const showAllCategories = $("show-all-categories");
 
 let allProducts = [];
 let allCategories = [];
+let allOutlets = [];
+let selectedOutlet = null;
 let activeCategory = "all";
+let bannerScrollHandler = null;
 
 const rupiah = value => new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -40,40 +42,244 @@ function toArray(data) {
 
   return Object.entries(data).map(([id, value]) => ({
     id,
-    ...value
+    ...(value && typeof value === "object" ? value : {})
   }));
 }
 
-function renderStoreLogo(value) {
-  const logoUrl = typeof value === "string"
-    ? value
-    : value?.url || value?.image || "";
+function getOutletAddress(outlet) {
+  return [
+    outlet.locationType,
+    outlet.address,
+    outlet.village,
+    outlet.district,
+    outlet.city,
+    outlet.province,
+    outlet.postalCode
+  ].filter(Boolean).join(", ");
+}
 
-  if (!logoUrl) {
-    storeLogo.hidden = true;
-    brandFallback.hidden = false;
+function getAvailableServices() {
+  const services = selectedOutlet?.services || {};
+
+  return [
+    services.delivery ? "Delivery" : null,
+    services.pickup ? "Pickup" : null,
+    services.dineIn ? "Dine In" : null
+  ].filter(Boolean);
+}
+
+function createOutletHeader() {
+  let header = $("outlet-header");
+
+  if (!header) {
+    header = document.createElement("header");
+    header.id = "outlet-header";
+    header.className = "outlet-header";
+
+    const page = document.querySelector(".page");
+
+    if (page) {
+      document.body.insertBefore(header, page);
+    } else {
+      document.body.prepend(header);
+    }
+  }
+
+  header.style.position = "sticky";
+  header.style.top = "0";
+  header.style.zIndex = "100";
+  header.style.background = "#fff";
+  header.style.width = "100%";
+
+  header.innerHTML = `
+    <div class="outlet-header-inner">
+      <div class="outlet-decoration">
+        <span class="outlet-star outlet-star-one">✦</span>
+        <span class="outlet-star outlet-star-two">✧</span>
+        <span class="outlet-moon">☾</span>
+      </div>
+
+      <div class="outlet-selector-wrapper">
+        <button
+          type="button"
+          id="outlet-selector"
+          class="outlet-selector"
+        >
+          <span class="outlet-selector-text">
+            <strong id="outlet-title">Pilih outlet</strong>
+            <small id="outlet-address"></small>
+          </span>
+
+          <i class="fa-solid fa-chevron-down" id="outlet-chevron"></i>
+        </button>
+
+        <div id="outlet-dropdown" class="outlet-dropdown" hidden></div>
+
+        <div class="outlet-selector-icon">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+      </div>
+
+      <p id="outlet-services" class="outlet-services" hidden></p>
+    </div>
+  `;
+
+  const selector = $("outlet-selector");
+  const dropdown = $("outlet-dropdown");
+
+  selector.addEventListener("click", () => {
+    if (allOutlets.length <= 1) return;
+
+    dropdown.hidden = !dropdown.hidden;
+    selector.classList.toggle("open", !dropdown.hidden);
+  });
+
+  document.addEventListener("click", event => {
+    if (
+      !event.target.closest("#outlet-selector") &&
+      !event.target.closest("#outlet-dropdown")
+    ) {
+      dropdown.hidden = true;
+      selector.classList.remove("open");
+    }
+  });
+}
+
+function renderOutletDropdown() {
+  const dropdown = $("outlet-dropdown");
+
+  if (!dropdown) return;
+
+  dropdown.innerHTML = allOutlets.map(outlet => `
+    <button
+      type="button"
+      class="outlet-option ${selectedOutlet?.id === outlet.id ? "active" : ""}"
+      data-outlet-id="${safe(outlet.id)}"
+    >
+      <span class="outlet-option-icon">
+        <i class="fa-solid fa-store"></i>
+      </span>
+
+      <span class="outlet-option-info">
+        <strong>${safe(outlet.name)}</strong>
+        <small>${safe(getOutletAddress(outlet))}</small>
+      </span>
+
+      ${selectedOutlet?.id === outlet.id
+        ? '<i class="fa-solid fa-circle-check outlet-option-check"></i>'
+        : ""}
+    </button>
+  `).join("");
+
+  dropdown.querySelectorAll("[data-outlet-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      const outlet = allOutlets.find(item =>
+        item.id === button.dataset.outletId
+      );
+
+      if (!outlet) return;
+
+      selectedOutlet = outlet;
+      renderSelectedOutlet();
+      dropdown.hidden = true;
+      $("outlet-selector")?.classList.remove("open");
+    });
+  });
+}
+
+function renderSelectedOutlet() {
+  const title = $("outlet-title");
+  const address = $("outlet-address");
+  const servicesElement = $("outlet-services");
+  const selector = $("outlet-selector");
+  const chevron = $("outlet-chevron");
+
+  if (!selectedOutlet) {
+    title.textContent = "Pilih outlet";
+    address.textContent = "";
+    servicesElement.hidden = true;
+    selector.disabled = allOutlets.length <= 1;
+    chevron.hidden = allOutlets.length <= 1;
     return;
   }
 
-  storeLogo.onload = () => {
-    storeLogo.hidden = false;
-    brandFallback.hidden = true;
-  };
+  title.textContent = selectedOutlet.name || "Outlet KOPICU";
+  address.textContent = getOutletAddress(selectedOutlet);
 
-  storeLogo.onerror = () => {
-    storeLogo.hidden = true;
-    brandFallback.hidden = false;
-  };
+  const services = getAvailableServices();
 
-  storeLogo.src = logoUrl;
+  servicesElement.textContent = services.length
+    ? `Melayani ${services.join(" / ")}`
+    : "Belum ada layanan yang tersedia";
+
+  servicesElement.hidden = false;
+
+  selector.disabled = allOutlets.length <= 1;
+  chevron.hidden = allOutlets.length <= 1;
+
+  renderOutletDropdown();
 }
 
-function renderBanners(items) {
-  const active = items.filter(item =>
-    item.active !== false && item.image
-  );
+function renderOutlets(storeData) {
+  const mainOutlet = {
+    id: "main",
+    name: storeData.name || "Outlet Utama",
+    latitude: storeData.latitude,
+    longitude: storeData.longitude,
+    locationType: storeData.locationType || "",
+    province: storeData.province || "",
+    city: storeData.city || "",
+    district: storeData.district || "",
+    village: storeData.village || "",
+    postalCode: storeData.postalCode || "",
+    address: storeData.address || "",
+    services: storeData.services || {}
+  };
 
-  if (!active.length) {
+  const branches = Array.isArray(storeData.branches)
+    ? storeData.branches
+    : Object.entries(storeData.branches || {}).map(([id, branch]) => ({
+        id,
+        ...branch
+      }));
+
+  allOutlets = [
+    mainOutlet,
+    ...branches.map((branch, index) => ({
+      ...branch,
+      id: String(branch.id || `branch_${index + 1}`),
+      name: branch.name || branch.title || `Cabang ${index + 1}`,
+      services: storeData.services || {}
+    }))
+  ];
+
+  if (allOutlets.length === 1) {
+    selectedOutlet = allOutlets[0];
+  } else {
+    selectedOutlet = null;
+  }
+
+  renderSelectedOutlet();
+}
+
+function renderBanners(data) {
+  if (!bannerList || !bannerDots) return;
+
+  const banners = Object.entries(data || {})
+    .map(([id, item]) => ({
+      id,
+      url: typeof item === "string"
+        ? item
+        : item?.url || item?.image || ""
+    }))
+    .filter(item => item.url);
+
+  if (bannerScrollHandler) {
+    bannerList.removeEventListener("scroll", bannerScrollHandler);
+    bannerScrollHandler = null;
+  }
+
+  if (!banners.length) {
     bannerList.innerHTML = `
       <div class="banner-card">
         <div class="banner-overlay">
@@ -87,30 +293,23 @@ function renderBanners(items) {
     return;
   }
 
-  const sorted = active.sort((a, b) =>
-    (a.order || 0) - (b.order || 0)
-  );
-
-  bannerList.innerHTML = sorted.map(item => `
+  bannerList.innerHTML = banners.map((item, index) => `
     <article class="banner-card">
       <img
-        src="${safe(item.image)}"
-        alt="${safe(item.title || "Banner KOPICU")}"
-        loading="lazy"
+        src="${safe(item.url)}"
+        alt="Banner promosi KOPICU ${index + 1}"
+        loading="${index === 0 ? "eager" : "lazy"}"
       >
-
-      <div class="banner-overlay">
-        ${item.title ? `<strong>${safe(item.title)}</strong>` : ""}
-        ${item.subtitle ? `<span>${safe(item.subtitle)}</span>` : ""}
-      </div>
     </article>
   `).join("");
 
-  bannerDots.innerHTML = sorted.map((_, i) => `
-    <span class="banner-dot ${i === 0 ? "active" : ""}"></span>
+  bannerDots.innerHTML = banners.map((_, index) => `
+    <span class="banner-dot ${index === 0 ? "active" : ""}"></span>
   `).join("");
 
-  bannerList.addEventListener("scroll", updateBannerDots, {
+  bannerScrollHandler = updateBannerDots;
+
+  bannerList.addEventListener("scroll", bannerScrollHandler, {
     passive: true
   });
 }
@@ -130,6 +329,8 @@ function updateBannerDots() {
 }
 
 function renderCategories() {
+  if (!categoryList) return;
+
   const visible = allCategories.filter(category =>
     category.active !== false
   );
@@ -162,7 +363,8 @@ function renderCategories() {
 }
 
 function renderProductCard(product) {
-  const productUrl = `customer/product.html?id=${encodeURIComponent(product.id)}`;
+  const productUrl =
+    `customer/product.html?id=${encodeURIComponent(product.id)}`;
 
   return `
     <article class="product-card">
@@ -205,7 +407,7 @@ function renderProductCard(product) {
 }
 
 function renderProducts() {
-  const query = searchInput.value.trim().toLocaleLowerCase("id");
+  if (!productList) return;
 
   const products = allProducts.filter(product => {
     const available = product.available !== false;
@@ -214,39 +416,35 @@ function renderProducts() {
       activeCategory === "all" ||
       product.categoryId === activeCategory;
 
-    const searchMatch =
-      !query ||
-      `${product.name || ""} ${product.description || ""}`
-        .toLocaleLowerCase("id")
-        .includes(query);
-
-    return available && categoryMatch && searchMatch;
+    return available && categoryMatch;
   });
 
-  productsHeading.textContent = query
-    ? "Hasil pencarian"
-    : "Menu";
+  productsHeading.textContent = "Menu";
 
-  resetCategory.hidden = activeCategory === "all";
+  if (resetCategory) {
+    resetCategory.hidden = activeCategory === "all";
+  }
 
   if (!products.length) {
     productList.innerHTML = "";
-    emptyState.textContent = query
-      ? "Menu yang kamu cari belum tersedia."
-      : "Produk belum tersedia.";
+
+    emptyState.textContent = "Produk belum tersedia.";
     emptyState.hidden = false;
+
     return;
   }
 
   emptyState.hidden = true;
 
   if (activeCategory !== "all") {
+    const categoryName = allCategories.find(item =>
+      item.id === activeCategory
+    )?.name || "Menu";
+
     productList.innerHTML = `
       <section class="product-category-group">
         <h3 class="product-category-title">
-          ${safe(allCategories.find(item =>
-            item.id === activeCategory
-          )?.name || "Menu")}
+          ${safe(categoryName)}
         </h3>
 
         <div class="product-category-items">
@@ -305,20 +503,26 @@ function renderProducts() {
 
 async function loadHome() {
   try {
+    createOutletHeader();
+
     const [
-      settingsSnap,
+      storeSnap,
       bannersSnap,
       categoriesSnap,
       productsSnap
     ] = await Promise.all([
-      get(ref(db, "settings/storeLogo")),
-      get(ref(db, "banners")),
+      get(ref(db, "store")),
+      get(ref(db, "settings/promotionBanners")),
       get(ref(db, "categories")),
       get(ref(db, "products"))
     ]);
 
-    renderStoreLogo(settingsSnap.val());
-    renderBanners(toArray(bannersSnap.val()));
+    const storeData = storeSnap.exists()
+      ? storeSnap.val() || {}
+      : {};
+
+    renderOutlets(storeData);
+    renderBanners(bannersSnap.exists() ? bannersSnap.val() : {});
 
     allCategories = toArray(categoriesSnap.val());
     allProducts = toArray(productsSnap.val());
@@ -329,48 +533,41 @@ async function loadHome() {
   } catch (error) {
     console.error("Gagal memuat halaman KOPICU:", error);
 
-    bannerList.innerHTML = `
-      <div class="banner-card">
-        <div class="banner-overlay">
-          <strong>KOPICU</strong>
-          <span>Belum dapat terhubung ke database.</span>
+    if (bannerList) {
+      bannerList.innerHTML = `
+        <div class="banner-card">
+          <div class="banner-overlay">
+            <strong>KOPICU</strong>
+            <span>Belum dapat terhubung ke database.</span>
+          </div>
         </div>
-      </div>
-    `;
+      `;
+    }
 
-    categoryList.innerHTML = "";
-    productList.innerHTML = "";
+    if (categoryList) categoryList.innerHTML = "";
+    if (productList) productList.innerHTML = "";
 
-    emptyState.textContent =
-      "Gagal memuat menu. Periksa konfigurasi Firebase dan koneksi internet.";
+    if (emptyState) {
+      emptyState.textContent =
+        "Gagal memuat menu. Periksa koneksi Firebase dan coba lagi.";
 
-    emptyState.hidden = false;
+      emptyState.hidden = false;
+    }
   }
 }
 
-searchInput.addEventListener("input", () => {
-  clearSearch.hidden = !searchInput.value;
-  renderProducts();
-});
-
-clearSearch.addEventListener("click", () => {
-  searchInput.value = "";
-  clearSearch.hidden = true;
-  renderProducts();
-});
-
-resetCategory.addEventListener("click", () => {
+resetCategory?.addEventListener("click", () => {
   activeCategory = "all";
   renderCategories();
   renderProducts();
 });
 
-showAllCategories.addEventListener("click", () => {
+showAllCategories?.addEventListener("click", () => {
   activeCategory = "all";
   renderCategories();
   renderProducts();
 
-  categoryList.scrollTo({
+  categoryList?.scrollTo({
     left: 0,
     behavior: "smooth"
   });
