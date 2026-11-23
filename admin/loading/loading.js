@@ -3,12 +3,13 @@ function createPageLoading() {
 
   const loading = document.createElement("div");
   loading.id = "page-loading";
-
+  
   loading.innerHTML = `
-    <div class="loading-spinner"></div>
-    <div class="loading-brand">KOPICU</div>
-    <div class="loading-text">Menyiapkan halaman...</div>
+  <div class="loading-spinner">
+  <i class="fa-solid fa-store"></i>
+  </div>
   `;
+
 
   document.body.appendChild(loading);
 
