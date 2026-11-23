@@ -510,19 +510,19 @@ async function loadSidebarLogo(sidebar, sidebarLogo) {
   sidebarLogo.removeAttribute("src");
 
   try {
-    const snapshot = await get(ref(db, "settings/storeLogo"));
+    const snapshot = await get(ref(db, "settings/adminBanner"));
 
     if (!snapshot.exists()) return;
 
     const data = snapshot.val();
 
-    const logoUrl = typeof data === "string"
+    const imageUrl = typeof data === "string"
       ? data.trim()
       : typeof data === "object" && data !== null
         ? String(data.url || data.image || "").trim()
         : "";
 
-    if (!logoUrl) return;
+    if (!imageUrl) return;
 
     sidebarLogo.onload = () => {
       sidebarLogo.hidden = false;
@@ -535,9 +535,9 @@ async function loadSidebarLogo(sidebar, sidebarLogo) {
       sidebar.classList.add("no-logo");
     };
 
-    sidebarLogo.src = logoUrl;
+    sidebarLogo.src = imageUrl;
   } catch (error) {
-    console.error("Gagal memuat logo sidebar:", error);
+    console.error("Gagal memuat banner sidebar:", error);
 
     sidebarLogo.hidden = true;
     sidebarLogo.removeAttribute("src");
