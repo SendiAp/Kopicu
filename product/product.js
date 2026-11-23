@@ -13,6 +13,12 @@ const productsHeading = document.getElementById("products-heading");
 const resetCategory = document.getElementById("reset-category");
 const showAllCategories = document.getElementById("show-all-categories");
 
+const outletSelector = document.getElementById("outlet-selector");
+const outletTitle = document.getElementById("outlet-title");
+const outletAddress = document.getElementById("outlet-address");
+const outletServices = document.getElementById("outlet-services");
+const outletServicesText = document.getElementById("outlet-services-text");
+
 let allProducts = [];
 let allCategories = [];
 let activeCategory = "all";
@@ -83,118 +89,61 @@ function getServiceLabels() {
   return labels;
 }
 
-function ensureOutletSection() {
-  const existing = [...document.querySelectorAll("#outlet-section")];
-
-  let section = existing.shift();
-
-  existing.forEach(element => element.remove());
-
-  if (!section) {
-    section = document.createElement("section");
-    section.id = "outlet-section";
-    section.className = "outlet-section";
-  }
-
-  const bannerSection = document.querySelector(".banner-section");
-
-  if (bannerSection?.parentElement) {
-    bannerSection.parentElement.insertBefore(section, bannerSection);
-  } else {
-    document.querySelector("main")?.prepend(section);
-  }
-
-  section.style.position = "sticky";
-  section.style.top = "0";
-  section.style.zIndex = "25";
-  section.style.background = "#fff";
-
-  return section;
-}
-
 function renderOutlet() {
-  const section = ensureOutletSection();
+  if (!outletSelector || !outletTitle || !outletAddress) return;
+
   const outlets = getOutlets();
+  const services = getServiceLabels();
+  const selectorIcon = outletSelector.querySelector(".outlet-selector-icon");
+
+  outletServices?.setAttribute("hidden", "");
 
   if (!outlets.length) {
-    section.innerHTML = `
-      <div class="outlet-selector">
-        <div class="outlet-selector-icon">
-          <i class="fa-solid fa-location-dot"></i>
-        </div>
-        <div class="outlet-selector-content">
-          <span class="outlet-label">Outlet belum tersedia</span>
-          <strong>Alamat toko belum diatur</strong>
-        </div>
-      </div>
-    `;
+    outletTitle.textContent = "Outlet belum tersedia";
+    outletAddress.hidden = true;
+    outletAddress.textContent = "";
+    outletSelector.disabled = true;
+
+    if (selectorIcon) selectorIcon.hidden = true;
+
     return;
+  }
+
+  outletSelector.disabled = false;
+
+  if (selectorIcon) {
+    selectorIcon.hidden = outlets.length <= 1;
   }
 
   if (outlets.length === 1) {
     selectedOutlet = outlets[0];
-    renderSelectedOutlet(section);
-    return;
-  }
-
-  if (!selectedOutlet || !outlets.some(outlet => outlet.id === selectedOutlet.id)) {
+  } else if (
+    !selectedOutlet ||
+    !outlets.some(outlet => outlet.id === selectedOutlet.id)
+  ) {
     selectedOutlet = null;
   }
 
   if (!selectedOutlet) {
-    section.innerHTML = `
-      <button class="outlet-selector outlet-select-button" id="choose-outlet-button" type="button">
-        <span class="outlet-selector-icon">
-          <i class="fa-solid fa-location-dot"></i>
-        </span>
-        <span class="outlet-selector-content">
-          <span class="outlet-label">Lokasi pengambilan</span>
-          <strong>Pilih outlet toko</strong>
-        </span>
-        <span class="outlet-chevron">
-          <i class="fa-solid fa-chevron-down"></i>
-        </span>
-      </button>
-    `;
-
-    section.querySelector("#choose-outlet-button")?.addEventListener("click", showOutletPicker);
+    outletTitle.textContent = "Pilih outlet";
+    outletAddress.hidden = true;
+    outletAddress.textContent = "";
+    outletSelector.setAttribute("aria-label", "Pilih outlet toko");
     return;
   }
 
-  renderSelectedOutlet(section);
-}
+  outletTitle.textContent = "Lokasi outlet";
+  outletAddress.textContent = getOutletAddress(selectedOutlet);
+  outletAddress.hidden = false;
+  outletSelector.setAttribute(
+    "aria-label",
+    `Outlet terpilih: ${getOutletAddress(selectedOutlet)}`
+  );
 
-function renderSelectedOutlet(section) {
-  const address = getOutletAddress(selectedOutlet);
-  const services = getServiceLabels();
-
-  section.innerHTML = `
-    <button class="outlet-selector outlet-select-button" id="choose-outlet-button" type="button">
-      <span class="outlet-selector-icon">
-        <i class="fa-solid fa-location-dot"></i>
-      </span>
-      <span class="outlet-selector-content">
-        <span class="outlet-label">Lokasi outlet</span>
-        <strong class="outlet-address">${safe(address)}</strong>
-      </span>
-      ${getOutlets().length > 1 ? `
-        <span class="outlet-chevron">
-          <i class="fa-solid fa-chevron-down"></i>
-        </span>
-      ` : ""}
-    </button>
-
-    ${services.length ? `
-      <div class="outlet-services">
-        <i class="fa-solid fa-circle-check"></i>
-        <span>Melayani ${services.map(safe).join(" / ")}</span>
-      </div>
-    ` : ""}
-  `;
-
-  section.querySelector("#choose-outlet-button")?.addEventListener("click", () => {
-    if (getOutlets().length > 1) showOutletPicker();
-  });
+  if (services.length && outletServices && outletServicesText) {
+    outletServicesText.textContent = `Melayani ${services.join(" / ")}`;
+    outletServices.hidden = false;
+  }
 }
 
 function showOutletPicker() {
@@ -265,6 +214,10 @@ function showOutletPicker() {
     });
   });
 }
+
+outletSelector?.addEventListener("click", () => {
+  showOutletPicker();
+});
 
 function renderBanners(items) {
   if (!bannerList || !bannerDots) return;
