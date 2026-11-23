@@ -268,6 +268,19 @@ function popup(message, title = "Informasi", type = "info") {
   });
 }
 
+function formatStoreAddress(location = {}) {
+  return [
+    location.address || location.alamat,
+    location.village || location.kelurahan,
+    location.district || location.kecamatan,
+    location.city || location.kota,
+    location.province || location.provinsi,
+    location.postalCode || location.kodePos
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
 async function loadStores() {
   const snapshot = await get(ref(db, "store"));
 
@@ -282,27 +295,40 @@ async function loadStores() {
 
   storeData = snapshot.val();
 
-  const stores = [{
-    id: "default",
-    name: storeData.name || "Toko Utama"
-  }];
+  const storeName = storeData.name || storeData.nama || "Toko Utama";
+  const mainAddress = formatStoreAddress(storeData);
 
-  (Array.isArray(storeData.branches) ? storeData.branches : []).forEach(
-    (branch, index) => {
-      stores.push({
-        id: branch.id || `branch_${index}`,
-        name: branch.name || branch.address || `Cabang ${index + 1}`
-      });
+  const stores = [
+    {
+      id: "default",
+      name: storeName,
+      address: mainAddress
     }
-  );
+  ];
+
+  const branches = Array.isArray(storeData.branches)
+    ? storeData.branches
+    : Object.values(storeData.branches || {});
+
+  branches.forEach((branch, index) => {
+    stores.push({
+      id: branch.id || `branch_${index}`,
+      name: `${storeName} - Cabang ${index + 1}`,
+      address: formatStoreAddress(branch)
+    });
+  });
 
   storeSelect.innerHTML = `
     <option value="">Pilih toko</option>
-    ${stores.map(store => `
-      <option value="${escapeHTML(store.id)}">
-        ${escapeHTML(store.name)}
-      </option>
-    `).join("")}
+    ${stores.map(store => {
+      const label = `${store.name} — ${store.address || "Alamat belum tersedia"}`;
+
+      return `
+        <option value="${escapeHTML(store.id)}">
+          ${escapeHTML(label)}
+        </option>
+      `;
+    }).join("")}
   `;
 
   storeSelect.disabled = false;
