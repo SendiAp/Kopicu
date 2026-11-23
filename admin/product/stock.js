@@ -298,7 +298,7 @@ document.getElementById("back-button").addEventListener("click", () => {
   if (window.history.length > 1) {
     window.history.back();
   } else {
-    window.location.href = "product.html";
+    window.location.href = "/admin/product/product.html";
   }
 });
 
