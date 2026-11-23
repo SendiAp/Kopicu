@@ -49,11 +49,6 @@ async function initializeSetupProgress() {
     "Buat Minimal 1 Product",
     "Buat Account Karyawan Dan Tambahkan Minimal 1 Karyawan"
   ];
-
-  if (completedCount === 5) {
-    document.getElementById("setup-progress").style.display = "none";
-    return;
-  }
   
   list.innerHTML = `
     <div class="setup-loading">
@@ -169,10 +164,16 @@ async function initializeSetupProgress() {
       productCount > 0,
       employeeCount > 0
     ];
-
+    
     const completedTotal = completed.filter(Boolean).length;
+    
+    if (completedTotal === 5) {
+      document.getElementById("setup-progress")?.remove();
+      return;
+    }
+    
     const percentage = (completedTotal / steps.length) * 100;
-
+    
     count.textContent = `${completedTotal}/5 Selesai`;
     fill.style.width = `${percentage}%`;
 
