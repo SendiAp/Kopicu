@@ -42,7 +42,9 @@ loginForm.addEventListener("submit", async (event) => {
       sessionStorage.setItem("kopicu_admin_username", username);
       sessionStorage.setItem("kopicu_user_role", "admin");
 
-      window.location.href = "dashboard/dashboard.html";
+      window.location.href = employee.role?.toLowerCase() === "driver"
+        ? "driver/driver.html"
+        : "dashboard/dashboard.html";
       return;
     }
 
@@ -66,7 +68,9 @@ loginForm.addEventListener("submit", async (event) => {
         sessionStorage.setItem("kopicu_employee_id", employeeId);
         sessionStorage.setItem("kopicu_employee_name", employee.name || "");
 
-        window.location.href = "dashboard/dashboard.html";
+        window.location.href = employee.role?.toLowerCase() === "driver"
+          ? "driver/driver.html"
+          : "dashboard/dashboard.html";
         return;
       }
     }
