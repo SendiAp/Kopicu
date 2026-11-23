@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Pengaturan Foto - Kopicu</title>
+
+  <link rel="stylesheet" href="picture.css">
+  <link rel="stylesheet" href="/admin/hamburger/hamburger.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+  <div id="hamburger-container"></div>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-button" id="hamburger-button" aria-expanded="false">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <div class="page-heading">
+        <h1>Pengaturan Foto</h1>
+        <p>Kelola banner promosi dan tampilan admin</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <section class="picture-section">
+      <div class="section-heading">
+        <div class="section-icon">
+          <i class="fa-solid fa-images"></i>
+        </div>
+
+        <div>
+          <h2>Banner Promosi</h2>
+          <p>Banner akan ditampilkan di halaman utama toko anda.</p>
+        </div>
+      </div>
+
+      <div class="upload-area" id="promotion-upload-area">
+        <input
+          type="file"
+          id="promotion-input"
+          accept="image/*"
+          multiple
+          hidden
+        >
+
+        <div class="upload-icon">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+
+        <h3>Tambahkan Foto Promosi</h3>
+        <p>Pilih atau tarik foto ke area ini</p>
+        <span>Rasio gambar wajib 16:9 (thumbnail YouTube)</span>
+
+        <button type="button" class="upload-button" id="promotion-upload-button">
+          <i class="fa-solid fa-plus"></i>
+          Pilih Foto
+        </button>
+      </div>
+
+      <div class="preview-heading">
+        <h3>Preview Banner</h3>
+        <span id="promotion-count">0 Foto</span>
+      </div>
+
+      <div class="slider-wrapper">
+        <button type="button" class="slider-arrow" id="promotion-prev" aria-label="Foto sebelumnya">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <div class="slider-viewport">
+          <div class="slider-track" id="promotion-slider">
+            <div class="empty-preview">
+              <i class="fa-regular fa-image"></i>
+              <p>Belum ada banner promosi</p>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="slider-arrow" id="promotion-next" aria-label="Foto berikutnya">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="slider-dots" id="promotion-dots"></div>
+
+      <div class="photo-list-heading">
+        <h3>Daftar Foto</h3>
+      </div>
+
+      <div class="photo-list" id="promotion-photo-list">
+        <div class="empty-list">
+          Belum ada foto yang ditambahkan.
+        </div>
+      </div>
+    </section>
+
+    <section class="picture-section">
+      <div class="section-heading">
+        <div class="section-icon">
+          <i class="fa-solid fa-bars"></i>
+        </div>
+
+        <div>
+          <h2>Menu Utama Admin</h2>
+          <p>Banner ini akan ditampilkan di menu hamburger pada panel admin.</p>
+        </div>
+      </div>
+
+      <div class="upload-area" id="admin-upload-area">
+        <input
+          type="file"
+          id="admin-input"
+          accept="image/*"
+          hidden
+        >
+
+        <div class="upload-icon">
+          <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+
+        <h3>Tambahkan Foto Menu Admin</h3>
+        <p>Pilih foto untuk banner menu hamburger</p>
+        <span>Rasio gambar wajib 16:9 (thumbnail YouTube)</span>
+
+        <button type="button" class="upload-button" id="admin-upload-button">
+          <i class="fa-solid fa-plus"></i>
+          Pilih Foto
+        </button>
+      </div>
+
+      <div class="preview-heading">
+        <h3>Preview Banner</h3>
+        <span id="admin-count">0/1 Foto</span>
+      </div>
+
+      <div class="slider-wrapper single-slider">
+        <div class="slider-viewport">
+          <div class="slider-track" id="admin-slider">
+            <div class="empty-preview">
+              <i class="fa-regular fa-image"></i>
+              <p>Belum ada banner menu admin</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="photo-list-heading">
+        <h3>Foto Terpasang</h3>
+      </div>
+
+      <div class="photo-list" id="admin-photo-list">
+        <div class="empty-list">
+          Belum ada foto yang ditambahkan.
+        </div>
+      </div>
+    </section>
+
+    <div class="save-container">
+      <button type="button" class="save-button" id="save-button" disabled>
+        <i class="fa-solid fa-floppy-disk"></i>
+        Simpan Perubahan
+      </button>
+      <p id="save-status">Belum ada perubahan.</p>
+    </div>
+
+  </main>
+
+  <script type="module" src="/admin/hamburger/hamburger.js"></script>
+  <script type="module" src="picture.js"></script>
+
+</body>
+</html>
