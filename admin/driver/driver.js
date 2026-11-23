@@ -1,3 +1,9 @@
+import { db } from "../../database/firebase.js";
+import {
+  ref,
+  get
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
+
 const isLoggedIn = sessionStorage.getItem("kopicu_admin_login") === "true";
 const userRole = String(
   sessionStorage.getItem("kopicu_user_role") || ""
@@ -15,19 +21,45 @@ function logout() {
   window.location.replace(loginPage);
 }
 
-if (!isLoggedIn || userRole !== "driver") {
-  logout();
-} else {
-  const map = document.getElementById("google-map");
+function createProfileAvatar() {
+  const employeeName = (
+    sessionStorage.getItem("kopicu_employee_name") ||
+    sessionStorage.getItem("kopicu_admin_username") ||
+    "Driver"
+  ).trim();
 
-  if (map) {
-    map.setAttribute("title", "Peta Google Maps");
-  }
+  const avatar = document.createElement("div");
 
+  avatar.textContent = employeeName.charAt(0).toUpperCase() || "D";
+
+  avatar.style.cssText = `
+    position: fixed;
+    top: 18px;
+    left: 18px;
+    z-index: 10;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: #38251d;
+    color: #ffffff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 17px;
+    font-weight: 800;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, .12);
+  `;
+
+  document.body.appendChild(avatar);
+}
+
+function createLogoutButton() {
   const logoutButton = document.createElement("button");
 
   logoutButton.type = "button";
-  logoutButton.innerHTML = '<i class="fa-solid fa-right-from-bracket"></i> Keluar';
+  logoutButton.innerHTML =
+    '<i class="fa-solid fa-right-from-bracket"></i> Keluar';
 
   logoutButton.style.cssText = `
     position: fixed;
@@ -60,8 +92,85 @@ if (!isLoggedIn || userRole !== "driver") {
   document.body.appendChild(logoutButton);
 }
 
+function updateStatus(title, description) {
+  const titleElement = document.querySelector(".status-info h1");
+  const descriptionElement = document.querySelector(".status-info p");
+
+  if (titleElement) {
+    titleElement.textContent = title;
+  }
+
+  if (descriptionElement) {
+    descriptionElement.textContent = description;
+  }
+}
+
+async function loadStoreLocation() {
+  const map = document.getElementById("google-map");
+
+  if (!map) return;
+
+  map.setAttribute("title", "Peta Google Maps");
+
+  try {
+    const snapshot = await get(ref(db, "store"));
+
+    if (!snapshot.exists()) {
+      updateStatus(
+        "Lokasi Toko Belum Tersedia",
+        "Admin belum mengatur lokasi utama toko."
+      );
+      return;
+    }
+
+    const storeData = snapshot.val();
+
+    const latitude = Number(storeData.latitude);
+    const longitude = Number(storeData.longitude);
+
+    if (
+      !Number.isFinite(latitude) ||
+      !Number.isFinite(longitude) ||
+      latitude < -90 ||
+      latitude > 90 ||
+      longitude < -180 ||
+      longitude > 180
+    ) {
+      updateStatus(
+        "Lokasi Toko Belum Tersedia",
+        "Koordinat lokasi utama toko belum diatur dengan benar."
+      );
+      return;
+    }
+
+    map.src = `https://maps.google.com/maps?q=${latitude},${longitude}&z=16&output=embed`;
+
+    updateStatus(
+      "Menunggu Pengiriman",
+      "Lokasi toko berhasil dimuat. Belum ada pesanan yang perlu diantar."
+    );
+  } catch (error) {
+    console.error("Gagal memuat lokasi toko:", error);
+
+    updateStatus(
+      "Gagal Memuat Lokasi",
+      "Periksa koneksi internet lalu muat ulang halaman."
+    );
+  }
+}
+
+if (!isLoggedIn || userRole !== "driver") {
+  logout();
+} else {
+  createProfileAvatar();
+  createLogoutButton();
+  loadStoreLocation();
+}
+
 window.addEventListener("pageshow", () => {
-  const loggedIn = sessionStorage.getItem("kopicu_admin_login") === "true";
+  const loggedIn =
+    sessionStorage.getItem("kopicu_admin_login") === "true";
+
   const role = String(
     sessionStorage.getItem("kopicu_user_role") || ""
   ).toLowerCase();
