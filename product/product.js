@@ -6,12 +6,6 @@ import {
 
 const bannerList = document.getElementById("banner-list");
 const bannerDots = document.getElementById("banner-dots");
-const categoryList = document.getElementById("category-list");
-const productList = document.getElementById("product-list");
-const emptyState = document.getElementById("empty-state");
-const productsHeading = document.getElementById("products-heading");
-const resetCategory = document.getElementById("reset-category");
-const showAllCategories = document.getElementById("show-all-categories");
 
 const outletSelector = document.getElementById("outlet-selector");
 const outletTitle = document.getElementById("outlet-title");
@@ -19,17 +13,8 @@ const outletAddress = document.getElementById("outlet-address");
 const outletServices = document.getElementById("outlet-services");
 const outletServicesText = document.getElementById("outlet-services-text");
 
-let allProducts = [];
-let allCategories = [];
-let activeCategory = "all";
 let storeData = null;
 let selectedOutlet = null;
-
-const rupiah = value => new Intl.NumberFormat("id-ID", {
-  style: "currency",
-  currency: "IDR",
-  maximumFractionDigits: 0
-}).format(Number(value) || 0);
 
 const safe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
   "&": "&amp;",
@@ -96,7 +81,9 @@ function renderOutlet() {
   const services = getServiceLabels();
   const selectorIcon = outletSelector.querySelector(".outlet-selector-icon");
 
-  outletServices?.setAttribute("hidden", "");
+  if (outletServices) {
+    outletServices.hidden = true;
+  }
 
   if (!outlets.length) {
     outletTitle.textContent = "Outlet belum tersedia";
@@ -135,6 +122,7 @@ function renderOutlet() {
   outletTitle.textContent = "Lokasi outlet";
   outletAddress.textContent = getOutletAddress(selectedOutlet);
   outletAddress.hidden = false;
+
   outletSelector.setAttribute(
     "aria-label",
     `Outlet terpilih: ${getOutletAddress(selectedOutlet)}`
@@ -164,6 +152,7 @@ function showOutletPicker() {
           <h3>Pilih outlet toko</h3>
           <p>Pilih lokasi outlet yang ingin kamu kunjungi</p>
         </div>
+
         <button class="outlet-picker-close" type="button" aria-label="Tutup">
           <i class="fa-solid fa-xmark"></i>
         </button>
@@ -179,10 +168,12 @@ function showOutletPicker() {
             <span class="outlet-option-icon">
               <i class="fa-solid fa-location-dot"></i>
             </span>
+
             <span class="outlet-option-content">
               <strong>${index === 0 ? "Outlet Utama" : `Outlet Cabang ${index}`}</strong>
               <span>${safe(getOutletAddress(outlet))}</span>
             </span>
+
             <i class="fa-solid fa-circle-check outlet-option-check"></i>
           </button>
         `).join("")}
@@ -197,7 +188,9 @@ function showOutletPicker() {
   });
 
   overlay.addEventListener("click", event => {
-    if (event.target === overlay) overlay.remove();
+    if (event.target === overlay) {
+      overlay.remove();
+    }
   });
 
   overlay.querySelectorAll("[data-outlet-id]").forEach(button => {
@@ -215,53 +208,39 @@ function showOutletPicker() {
   });
 }
 
-outletSelector?.addEventListener("click", () => {
-  showOutletPicker();
-});
+outletSelector?.addEventListener("click", showOutletPicker);
 
 function renderBanners(items) {
   if (!bannerList || !bannerDots) return;
 
-  const active = items.filter(item =>
-    item.active !== false && item.image
-  );
+  const active = items
+    .filter(item => item.active !== false && item.image)
+    .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
 
   if (!active.length) {
     bannerList.innerHTML = `
-      <div class="banner-card">
-        <div class="banner-overlay">
-          <strong>Selamat datang di KOPICU</strong>
-          <span>Temukan menu favoritmu hari ini</span>
-        </div>
-      </div>
+      <div class="banner-card"></div>
     `;
 
     bannerDots.innerHTML = "";
     return;
   }
 
-  const sorted = [...active].sort((a, b) =>
-    (Number(a.order) || 0) - (Number(b.order) || 0)
-  );
-
-  bannerList.innerHTML = sorted.map(item => `
+  bannerList.innerHTML = active.map(item => `
     <article class="banner-card">
       <img
         src="${safe(item.image)}"
         alt="${safe(item.title || "Banner KOPICU")}"
-        loading="lazy"
+        loading="eager"
       >
-
-      <div class="banner-overlay">
-        ${item.title ? `<strong>${safe(item.title)}</strong>` : ""}
-        ${item.subtitle ? `<span>${safe(item.subtitle)}</span>` : ""}
-      </div>
     </article>
   `).join("");
 
-  bannerDots.innerHTML = sorted.map((_, index) => `
+  bannerDots.innerHTML = active.map((_, index) => `
     <span class="banner-dot ${index === 0 ? "active" : ""}"></span>
   `).join("");
+
+  updateBannerDots();
 }
 
 function updateBannerDots() {
@@ -271,12 +250,22 @@ function updateBannerDots() {
 
   if (!cards.length) return;
 
-  const index = Math.round(
-    bannerList.scrollLeft / (cards[0].offsetWidth + 12)
-  );
+  const scrollPosition = bannerList.scrollLeft;
 
-  [...bannerDots.children].forEach((dot, i) => {
-    dot.classList.toggle("active", i === index);
+  let activeIndex = 0;
+  let smallestDistance = Infinity;
+
+  cards.forEach((card, index) => {
+    const distance = Math.abs(card.offsetLeft - scrollPosition);
+
+    if (distance < smallestDistance) {
+      smallestDistance = distance;
+      activeIndex = index;
+    }
+  });
+
+  [...bannerDots.children].forEach((dot, index) => {
+    dot.classList.toggle("active", index === activeIndex);
   });
 }
 
@@ -284,248 +273,61 @@ bannerList?.addEventListener("scroll", updateBannerDots, {
   passive: true
 });
 
-function renderCategories() {
-  if (!categoryList) return;
-
-  const visible = allCategories.filter(category =>
-    category.active !== false
-  );
-
-  categoryList.innerHTML = `
-    <button
-      class="category-item ${activeCategory === "all" ? "active" : ""}"
-      data-category="all"
-      type="button"
-    >
-      Semua
-    </button>
-  ` + visible.map(category => `
-    <button
-      class="category-item ${activeCategory === category.id ? "active" : ""}"
-      data-category="${safe(category.id)}"
-      type="button"
-    >
-      ${safe(category.name)}
-    </button>
-  `).join("");
-
-  categoryList.querySelectorAll("[data-category]").forEach(button => {
-    button.addEventListener("click", () => {
-      activeCategory = button.dataset.category;
-      renderCategories();
-      renderProducts();
-    });
-  });
-}
-
-function renderProductCard(product) {
-  const productUrl = `customer/product.html?id=${encodeURIComponent(product.id)}`;
-
-  return `
-    <article class="product-card">
-      <a class="product-image-link" href="${productUrl}">
-        <img
-          class="product-image"
-          src="${safe(product.image || "assets/images/product-placeholder.png")}"
-          alt="${safe(product.name)}"
-          loading="lazy"
-        >
-      </a>
-
-      <div class="product-info">
-        <div>
-          <h3 class="product-name">
-            ${safe(product.name || "Produk")}
-          </h3>
-
-          <p class="product-description">
-            ${safe(product.description || "Menu pilihan KOPICU")}
-          </p>
-        </div>
-
-        <div class="product-bottom">
-          <span class="product-price">
-            ${rupiah(product.price)}
-          </span>
-
-          <a
-            class="add-button"
-            href="${productUrl}"
-            aria-label="Pilih ${safe(product.name)}"
-          >
-            <i class="fa-solid fa-plus"></i>
-          </a>
-        </div>
-      </div>
-    </article>
-  `;
-}
-
-function renderProducts() {
-  if (!productList || !productsHeading || !emptyState) return;
-
-  const products = allProducts.filter(product => {
-    const available = product.available !== false;
-
-    const categoryMatch =
-      activeCategory === "all" ||
-      product.categoryId === activeCategory;
-
-    return available && categoryMatch;
-  });
-
-  productsHeading.textContent = "Menu";
-
-  if (resetCategory) {
-    resetCategory.hidden = activeCategory === "all";
-  }
-
-  if (!products.length) {
-    productList.innerHTML = "";
-    emptyState.textContent = "Produk belum tersedia.";
-    emptyState.hidden = false;
-    return;
-  }
-
-  emptyState.hidden = true;
-
-  if (activeCategory !== "all") {
-    productList.innerHTML = `
-      <section class="product-category-group">
-        <h3 class="product-category-title">
-          ${safe(allCategories.find(item =>
-            item.id === activeCategory
-          )?.name || "Menu")}
-        </h3>
-
-        <div class="product-category-items">
-          ${products.map(renderProductCard).join("")}
-        </div>
-      </section>
-    `;
-
-    return;
-  }
-
-  const groups = allCategories
-    .filter(category => category.active !== false)
-    .map(category => ({
-      category,
-      products: products.filter(product =>
-        product.categoryId === category.id
-      )
-    }))
-    .filter(group => group.products.length > 0);
-
-  const categorizedIds = new Set(
-    groups.flatMap(group =>
-      group.products.map(product => product.id)
-    )
-  );
-
-  const uncategorized = products.filter(product =>
-    !categorizedIds.has(product.id)
-  );
-
-  productList.innerHTML = groups.map(group => `
-    <section class="product-category-group">
-      <h3 class="product-category-title">
-        ${safe(group.category.name)}
-      </h3>
-
-      <div class="product-category-items">
-        ${group.products.map(renderProductCard).join("")}
-      </div>
-    </section>
-  `).join("");
-
-  if (uncategorized.length) {
-    productList.innerHTML += `
-      <section class="product-category-group">
-        <h3 class="product-category-title">Lainnya</h3>
-
-        <div class="product-category-items">
-          ${uncategorized.map(renderProductCard).join("")}
-        </div>
-      </section>
-    `;
-  }
-}
+window.addEventListener("resize", updateBannerDots);
 
 async function loadHome() {
   try {
-    const [
-      storeSnap,
-      bannersSnap,
-      categoriesSnap,
-      productsSnap
-    ] = await Promise.all([
+    const [storeSnap, bannersSnap] = await Promise.all([
       get(ref(db, "store")),
-      get(ref(db, "settings/promotionBanners")),
-      get(ref(db, "categories")),
-      get(ref(db, "products"))
+      get(ref(db, "settings/promotionBanners"))
     ]);
 
     storeData = storeSnap.val() || {};
     selectedOutlet = null;
 
     renderOutlet();
+
     const bannerData = bannersSnap.val() || {};
-    
+
     const bannerItems = Object.entries(bannerData).map(([id, item]) => ({
       id,
-      image: typeof item === "string" ? item : item?.url || item?.image || "",
-      active: true
+      image: typeof item === "string"
+        ? item
+        : item?.url || item?.image || "",
+      title: item?.title || "",
+      subtitle: item?.subtitle || "",
+      active: item?.active !== false,
+      order: item?.order ?? 0
     }));
-    
-    renderBanners(bannerItems);
-    
-    allCategories = toArray(categoriesSnap.val());
-    allProducts = toArray(productsSnap.val());
 
-    renderCategories();
-    renderProducts();
+    renderBanners(bannerItems);
 
   } catch (error) {
     console.error("Gagal memuat halaman KOPICU:", error);
 
     if (bannerList) {
       bannerList.innerHTML = `
-        <div class="banner-card">
-          <div class="banner-overlay">
-            <strong>KOPICU</strong>
-            <span>Belum dapat terhubung ke database.</span>
-          </div>
-        </div>
+        <div class="banner-card"></div>
       `;
     }
 
-    if (categoryList) categoryList.innerHTML = "";
-    if (productList) productList.innerHTML = "";
+    if (bannerDots) {
+      bannerDots.innerHTML = "";
+    }
 
-    if (emptyState) {
-      emptyState.textContent =
-        "Gagal memuat menu. Periksa konfigurasi Firebase dan koneksi internet.";
-      emptyState.hidden = false;
+    if (outletTitle) {
+      outletTitle.textContent = "Outlet belum tersedia";
+    }
+
+    if (outletAddress) {
+      outletAddress.hidden = true;
+      outletAddress.textContent = "";
+    }
+
+    if (outletServices) {
+      outletServices.hidden = true;
     }
   }
 }
-
-resetCategory?.addEventListener("click", () => {
-  activeCategory = "all";
-  renderCategories();
-  renderProducts();
-});
-
-showAllCategories?.addEventListener("click", () => {
-  activeCategory = "all";
-  renderCategories();
-  renderProducts();
-
-  categoryList?.scrollTo({
-    left: 0,
-    behavior: "smooth"
-  });
-});
 
 loadHome();
