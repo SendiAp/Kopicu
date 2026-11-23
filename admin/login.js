@@ -42,9 +42,7 @@ loginForm.addEventListener("submit", async (event) => {
       sessionStorage.setItem("kopicu_admin_username", username);
       sessionStorage.setItem("kopicu_user_role", "admin");
 
-      window.location.href = employee.role?.toLowerCase() === "driver"
-        ? "driver/driver.html"
-        : "dashboard/dashboard.html";
+      window.location.href = "dashboard/dashboard.html";
       return;
     }
 
@@ -62,15 +60,20 @@ loginForm.addEventListener("submit", async (event) => {
       if (employeeEntry) {
         const [employeeId, employee] = employeeEntry;
 
+        const role = String(employee.role || "").toLowerCase();
+
         sessionStorage.setItem("kopicu_admin_login", "true");
         sessionStorage.setItem("kopicu_admin_username", employee.username);
         sessionStorage.setItem("kopicu_user_role", employee.role);
         sessionStorage.setItem("kopicu_employee_id", employeeId);
         sessionStorage.setItem("kopicu_employee_name", employee.name || "");
 
-        window.location.href = employee.role?.toLowerCase() === "driver"
-          ? "driver/driver.html"
-          : "dashboard/dashboard.html";
+        if (role === "driver") {
+          window.location.href = "driver/driver.html";
+        } else {
+          window.location.href = "dashboard/dashboard.html";
+        }
+
         return;
       }
     }
