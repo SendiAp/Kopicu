@@ -60,6 +60,53 @@ function getSelectedRole() {
   )?.value || "";
 }
 
+function updateDriverRoleAvailability() {
+  const driverInput = document.querySelector(
+    'input[name="employee-role"][value="driver"]'
+  );
+
+  if (!driverInput) return;
+
+  const driverLabel = driverInput.closest("label") || driverInput.parentElement;
+  const deliveryEnabled = Boolean(storeData.services?.delivery);
+
+  let message = document.getElementById("driver-disabled-message");
+
+  driverInput.disabled = !deliveryEnabled;
+
+  if (!deliveryEnabled) {
+    driverInput.checked = false;
+
+    if (driverLabel) {
+      driverLabel.style.opacity = "0.45";
+      driverLabel.style.cursor = "not-allowed";
+    }
+
+    if (!message && driverLabel) {
+      message = document.createElement("p");
+      message.id = "driver-disabled-message";
+      message.textContent =
+        "Toko ini tidak melayani delivery, jadi toko anda tidak bisa menambahkan karyawan driver.";
+
+      message.style.cssText = `
+        margin:8px 0 0;
+        color:#999;
+        font-size:11px;
+        line-height:1.5;
+      `;
+
+      driverLabel.insertAdjacentElement("afterend", message);
+    }
+  } else {
+    if (driverLabel) {
+      driverLabel.style.opacity = "";
+      driverLabel.style.cursor = "";
+    }
+
+    message?.remove();
+  }
+}
+
 function normalizePhone(value) {
   let phone = String(value || "").replace(/\D/g, "");
 
@@ -122,6 +169,7 @@ function validateForm() {
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) &&
     /^8[0-9]{8,12}$/.test(phone) &&
     Boolean(role) &&
+    (role !== "driver" || Boolean(storeData.services?.delivery)) &&
     Boolean(storeId) &&
     !usernameExists &&
     !emailExists &&
@@ -290,11 +338,14 @@ async function loadStores() {
     `;
     storeSelect.disabled = true;
     validateForm();
+    updateDriverRoleAvailability();
     return;
   }
 
   storeData = snapshot.val();
 
+  updateDriverRoleAvailability();
+  
   const storeName = storeData.name || storeData.nama || "Toko Utama";
   const mainAddress = formatStoreAddress(storeData);
 
