@@ -11,10 +11,13 @@ const outletSelector = document.getElementById("outlet-selector");
 const outletTitle = document.getElementById("outlet-title");
 const outletAddress = document.getElementById("outlet-address");
 const outletServices = document.getElementById("outlet-services");
-const outletServicesText = document.getElementById("outlet-services-text");
+const outletServicesList = document.getElementById("outlet-services-list");
 
 let storeData = null;
 let selectedOutlet = null;
+let bannerInterval = null;
+let activeBannerIndex = 0;
+let bannerInteractionTimeout = null;
 
 const safe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
   "&": "&amp;",
@@ -65,13 +68,24 @@ function getOutlets() {
 
 function getServiceLabels() {
   const services = storeData?.services || {};
-  const labels = [];
 
-  if (services.delivery === true) labels.push("Delivery");
-  if (services.pickup === true) labels.push("Pickup");
-  if (services.dineIn === true) labels.push("Dine In");
-
-  return labels;
+  return [
+    {
+      key: "delivery",
+      label: "Delivery",
+      icon: "fa-motorcycle"
+    },
+    {
+      key: "pickup",
+      label: "Pickup",
+      icon: "fa-bag-shopping"
+    },
+    {
+      key: "dineIn",
+      label: "Dine In",
+      icon: "fa-utensils"
+    }
+  ].filter(service => services[service.key] === true);
 }
 
 function renderOutlet() {
@@ -119,7 +133,7 @@ function renderOutlet() {
     return;
   }
 
-  outletTitle.textContent = "Lokasi outlet";
+  outletTitle.textContent = "";
   outletAddress.textContent = getOutletAddress(selectedOutlet);
   outletAddress.hidden = false;
 
@@ -128,8 +142,14 @@ function renderOutlet() {
     `Outlet terpilih: ${getOutletAddress(selectedOutlet)}`
   );
 
-  if (services.length && outletServices && outletServicesText) {
-    outletServicesText.textContent = `Melayani ${services.join(" / ")}`;
+  if (services.length && outletServices && outletServicesList) {
+    outletServicesList.innerHTML = services.map(service => `
+      <span class="outlet-service-item">
+        <i class="fa-solid ${service.icon}"></i>
+        <span>${service.label}</span>
+      </span>
+    `).join("");
+
     outletServices.hidden = false;
   }
 }
@@ -210,12 +230,20 @@ function showOutletPicker() {
 
 outletSelector?.addEventListener("click", showOutletPicker);
 
+function getBannerCards() {
+  if (!bannerList) return [];
+
+  return [...bannerList.querySelectorAll(".banner-card")];
+}
+
 function renderBanners(items) {
   if (!bannerList || !bannerDots) return;
 
   const active = items
     .filter(item => item.active !== false && item.image)
     .sort((a, b) => (Number(a.order) || 0) - (Number(b.order) || 0));
+
+  stopBannerAutoplay();
 
   if (!active.length) {
     bannerList.innerHTML = `
@@ -240,37 +268,117 @@ function renderBanners(items) {
     <span class="banner-dot ${index === 0 ? "active" : ""}"></span>
   `).join("");
 
+  activeBannerIndex = 0;
+
   updateBannerDots();
+  startBannerAutoplay();
 }
 
 function updateBannerDots() {
   if (!bannerList || !bannerDots) return;
 
-  const cards = [...bannerList.querySelectorAll(".banner-card")];
+  const cards = getBannerCards();
 
   if (!cards.length) return;
 
-  const scrollPosition = bannerList.scrollLeft;
-
-  let activeIndex = 0;
+  let closestIndex = 0;
   let smallestDistance = Infinity;
 
   cards.forEach((card, index) => {
-    const distance = Math.abs(card.offsetLeft - scrollPosition);
+    const distance = Math.abs(
+      card.offsetLeft - bannerList.scrollLeft
+    );
 
     if (distance < smallestDistance) {
       smallestDistance = distance;
-      activeIndex = index;
+      closestIndex = index;
     }
   });
 
+  activeBannerIndex = closestIndex;
+
   [...bannerDots.children].forEach((dot, index) => {
-    dot.classList.toggle("active", index === activeIndex);
+    dot.classList.toggle("active", index === closestIndex);
   });
 }
 
-bannerList?.addEventListener("scroll", updateBannerDots, {
+function goToBanner(index) {
+  const cards = getBannerCards();
+
+  if (!cards.length || !bannerList) return;
+
+  const nextIndex = Math.max(0, Math.min(index, cards.length - 1));
+
+  activeBannerIndex = nextIndex;
+
+  bannerList.scrollTo({
+    left: cards[nextIndex].offsetLeft - cards[0].offsetLeft,
+    behavior: "smooth"
+  });
+
+  updateBannerDots();
+}
+
+function startBannerAutoplay() {
+  stopBannerAutoplay();
+
+  const cards = getBannerCards();
+
+  if (cards.length <= 1) return;
+
+  bannerInterval = setInterval(() => {
+    if (document.hidden) return;
+
+    const nextIndex =
+      activeBannerIndex >= cards.length - 1
+        ? 0
+        : activeBannerIndex + 1;
+
+    goToBanner(nextIndex);
+  }, 4000);
+}
+
+function stopBannerAutoplay() {
+  if (bannerInterval) {
+    clearInterval(bannerInterval);
+    bannerInterval = null;
+  }
+}
+
+function pauseBannerAutoplay() {
+  stopBannerAutoplay();
+
+  clearTimeout(bannerInteractionTimeout);
+
+  bannerInteractionTimeout = setTimeout(() => {
+    startBannerAutoplay();
+  }, 7000);
+}
+
+bannerList?.addEventListener("scroll", () => {
+  updateBannerDots();
+}, {
   passive: true
+});
+
+bannerList?.addEventListener("touchstart", pauseBannerAutoplay, {
+  passive: true
+});
+
+bannerList?.addEventListener("pointerdown", pauseBannerAutoplay, {
+  passive: true
+});
+
+bannerList?.addEventListener("mouseenter", stopBannerAutoplay);
+
+bannerList?.addEventListener("mouseleave", startBannerAutoplay);
+
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopBannerAutoplay();
+  } else {
+    startBannerAutoplay();
+  }
 });
 
 window.addEventListener("resize", updateBannerDots);
@@ -304,6 +412,8 @@ async function loadHome() {
 
   } catch (error) {
     console.error("Gagal memuat halaman KOPICU:", error);
+
+    stopBannerAutoplay();
 
     if (bannerList) {
       bannerList.innerHTML = `
