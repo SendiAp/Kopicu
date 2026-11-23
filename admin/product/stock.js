@@ -47,6 +47,12 @@ const rupiah = (value) => {
   }).format(Number(value) || 0);
 };
 
+const backButton = document.getElementById("back-button");
+
+backButton.addEventListener("click", () => {
+  window.location.assign("/admin/product/product.html");
+});
+
 function getFormState() {
   return JSON.stringify({
     stockEnabled: stockEnabled.checked,
@@ -293,14 +299,6 @@ resetTime.addEventListener("input", updateSchedulePreview);
 
 stockForm.addEventListener("input", updateSaveButton);
 stockForm.addEventListener("change", updateSaveButton);
-
-document.getElementById("back-button").addEventListener("click", () => {
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.location.href = "/admin/product/product.html";
-  }
-});
 
 stockForm.addEventListener("submit", async (event) => {
   event.preventDefault();
