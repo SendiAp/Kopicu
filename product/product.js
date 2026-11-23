@@ -1,27 +1,23 @@
 import { db } from "../database/firebase.js";
-
 import {
   ref,
   get
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
-const $ = id => document.getElementById(id);
-
-const bannerList = $("banner-list");
-const bannerDots = $("banner-dots");
-const categoryList = $("category-list");
-const productList = $("product-list");
-const emptyState = $("empty-state");
-const productsHeading = $("products-heading");
-const resetCategory = $("reset-category");
-const showAllCategories = $("show-all-categories");
+const bannerList = document.getElementById("banner-list");
+const bannerDots = document.getElementById("banner-dots");
+const categoryList = document.getElementById("category-list");
+const productList = document.getElementById("product-list");
+const emptyState = document.getElementById("empty-state");
+const productsHeading = document.getElementById("products-heading");
+const resetCategory = document.getElementById("reset-category");
+const showAllCategories = document.getElementById("show-all-categories");
 
 let allProducts = [];
 let allCategories = [];
-let allOutlets = [];
-let selectedOutlet = null;
 let activeCategory = "all";
-let bannerScrollHandler = null;
+let storeData = null;
+let selectedOutlet = null;
 
 const rupiah = value => new Intl.NumberFormat("id-ID", {
   style: "currency",
@@ -58,228 +54,226 @@ function getOutletAddress(outlet) {
   ].filter(Boolean).join(", ");
 }
 
-function getAvailableServices() {
-  const services = selectedOutlet?.services || {};
+function getOutlets() {
+  if (!storeData) return [];
 
-  return [
-    services.delivery ? "Delivery" : null,
-    services.pickup ? "Pickup" : null,
-    services.dineIn ? "Dine In" : null
-  ].filter(Boolean);
+  const mainOutlet = {
+    id: "main",
+    ...storeData
+  };
+
+  const branches = toArray(storeData.branches).map((branch, index) => ({
+    ...branch,
+    id: branch.id || `branch_${index + 1}`
+  }));
+
+  return [mainOutlet, ...branches].filter(outlet =>
+    getOutletAddress(outlet)
+  );
 }
 
-function createOutletHeader() {
-  let header = $("outlet-header");
+function getServiceLabels() {
+  const services = storeData?.services || {};
+  const labels = [];
 
-  if (!header) {
-    header = document.createElement("header");
-    header.id = "outlet-header";
-    header.className = "outlet-header";
+  if (services.delivery === true) labels.push("Delivery");
+  if (services.pickup === true) labels.push("Pickup");
+  if (services.dineIn === true) labels.push("Dine In");
 
-    const page = document.querySelector(".page");
+  return labels;
+}
 
-    if (page) {
-      document.body.insertBefore(header, page);
-    } else {
-      document.body.prepend(header);
-    }
+function ensureOutletSection() {
+  const existing = [...document.querySelectorAll("#outlet-section")];
+
+  let section = existing.shift();
+
+  existing.forEach(element => element.remove());
+
+  if (!section) {
+    section = document.createElement("section");
+    section.id = "outlet-section";
+    section.className = "outlet-section";
   }
 
-  header.style.position = "sticky";
-  header.style.top = "0";
-  header.style.zIndex = "100";
-  header.style.background = "#fff";
-  header.style.width = "100%";
+  const bannerSection = document.querySelector(".banner-section");
 
-  header.innerHTML = `
-    <div class="outlet-header-inner">
-      <div class="outlet-decoration">
-        <span class="outlet-star outlet-star-one">✦</span>
-        <span class="outlet-star outlet-star-two">✧</span>
-        <span class="outlet-moon">☾</span>
-      </div>
+  if (bannerSection?.parentElement) {
+    bannerSection.parentElement.insertBefore(section, bannerSection);
+  } else {
+    document.querySelector("main")?.prepend(section);
+  }
 
-      <div class="outlet-selector-wrapper">
-        <button
-          type="button"
-          id="outlet-selector"
-          class="outlet-selector"
-        >
-          <span class="outlet-selector-text">
-            <strong id="outlet-title">Pilih outlet</strong>
-            <small id="outlet-address"></small>
-          </span>
+  section.style.position = "sticky";
+  section.style.top = "0";
+  section.style.zIndex = "25";
+  section.style.background = "#fff";
 
-          <i class="fa-solid fa-chevron-down" id="outlet-chevron"></i>
-        </button>
+  return section;
+}
 
-        <div id="outlet-dropdown" class="outlet-dropdown" hidden></div>
+function renderOutlet() {
+  const section = ensureOutletSection();
+  const outlets = getOutlets();
 
+  if (!outlets.length) {
+    section.innerHTML = `
+      <div class="outlet-selector">
         <div class="outlet-selector-icon">
           <i class="fa-solid fa-location-dot"></i>
         </div>
+        <div class="outlet-selector-content">
+          <span class="outlet-label">Outlet belum tersedia</span>
+          <strong>Alamat toko belum diatur</strong>
+        </div>
       </div>
+    `;
+    return;
+  }
 
-      <p id="outlet-services" class="outlet-services" hidden></p>
-    </div>
+  if (outlets.length === 1) {
+    selectedOutlet = outlets[0];
+    renderSelectedOutlet(section);
+    return;
+  }
+
+  if (!selectedOutlet || !outlets.some(outlet => outlet.id === selectedOutlet.id)) {
+    selectedOutlet = null;
+  }
+
+  if (!selectedOutlet) {
+    section.innerHTML = `
+      <button class="outlet-selector outlet-select-button" id="choose-outlet-button" type="button">
+        <span class="outlet-selector-icon">
+          <i class="fa-solid fa-location-dot"></i>
+        </span>
+        <span class="outlet-selector-content">
+          <span class="outlet-label">Lokasi pengambilan</span>
+          <strong>Pilih outlet toko</strong>
+        </span>
+        <span class="outlet-chevron">
+          <i class="fa-solid fa-chevron-down"></i>
+        </span>
+      </button>
+    `;
+
+    section.querySelector("#choose-outlet-button")?.addEventListener("click", showOutletPicker);
+    return;
+  }
+
+  renderSelectedOutlet(section);
+}
+
+function renderSelectedOutlet(section) {
+  const address = getOutletAddress(selectedOutlet);
+  const services = getServiceLabels();
+
+  section.innerHTML = `
+    <button class="outlet-selector outlet-select-button" id="choose-outlet-button" type="button">
+      <span class="outlet-selector-icon">
+        <i class="fa-solid fa-location-dot"></i>
+      </span>
+      <span class="outlet-selector-content">
+        <span class="outlet-label">Lokasi outlet</span>
+        <strong class="outlet-address">${safe(address)}</strong>
+      </span>
+      ${getOutlets().length > 1 ? `
+        <span class="outlet-chevron">
+          <i class="fa-solid fa-chevron-down"></i>
+        </span>
+      ` : ""}
+    </button>
+
+    ${services.length ? `
+      <div class="outlet-services">
+        <i class="fa-solid fa-circle-check"></i>
+        <span>Melayani ${services.map(safe).join(" / ")}</span>
+      </div>
+    ` : ""}
   `;
 
-  const selector = $("outlet-selector");
-  const dropdown = $("outlet-dropdown");
-
-  selector.addEventListener("click", () => {
-    if (allOutlets.length <= 1) return;
-
-    dropdown.hidden = !dropdown.hidden;
-    selector.classList.toggle("open", !dropdown.hidden);
-  });
-
-  document.addEventListener("click", event => {
-    if (
-      !event.target.closest("#outlet-selector") &&
-      !event.target.closest("#outlet-dropdown")
-    ) {
-      dropdown.hidden = true;
-      selector.classList.remove("open");
-    }
+  section.querySelector("#choose-outlet-button")?.addEventListener("click", () => {
+    if (getOutlets().length > 1) showOutletPicker();
   });
 }
 
-function renderOutletDropdown() {
-  const dropdown = $("outlet-dropdown");
+function showOutletPicker() {
+  const outlets = getOutlets();
 
-  if (!dropdown) return;
+  if (outlets.length <= 1) return;
 
-  dropdown.innerHTML = allOutlets.map(outlet => `
-    <button
-      type="button"
-      class="outlet-option ${selectedOutlet?.id === outlet.id ? "active" : ""}"
-      data-outlet-id="${safe(outlet.id)}"
-    >
-      <span class="outlet-option-icon">
-        <i class="fa-solid fa-store"></i>
-      </span>
+  document.getElementById("outlet-picker-overlay")?.remove();
 
-      <span class="outlet-option-info">
-        <strong>${safe(outlet.name)}</strong>
-        <small>${safe(getOutletAddress(outlet))}</small>
-      </span>
+  const overlay = document.createElement("div");
+  overlay.id = "outlet-picker-overlay";
+  overlay.className = "outlet-picker-overlay";
 
-      ${selectedOutlet?.id === outlet.id
-        ? '<i class="fa-solid fa-circle-check outlet-option-check"></i>'
-        : ""}
-    </button>
-  `).join("");
+  overlay.innerHTML = `
+    <div class="outlet-picker">
+      <div class="outlet-picker-heading">
+        <div>
+          <h3>Pilih outlet toko</h3>
+          <p>Pilih lokasi outlet yang ingin kamu kunjungi</p>
+        </div>
+        <button class="outlet-picker-close" type="button" aria-label="Tutup">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
 
-  dropdown.querySelectorAll("[data-outlet-id]").forEach(button => {
+      <div class="outlet-picker-list">
+        ${outlets.map((outlet, index) => `
+          <button
+            class="outlet-option ${selectedOutlet?.id === outlet.id ? "active" : ""}"
+            type="button"
+            data-outlet-id="${safe(outlet.id)}"
+          >
+            <span class="outlet-option-icon">
+              <i class="fa-solid fa-location-dot"></i>
+            </span>
+            <span class="outlet-option-content">
+              <strong>${index === 0 ? "Outlet Utama" : `Outlet Cabang ${index}`}</strong>
+              <span>${safe(getOutletAddress(outlet))}</span>
+            </span>
+            <i class="fa-solid fa-circle-check outlet-option-check"></i>
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  overlay.querySelector(".outlet-picker-close")?.addEventListener("click", () => {
+    overlay.remove();
+  });
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) overlay.remove();
+  });
+
+  overlay.querySelectorAll("[data-outlet-id]").forEach(button => {
     button.addEventListener("click", () => {
-      const outlet = allOutlets.find(item =>
+      const outlet = outlets.find(item =>
         item.id === button.dataset.outletId
       );
 
       if (!outlet) return;
 
       selectedOutlet = outlet;
-      renderSelectedOutlet();
-      dropdown.hidden = true;
-      $("outlet-selector")?.classList.remove("open");
+      overlay.remove();
+      renderOutlet();
     });
   });
 }
 
-function renderSelectedOutlet() {
-  const title = $("outlet-title");
-  const address = $("outlet-address");
-  const servicesElement = $("outlet-services");
-  const selector = $("outlet-selector");
-  const chevron = $("outlet-chevron");
-
-  if (!selectedOutlet) {
-    title.textContent = "Pilih outlet";
-    address.textContent = "";
-    servicesElement.hidden = true;
-    selector.disabled = allOutlets.length <= 1;
-    chevron.hidden = allOutlets.length <= 1;
-    return;
-  }
-
-  title.textContent = selectedOutlet.name || "Outlet KOPICU";
-  address.textContent = getOutletAddress(selectedOutlet);
-
-  const services = getAvailableServices();
-
-  servicesElement.textContent = services.length
-    ? `Melayani ${services.join(" / ")}`
-    : "Belum ada layanan yang tersedia";
-
-  servicesElement.hidden = false;
-
-  selector.disabled = allOutlets.length <= 1;
-  chevron.hidden = allOutlets.length <= 1;
-
-  renderOutletDropdown();
-}
-
-function renderOutlets(storeData) {
-  const mainOutlet = {
-    id: "main",
-    name: storeData.name || "Outlet Utama",
-    latitude: storeData.latitude,
-    longitude: storeData.longitude,
-    locationType: storeData.locationType || "",
-    province: storeData.province || "",
-    city: storeData.city || "",
-    district: storeData.district || "",
-    village: storeData.village || "",
-    postalCode: storeData.postalCode || "",
-    address: storeData.address || "",
-    services: storeData.services || {}
-  };
-
-  const branches = Array.isArray(storeData.branches)
-    ? storeData.branches
-    : Object.entries(storeData.branches || {}).map(([id, branch]) => ({
-        id,
-        ...branch
-      }));
-
-  allOutlets = [
-    mainOutlet,
-    ...branches.map((branch, index) => ({
-      ...branch,
-      id: String(branch.id || `branch_${index + 1}`),
-      name: branch.name || branch.title || `Cabang ${index + 1}`,
-      services: storeData.services || {}
-    }))
-  ];
-
-  if (allOutlets.length === 1) {
-    selectedOutlet = allOutlets[0];
-  } else {
-    selectedOutlet = null;
-  }
-
-  renderSelectedOutlet();
-}
-
-function renderBanners(data) {
+function renderBanners(items) {
   if (!bannerList || !bannerDots) return;
 
-  const banners = Object.entries(data || {})
-    .map(([id, item]) => ({
-      id,
-      url: typeof item === "string"
-        ? item
-        : item?.url || item?.image || ""
-    }))
-    .filter(item => item.url);
+  const active = items.filter(item =>
+    item.active !== false && item.image
+  );
 
-  if (bannerScrollHandler) {
-    bannerList.removeEventListener("scroll", bannerScrollHandler);
-    bannerScrollHandler = null;
-  }
-
-  if (!banners.length) {
+  if (!active.length) {
     bannerList.innerHTML = `
       <div class="banner-card">
         <div class="banner-overlay">
@@ -293,28 +287,33 @@ function renderBanners(data) {
     return;
   }
 
-  bannerList.innerHTML = banners.map((item, index) => `
+  const sorted = [...active].sort((a, b) =>
+    (Number(a.order) || 0) - (Number(b.order) || 0)
+  );
+
+  bannerList.innerHTML = sorted.map(item => `
     <article class="banner-card">
       <img
-        src="${safe(item.url)}"
-        alt="Banner promosi KOPICU ${index + 1}"
-        loading="${index === 0 ? "eager" : "lazy"}"
+        src="${safe(item.image)}"
+        alt="${safe(item.title || "Banner KOPICU")}"
+        loading="lazy"
       >
+
+      <div class="banner-overlay">
+        ${item.title ? `<strong>${safe(item.title)}</strong>` : ""}
+        ${item.subtitle ? `<span>${safe(item.subtitle)}</span>` : ""}
+      </div>
     </article>
   `).join("");
 
-  bannerDots.innerHTML = banners.map((_, index) => `
+  bannerDots.innerHTML = sorted.map((_, index) => `
     <span class="banner-dot ${index === 0 ? "active" : ""}"></span>
   `).join("");
-
-  bannerScrollHandler = updateBannerDots;
-
-  bannerList.addEventListener("scroll", bannerScrollHandler, {
-    passive: true
-  });
 }
 
 function updateBannerDots() {
+  if (!bannerList || !bannerDots) return;
+
   const cards = [...bannerList.querySelectorAll(".banner-card")];
 
   if (!cards.length) return;
@@ -327,6 +326,10 @@ function updateBannerDots() {
     dot.classList.toggle("active", i === index);
   });
 }
+
+bannerList?.addEventListener("scroll", updateBannerDots, {
+  passive: true
+});
 
 function renderCategories() {
   if (!categoryList) return;
@@ -363,8 +366,7 @@ function renderCategories() {
 }
 
 function renderProductCard(product) {
-  const productUrl =
-    `customer/product.html?id=${encodeURIComponent(product.id)}`;
+  const productUrl = `customer/product.html?id=${encodeURIComponent(product.id)}`;
 
   return `
     <article class="product-card">
@@ -407,7 +409,7 @@ function renderProductCard(product) {
 }
 
 function renderProducts() {
-  if (!productList) return;
+  if (!productList || !productsHeading || !emptyState) return;
 
   const products = allProducts.filter(product => {
     const available = product.available !== false;
@@ -427,24 +429,20 @@ function renderProducts() {
 
   if (!products.length) {
     productList.innerHTML = "";
-
     emptyState.textContent = "Produk belum tersedia.";
     emptyState.hidden = false;
-
     return;
   }
 
   emptyState.hidden = true;
 
   if (activeCategory !== "all") {
-    const categoryName = allCategories.find(item =>
-      item.id === activeCategory
-    )?.name || "Menu";
-
     productList.innerHTML = `
       <section class="product-category-group">
         <h3 class="product-category-title">
-          ${safe(categoryName)}
+          ${safe(allCategories.find(item =>
+            item.id === activeCategory
+          )?.name || "Menu")}
         </h3>
 
         <div class="product-category-items">
@@ -503,8 +501,6 @@ function renderProducts() {
 
 async function loadHome() {
   try {
-    createOutletHeader();
-
     const [
       storeSnap,
       bannersSnap,
@@ -512,17 +508,16 @@ async function loadHome() {
       productsSnap
     ] = await Promise.all([
       get(ref(db, "store")),
-      get(ref(db, "settings/promotionBanners")),
+      get(ref(db, "banners")),
       get(ref(db, "categories")),
       get(ref(db, "products"))
     ]);
 
-    const storeData = storeSnap.exists()
-      ? storeSnap.val() || {}
-      : {};
+    storeData = storeSnap.val() || {};
+    selectedOutlet = null;
 
-    renderOutlets(storeData);
-    renderBanners(bannersSnap.exists() ? bannersSnap.val() : {});
+    renderOutlet();
+    renderBanners(toArray(bannersSnap.val()));
 
     allCategories = toArray(categoriesSnap.val());
     allProducts = toArray(productsSnap.val());
@@ -549,8 +544,7 @@ async function loadHome() {
 
     if (emptyState) {
       emptyState.textContent =
-        "Gagal memuat menu. Periksa koneksi Firebase dan coba lagi.";
-
+        "Gagal memuat menu. Periksa konfigurasi Firebase dan koneksi internet.";
       emptyState.hidden = false;
     }
   }
