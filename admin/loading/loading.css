@@ -19,8 +19,8 @@
 
 .loading-spinner {
   position: relative;
-  width: 65px;
-  height: 65px;
+  width: 90px;
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -31,7 +31,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  border: 3px solid #e8f5ed;
+  border: 5px solid #e8f5ed;
   border-top-color: #16a36a;
   border-right-color: #16a36a;
   border-radius: 50%;
@@ -40,7 +40,7 @@
 
 .loading-spinner i {
   color: #16a36a;
-  font-size: 25px;
+  font-size: 38px;
 }
 
 @keyframes loading-spin {
