@@ -40,13 +40,118 @@ backButton.addEventListener("click", () => {
   window.location.href = "product.html";
 });
 
-function showAlert(icon, title, text) {
-  return Swal.fire({
-    icon,
-    title,
-    text,
-    confirmButtonColor: "#38251d"
+function createPopup(title, message, confirmMode = false) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+
+    overlay.style.cssText = `
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(0,0,0,.38);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+    `;
+
+    const dialog = document.createElement("div");
+
+    dialog.style.cssText = `
+      width: 100%;
+      max-width: 370px;
+      padding: 25px 22px 20px;
+      border: 1px solid #eee;
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: 0 15px 50px rgba(0,0,0,.15);
+      font-family: 'DM Sans', sans-serif;
+      text-align: center;
+      animation: popupAppear .2s ease;
+    `;
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    heading.style.cssText = `
+      margin: 0;
+      color: #38251d;
+      font-size: 17px;
+      font-weight: 800;
+    `;
+
+    const description = document.createElement("p");
+    description.textContent = message;
+    description.style.cssText = `
+      margin: 12px 0 22px;
+      color: #777;
+      font-size: 13px;
+      line-height: 1.6;
+    `;
+
+    const actions = document.createElement("div");
+    actions.style.cssText = `
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+    `;
+
+    const closePopup = value => {
+      overlay.remove();
+      resolve(value);
+    };
+
+    const createButton = (text, primary, value) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = text;
+      button.style.cssText = `
+        flex: 1;
+        min-height: 42px;
+        padding: 0 12px;
+        border: none;
+        border-radius: 8px;
+        background: ${primary ? "#38251d" : "#eee"};
+        color: ${primary ? "#fff" : "#555"};
+        font-family: 'DM Sans', sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+      `;
+      button.addEventListener("click", () => closePopup(value));
+      return button;
+    };
+
+    if (confirmMode) {
+      actions.append(
+        createButton("Batal", false, false),
+        createButton("Ya, lanjutkan", true, true)
+      );
+    } else {
+      actions.append(createButton("Mengerti", true, true));
+    }
+
+    dialog.append(heading, description, actions);
+    overlay.appendChild(dialog);
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        closePopup(false);
+      }
+    });
+
+    document.body.appendChild(overlay);
   });
+}
+
+function showAlert(icon, title, text) {
+  return createPopup(title, text);
+}
+
+function showConfirm(title, text) {
+  return createPopup(title, text, true);
 }
 
 function formatRupiah(value) {
@@ -371,6 +476,7 @@ async function saveProduct(event) {
   ).map(input => input.value);
 
   isProcessing = true;
+
   setLoading(
     saveButton,
     true,
@@ -403,12 +509,11 @@ async function saveProduct(event) {
 
     await update(ref(db, `products/${productId}`), updatedData);
 
-    await Swal.fire({
-      icon: "success",
-      title: "Perubahan berhasil disimpan",
-      text: "Informasi produk sudah diperbarui.",
-      confirmButtonColor: "#38251d"
-    });
+    await showAlert(
+      "success",
+      "Perubahan berhasil disimpan",
+      "Informasi produk sudah diperbarui."
+    );
 
     window.location.href = "product.html";
 
@@ -423,6 +528,7 @@ async function saveProduct(event) {
 
   } finally {
     isProcessing = false;
+
     setLoading(
       saveButton,
       false,
@@ -435,19 +541,12 @@ async function saveProduct(event) {
 async function deleteProduct() {
   if (isProcessing) return;
 
-  const confirmation = await Swal.fire({
-    icon: "warning",
-    title: "Hapus hidangan ini?",
-    text: "Produk yang dihapus tidak dapat dikembalikan.",
-    showCancelButton: true,
-    confirmButtonText: "Ya, Hapus",
-    cancelButtonText: "Batal",
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#777",
-    reverseButtons: true
-  });
+  const confirmation = await showConfirm(
+    "Hapus hidangan ini?",
+    "Produk yang dihapus tidak dapat dikembalikan."
+  );
 
-  if (!confirmation.isConfirmed) return;
+  if (!confirmation) return;
 
   isProcessing = true;
 
@@ -461,11 +560,11 @@ async function deleteProduct() {
   try {
     await remove(ref(db, `products/${productId}`));
 
-    await Swal.fire({
-      icon: "success",
-      title: "Produk berhasil dihapus",
-      confirmButtonColor: "#38251d"
-    });
+    await showAlert(
+      "success",
+      "Produk berhasil dihapus",
+      "Produk sudah dihapus dari daftar menu."
+    );
 
     window.location.href = "product.html";
 
@@ -480,6 +579,7 @@ async function deleteProduct() {
 
   } finally {
     isProcessing = false;
+
     setLoading(
       deleteButton,
       false,
