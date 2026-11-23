@@ -540,3 +540,178 @@ a {
 .sidebar:not(.no-logo) .sidebar-label {
   position: static;
 }
+
+.setup-progress {
+  width: 100%;
+  margin-bottom: 25px;
+  padding: 22px;
+  background: #fff;
+  border: 1px solid #eeeeee;
+  border-radius: 14px;
+}
+
+.setup-progress-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.setup-progress-header h2 {
+  margin: 0 0 5px;
+  color: #38251d;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.setup-progress-header p {
+  margin: 0;
+  color: #999;
+  font-size: 12px;
+}
+
+#setup-progress-count {
+  flex-shrink: 0;
+  padding: 7px 11px;
+  border-radius: 20px;
+  background: #eaf7ef;
+  color: #16a36a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.setup-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.setup-step {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid #eeeeee;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.setup-step-icon {
+  width: 27px;
+  height: 27px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #f1f1f1;
+  color: #aaa;
+  font-size: 12px;
+}
+
+.setup-step.completed .setup-step-icon {
+  background: #e5f7ed;
+  color: #16a36a;
+}
+
+.setup-step-text {
+  flex: 1;
+  color: #555;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.setup-step.completed .setup-step-text {
+  color: #16a36a;
+}
+
+.setup-step-status {
+  flex-shrink: 0;
+  color: #aaa;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.setup-step.completed .setup-step-status {
+  color: #16a36a;
+}
+
+.setup-progress-bar {
+  width: 100%;
+  height: 7px;
+  margin-top: 19px;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #eeeeee;
+}
+
+#setup-progress-fill {
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: #16a36a;
+  transition: width .3s ease;
+}
+
+#setup-progress-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 15px 0 0;
+  color: #c17b27;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+#setup-progress-message.all-completed {
+  color: #16a36a;
+}
+
+.setup-loading,
+.setup-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px;
+  color: #888;
+  font-size: 12px;
+}
+
+.setup-error {
+  color: #d9534f;
+}
+
+@media (max-width: 600px) {
+  .setup-progress {
+    padding: 17px 14px;
+  }
+
+  .setup-progress-header {
+    align-items: flex-start;
+  }
+
+  .setup-progress-header h2 {
+    font-size: 15px;
+  }
+
+  .setup-progress-header p {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .setup-step {
+    gap: 9px;
+    padding: 10px;
+  }
+
+  .setup-step-text {
+    font-size: 11px;
+  }
+
+  .setup-step-status {
+    font-size: 9px;
+  }
+}
