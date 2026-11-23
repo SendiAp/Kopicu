@@ -43,11 +43,11 @@ async function initializeSetupProgress() {
   if (!list || !count || !fill || !message) return;
 
   const steps = [
-    "Isi Semua Data Toko",
-    "Buat Minimal 1 Kategori Di Product",
+    "Buat Semua Data Toko",
+    "Buat Minimal 1 Kategori",
     "Buat Minimal 1 Grup Opsi",
     "Buat Minimal 1 Product",
-    "Buatkan Account Karyawan Dan Tambahkan Minimal 1 Karyawan"
+    "Buat Account Karyawan Dan Tambahkan Minimal 1 Karyawan"
   ];
 
   if (completedCount === 5) {
