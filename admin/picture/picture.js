@@ -1,3 +1,4 @@
+
 import { db } from "../../database/firebase.js";
 
 import {
@@ -12,6 +13,19 @@ const loginStatus = sessionStorage.getItem("kopicu_admin_login");
 
 if (loginStatus !== "true") {
   window.location.replace("/admin/login.html");
+} else {
+  const username = sessionStorage.getItem("kopicu_admin_username") || "Admin";
+
+  const adminUsername = document.getElementById("admin-username");
+  const adminAvatar = document.getElementById("admin-avatar");
+
+  if (adminUsername) {
+    adminUsername.textContent = username;
+  }
+
+  if (adminAvatar) {
+    adminAvatar.textContent = username.charAt(0).toUpperCase();
+  }
 }
 
 const $ = id => document.getElementById(id);
