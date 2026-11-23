@@ -298,9 +298,9 @@ display: none;
 
 .banner-card {
 flex: 0 0 100%;
-aspect-ratio: 16 / 6;
+width: 100%;
+aspect-ratio: 16 / 9;
 min-height: 0;
-max-height: 175px;
 border-radius: 12px;
 overflow: hidden;
 position: relative;
@@ -551,7 +551,7 @@ font-weight: 700;
 
 .banner-skeleton {
 width: 100%;
-aspect-ratio: 16 / 6;
+aspect-ratio: 16 / 9;
 }
 
 .category-skeleton {
@@ -612,10 +612,6 @@ flex-basis: 130px;
 width: 130px;
 height: 130px;
 }
-
-.banner-card {
-max-height: 230px;
-}
 }
 
 @media (max-width: 600px) {
@@ -674,11 +670,6 @@ font-size: 10px;
 padding: 12px 15px 90px;
 }
 
-.banner-card {
-aspect-ratio: 16 / 6.5;
-max-height: 145px;
-}
-
 .product-card {
 gap: 11px;
 padding: 9px;
@@ -721,10 +712,6 @@ font-size: 11px;
 .page {
 padding-right: 12px;
 padding-left: 12px;
-}
-
-.banner-card {
-max-height: 125px;
 }
 
 .product-image-link {
