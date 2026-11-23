@@ -461,7 +461,7 @@ async function loadHome() {
       productsSnap
     ] = await Promise.all([
       get(ref(db, "store")),
-      get(ref(db, "banners")),
+      get(ref(db, "settings/promotionBanners")),
       get(ref(db, "categories")),
       get(ref(db, "products"))
     ]);
@@ -470,8 +470,16 @@ async function loadHome() {
     selectedOutlet = null;
 
     renderOutlet();
-    renderBanners(toArray(bannersSnap.val()));
-
+    const bannerData = bannersSnap.val() || {};
+    
+    const bannerItems = Object.entries(bannerData).map(([id, item]) => ({
+      id,
+      image: typeof item === "string" ? item : item?.url || item?.image || "",
+      active: true
+    }));
+    
+    renderBanners(bannerItems);
+    
     allCategories = toArray(categoriesSnap.val());
     allProducts = toArray(productsSnap.val());
 
