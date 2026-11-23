@@ -50,6 +50,11 @@ async function initializeSetupProgress() {
     "Buatkan Account Karyawan Dan Tambahkan Minimal 1 Karyawan"
   ];
 
+  if (completedCount === 5) {
+    document.getElementById("setup-progress").style.display = "none";
+    return;
+  }
+  
   list.innerHTML = `
     <div class="setup-loading">
       <i class="fa-solid fa-spinner fa-spin"></i>
