@@ -452,4 +452,89 @@ async function loadHome() {
   }
 }
 
+
+async function loadProducts() {
+  const [categorySnap, productSnap] = await Promise.all([
+    get(ref(db, "categories")),
+    get(ref(db, "products"))
+  ]);
+
+  const categories = categorySnap.exists() ? categorySnap.val() : {};
+  const products = productSnap.exists() ? productSnap.val() : {};
+
+  renderProducts(categories, products);
+}
+
+function renderProducts(categories, products) {
+  const menu = document.getElementById("menu");
+
+  if (!menu) return;
+
+  const grouped = {};
+
+  Object.entries(products).forEach(([id, product]) => {
+    if (!product || !product.categoryId) return;
+
+    const categoryId = product.categoryId;
+
+    if (!grouped[categoryId]) {
+      grouped[categoryId] = [];
+    }
+
+    grouped[categoryId].push({ id, ...product });
+  });
+
+  menu.innerHTML = Object.entries(grouped).map(([categoryId, items]) => {
+    const categoryName = categories[categoryId]?.name || "Lainnya";
+
+    return `
+      <div class="product-category" id="category-${safe(categoryId)}">
+        <div class="product-category-heading">
+          <h2>${safe(categoryName)}</h2>
+        </div>
+
+        <div class="product-grid" id="product-list-${safe(categoryId)}">
+          ${items.map(product => {
+            const image = product.image || product.images?.[0] || "";
+
+            return `
+              <article
+                class="product-card"
+                data-product-id="${safe(product.id)}"
+              >
+                <div class="product-image">
+                  ${
+                    image
+                      ? `<img src="${safe(image)}" alt="${safe(product.name)}">`
+                      : `<div class="product-image-placeholder">
+                           <i class="fa-solid fa-image"></i>
+                         </div>`
+                  }
+                </div>
+
+                <div class="product-info">
+                  <h3 class="product-name">${safe(product.name)}</h3>
+                  <p class="product-price">
+                    Rp${Number(product.price || 0).toLocaleString("id-ID")}
+                  </p>
+                </div>
+              </article>
+            `;
+          }).join("")}
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  menu.querySelectorAll(".product-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const id = card.dataset.productId;
+
+      window.location.href =
+        `preview/preview.html?id=${encodeURIComponent(id)}`;
+    });
+  });
+}
+
 loadHome();
+loadProducts();
