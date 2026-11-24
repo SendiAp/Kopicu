@@ -1,3 +1,4 @@
+
 * {
   box-sizing: border-box;
 }
@@ -345,7 +346,7 @@ img {
 
 .banner-section {
   position: relative;
-  z-index: 3;
+  z-index: auto;
   width: 100vw;
   margin-top: -10px;
   margin-left: calc(50% - 50vw);
@@ -390,10 +391,15 @@ img {
 }
 
 .banner-dots {
+  position: absolute;
+  z-index: 6;
+  left: 0;
+  right: 0;
+  bottom: 42px;
   display: flex;
   justify-content: center;
   gap: 6px;
-  margin-top: 10px;
+  margin-top: 0;
 }
 
 .banner-dot {
@@ -407,6 +413,96 @@ img {
 .banner-dot.active {
   width: 17px;
   background: #38251d;
+}
+
+/* MENU UTAMA */
+
+.quick-menu {
+  position: relative;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  margin-top: -34px;
+  padding: 0 0 25px;
+}
+
+.quick-menu-card {
+  min-width: 0;
+  min-height: 230px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 22px;
+  padding: 25px 10px 20px;
+  border: 1px solid #eeeeee;
+  border-radius: 22px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .10);
+  text-align: center;
+  transition: transform .2s, box-shadow .2s;
+}
+
+.quick-menu-card:active {
+  transform: scale(.97);
+}
+
+.quick-menu-icon {
+  position: relative;
+  width: 112px;
+  height: 112px;
+  flex: 0 0 112px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 48px;
+}
+
+.order-icon {
+  color: #279e91;
+  background: #e0f3f0;
+}
+
+.cart-icon {
+  color: #bd8a43;
+  background: #f8edda;
+}
+
+.orders-icon {
+  color: #d47b36;
+  background: #f9e8df;
+}
+
+.account-icon {
+  color: #9674b6;
+  background: #eee6f6;
+}
+
+.quick-menu-plus {
+  position: absolute;
+  right: -2px;
+  bottom: 0;
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border: 4px solid #ffffff;
+  border-radius: 50%;
+  background: #239d67;
+  color: #ffffff;
+  font-size: 20px;
+}
+
+.quick-menu-title {
+  display: block;
+  width: 100%;
+  color: #242424;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
 }
 
 /* NAVIGASI BAWAH */
@@ -511,6 +607,35 @@ img {
   .banner-section {
     margin-top: -20px;
   }
+
+  .quick-menu {
+    gap: 20px;
+    margin-top: -35px;
+  }
+
+  .quick-menu-card {
+    min-height: 290px;
+    gap: 25px;
+    padding: 35px 15px 25px;
+    border-radius: 24px;
+  }
+
+  .quick-menu-icon {
+    width: 145px;
+    height: 145px;
+    flex-basis: 145px;
+    font-size: 62px;
+  }
+
+  .quick-menu-plus {
+    width: 52px;
+    height: 52px;
+    font-size: 24px;
+  }
+
+  .quick-menu-title {
+    font-size: 23px;
+  }
 }
 
 /* TAMPILAN HP */
@@ -592,6 +717,42 @@ img {
     margin-top: -15px;
     margin-bottom: 20px;
   }
+
+  .banner-dots {
+    bottom: 34px;
+  }
+
+  .quick-menu {
+    gap: 9px;
+    margin-top: -24px;
+    padding-bottom: 20px;
+  }
+
+  .quick-menu-card {
+    min-height: 145px;
+    gap: 15px;
+    padding: 17px 5px 13px;
+    border-radius: 15px;
+  }
+
+  .quick-menu-icon {
+    width: 62px;
+    height: 62px;
+    flex-basis: 62px;
+    font-size: 29px;
+  }
+
+  .quick-menu-plus {
+    width: 27px;
+    height: 27px;
+    border-width: 3px;
+    font-size: 12px;
+  }
+
+  .quick-menu-title {
+    font-size: 12px;
+    line-height: 1.3;
+  }
 }
 
 /* TAMPILAN HP KECIL */
@@ -637,5 +798,34 @@ img {
 
   .banner-section {
     margin-top: -10px;
+  }
+
+  .quick-menu {
+    gap: 7px;
+    margin-top: -20px;
+  }
+
+  .quick-menu-card {
+    min-height: 130px;
+    gap: 12px;
+    padding: 14px 3px 11px;
+    border-radius: 13px;
+  }
+
+  .quick-menu-icon {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+    font-size: 24px;
+  }
+
+  .quick-menu-plus {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .quick-menu-title {
+    font-size: 11px;
   }
 }
