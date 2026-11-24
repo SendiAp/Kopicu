@@ -328,9 +328,9 @@ img {
 
 .banner-section {
   position: relative;
-  z-index: 0;
+  z-index: 3;
   width: 100vw;
-  margin: -34px 0 24px;
+  margin: -5px 0 24px;
   margin-left: calc(50% - 50vw);
 }
 
@@ -770,7 +770,7 @@ img {
   }
 
   .banner-section {
-    margin-top: -32px;
+    margin-top: -3px;
     margin-bottom: 20px;
   }
 
