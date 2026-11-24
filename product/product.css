@@ -283,7 +283,7 @@ img {
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin: 5px 3px 0;
+  margin: -5px 3px 0;
   min-height: 24px;
 }
 
@@ -347,7 +347,7 @@ img {
   position: relative;
   z-index: 3;
   width: 100vw;
-  margin: -20px 0 24px;
+  margin-top: -22px;
   margin-left: calc(50% - 50vw);
 }
 
