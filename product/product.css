@@ -66,6 +66,7 @@ img {
     radial-gradient(ellipse at 78% 0%, rgba(255,255,255,.95), transparent 48%),
     linear-gradient(145deg, #edf0ff 0%, #f8f8ff 52%, #e8edff 100%);
   border-radius: 0 0 20px 20px;
+  border: 1px solid rgba(0, 0, 0, 0.18);
   box-shadow: 0 3px 12px rgba(30, 30, 50, .06);
 }
 
