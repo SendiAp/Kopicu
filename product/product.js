@@ -36,6 +36,14 @@ function toArray(data) {
   }));
 }
 
+function getOutletName(outlet) {
+  return outlet.name ||
+    outlet.storeName ||
+    outlet.outletName ||
+    outlet.title ||
+    "Outlet KOPICU";
+}
+
 function getOutletAddress(outlet) {
   return [
     outlet.locationType,
@@ -95,6 +103,12 @@ function renderOutlet() {
   const services = getServiceLabels();
   const selectorIcon = outletSelector.querySelector(".outlet-selector-icon");
 
+  if (selectorIcon) {
+    selectorIcon.hidden = false;
+    selectorIcon.innerHTML = '<i class="fa-solid fa-expand"></i>';
+    selectorIcon.setAttribute("aria-label", "Scan outlet");
+  }
+
   if (outletServices) {
     outletServices.hidden = true;
   }
@@ -104,25 +118,16 @@ function renderOutlet() {
     outletAddress.hidden = true;
     outletAddress.textContent = "";
     outletSelector.disabled = true;
-
-    if (selectorIcon) selectorIcon.hidden = true;
-
     return;
   }
 
   outletSelector.disabled = false;
 
-  if (selectorIcon) {
-    selectorIcon.hidden = outlets.length <= 1;
-  }
-
-  if (outlets.length === 1) {
-    selectedOutlet = outlets[0];
-  } else if (
+  if (
     !selectedOutlet ||
     !outlets.some(outlet => outlet.id === selectedOutlet.id)
   ) {
-    selectedOutlet = null;
+    selectedOutlet = outlets.length === 1 ? outlets[0] : null;
   }
 
   if (!selectedOutlet) {
@@ -133,13 +138,13 @@ function renderOutlet() {
     return;
   }
 
-  outletTitle.textContent = "";
+  outletTitle.textContent = getOutletName(selectedOutlet);
   outletAddress.textContent = getOutletAddress(selectedOutlet);
   outletAddress.hidden = false;
 
   outletSelector.setAttribute(
     "aria-label",
-    `Outlet terpilih: ${getOutletAddress(selectedOutlet)}`
+    `Outlet terpilih: ${getOutletName(selectedOutlet)}, ${getOutletAddress(selectedOutlet)}`
   );
 
   if (services.length && outletServices && outletServicesList) {
@@ -190,7 +195,7 @@ function showOutletPicker() {
             </span>
 
             <span class="outlet-option-content">
-              <strong>${index === 0 ? "Outlet Utama" : `Outlet Cabang ${index}`}</strong>
+              <strong>${safe(index === 0 ? "Outlet Utama" : `Outlet Cabang ${index}`)}</strong>
               <span>${safe(getOutletAddress(outlet))}</span>
             </span>
 
@@ -228,7 +233,14 @@ function showOutletPicker() {
   });
 }
 
-outletSelector?.addEventListener("click", showOutletPicker);
+outletSelector?.addEventListener("click", event => {
+  if (event.target.closest(".outlet-selector-icon")) {
+    showOutletPicker();
+    return;
+  }
+
+  showOutletPicker();
+});
 
 function getBannerCards() {
   if (!bannerList) return [];
@@ -246,10 +258,7 @@ function renderBanners(items) {
   stopBannerAutoplay();
 
   if (!active.length) {
-    bannerList.innerHTML = `
-      <div class="banner-card"></div>
-    `;
-
+    bannerList.innerHTML = "";
     bannerDots.innerHTML = "";
     return;
   }
@@ -355,9 +364,7 @@ function pauseBannerAutoplay() {
   }, 7000);
 }
 
-bannerList?.addEventListener("scroll", () => {
-  updateBannerDots();
-}, {
+bannerList?.addEventListener("scroll", updateBannerDots, {
   passive: true
 });
 
@@ -416,9 +423,7 @@ async function loadHome() {
     stopBannerAutoplay();
 
     if (bannerList) {
-      bannerList.innerHTML = `
-        <div class="banner-card"></div>
-      `;
+      bannerList.innerHTML = "";
     }
 
     if (bannerDots) {
@@ -436,6 +441,13 @@ async function loadHome() {
 
     if (outletServices) {
       outletServices.hidden = true;
+    }
+
+    const selectorIcon = outletSelector?.querySelector(".outlet-selector-icon");
+
+    if (selectorIcon) {
+      selectorIcon.hidden = false;
+      selectorIcon.innerHTML = '<i class="fa-solid fa-expand"></i>';
     }
   }
 }
