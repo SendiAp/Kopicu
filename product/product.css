@@ -505,6 +505,116 @@ img {
   text-align: center;
 }
 
+/* BANNER UNDANG TEMAN */
+
+.invite-banner {
+  position: relative;
+  width: 100%;
+  min-height: 112px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  overflow: hidden;
+  border: 3px solid #b77b4d;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 3px 8px rgba(120, 75, 40, .08);
+}
+
+.invite-banner-icon {
+  position: relative;
+  width: 94px;
+  min-width: 94px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #fff1d1;
+  color: #d49b36;
+}
+
+.invite-banner-icon > i:first-child {
+  font-size: 55px;
+}
+
+.invite-banner-icon > i:last-child {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  color: #bd3443;
+  font-size: 23px;
+  transform: translateX(-50%);
+}
+
+.invite-banner-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.invite-banner-content h2 {
+  margin: 0;
+  color: #242424;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -.5px;
+}
+
+.invite-banner-button {
+  min-width: 104px;
+  min-height: 54px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 15px;
+  border-radius: 12px;
+  background: #bd2029;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+  white-space: nowrap;
+  transition: background .2s, transform .2s;
+}
+
+.invite-banner-button:active {
+  background: #a71922;
+  transform: scale(.96);
+}
+
+/* KHUSUS PENGGUNA BARU */
+
+.new-user-section {
+  width: calc(100% + 40px);
+  margin-left: -20px;
+  padding: 25px 20px 30px;
+  background: #f6ede4;
+}
+
+.new-user-heading {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.new-user-heading h2 {
+  margin: 0;
+  color: #292522;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -.5px;
+}
+
+.new-user-heading > i {
+  color: #888888;
+  font-size: 23px;
+}
+
 /* NAVIGASI BAWAH */
 
 .bottom-nav {
@@ -636,6 +746,51 @@ img {
   .quick-menu-title {
     font-size: 23px;
   }
+
+  .invite-banner {
+    min-height: 140px;
+    gap: 24px;
+    padding: 16px 22px;
+    border-radius: 22px;
+  }
+
+  .invite-banner-icon {
+    width: 112px;
+    min-width: 112px;
+    height: 104px;
+  }
+
+  .invite-banner-icon > i:first-child {
+    font-size: 68px;
+  }
+
+  .invite-banner-icon > i:last-child {
+    font-size: 28px;
+  }
+
+  .invite-banner-content h2 {
+    font-size: 27px;
+  }
+
+  .invite-banner-button {
+    min-width: 145px;
+    min-height: 66px;
+    font-size: 23px;
+  }
+
+  .new-user-section {
+    width: calc(100% + 40px);
+    margin-left: -20px;
+    padding: 30px 20px 35px;
+  }
+
+  .new-user-heading h2 {
+    font-size: 29px;
+  }
+
+  .new-user-heading > i {
+    font-size: 27px;
+  }
 }
 
 /* TAMPILAN HP */
@@ -753,6 +908,60 @@ img {
     font-size: 12px;
     line-height: 1.3;
   }
+
+  .invite-banner {
+    min-height: 96px;
+    gap: 10px;
+    margin-bottom: 14px;
+    padding: 9px 10px;
+    border-width: 2px;
+    border-radius: 15px;
+  }
+
+  .invite-banner-icon {
+    width: 65px;
+    min-width: 65px;
+    height: 68px;
+    border-radius: 11px;
+  }
+
+  .invite-banner-icon > i:first-child {
+    font-size: 41px;
+  }
+
+  .invite-banner-icon > i:last-child {
+    top: 10px;
+    font-size: 18px;
+  }
+
+  .invite-banner-content h2 {
+    font-size: 14px;
+    line-height: 1.35;
+    letter-spacing: -.3px;
+  }
+
+  .invite-banner-button {
+    min-width: 72px;
+    min-height: 44px;
+    padding: 8px 10px;
+    border-radius: 9px;
+    font-size: 14px;
+  }
+
+  .new-user-section {
+    width: calc(100% + 30px);
+    margin-left: -15px;
+    padding: 21px 15px 27px;
+  }
+
+  .new-user-heading h2 {
+    font-size: 21px;
+    letter-spacing: -.4px;
+  }
+
+  .new-user-heading > i {
+    font-size: 21px;
+  }
 }
 
 /* TAMPILAN HP KECIL */
@@ -827,5 +1036,45 @@ img {
 
   .quick-menu-title {
     font-size: 11px;
+  }
+
+  .invite-banner {
+    gap: 7px;
+    padding: 8px;
+  }
+
+  .invite-banner-icon {
+    width: 55px;
+    min-width: 55px;
+    height: 60px;
+  }
+
+  .invite-banner-icon > i:first-child {
+    font-size: 35px;
+  }
+
+  .invite-banner-icon > i:last-child {
+    font-size: 15px;
+  }
+
+  .invite-banner-content h2 {
+    font-size: 12px;
+  }
+
+  .invite-banner-button {
+    min-width: 62px;
+    min-height: 40px;
+    padding: 7px;
+    font-size: 12px;
+  }
+
+  .new-user-section {
+    width: calc(100% + 24px);
+    margin-left: -12px;
+    padding: 19px 12px 24px;
+  }
+
+  .new-user-heading h2 {
+    font-size: 19px;
   }
 }
