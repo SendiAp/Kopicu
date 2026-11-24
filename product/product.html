@@ -1,97 +1,76 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#ffffff">
   <meta name="description" content="Pesan menu favorit KOPICU dengan mudah.">
-  <title>Kopicu</title>
-
-  <link rel="stylesheet" href="product.css">
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <title>Kopicu</title>  <link rel="stylesheet" href="product.css">  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 </head>
-<body>
+<body>  <header class="outlet-header"><div class="outlet-decoration">
+  <span class="decoration-star star-one">✦</span>
+  <span class="decoration-star star-two">✧</span>
+  <span class="decoration-star star-three">✦</span>
 
-  <header class="outlet-header">
+  <span class="decoration-moon">
+    <i class="fa-solid fa-moon"></i>
+  </span>
 
-    <div class="outlet-decoration">
-      <span class="decoration-star star-one">✦</span>
-      <span class="decoration-star star-two">✧</span>
-      <span class="decoration-star star-three">✦</span>
+  <span class="decoration-cloud cloud-one"></span>
+  <span class="decoration-cloud cloud-two"></span>
+</div>
 
-      <span class="decoration-moon">
-        <i class="fa-solid fa-moon"></i>
-      </span>
+<div class="outlet-content">
 
-      <span class="decoration-cloud cloud-one"></span>
-      <span class="decoration-cloud cloud-two"></span>
-    </div>
+  <button
+    id="outlet-selector"
+    class="outlet-selector"
+    type="button"
+    aria-label="Pilih outlet toko"
+  >
+    <span class="outlet-selector-text">
+      <span id="outlet-title">Pilih outlet</span>
+      <span id="outlet-address" hidden></span>
+    </span>
 
-    <div class="outlet-content">
+    <span class="outlet-selector-icon">
+      <i class="fa-solid fa-qrcode"></i>
+    </span>
+  </button>
 
-      <button
-        id="outlet-selector"
-        class="outlet-selector"
-        type="button"
-        aria-label="Pilih outlet toko"
-      >
-        <span class="outlet-selector-text">
-          <span id="outlet-title">Pilih outlet</span>
-          <span id="outlet-address" hidden></span>
-        </span>
+  <div id="outlet-services" class="outlet-services" hidden>
+    <span class="outlet-services-label">Melayani</span>
+    <div id="outlet-services-list" class="outlet-services-list"></div>
+  </div>
 
-        <span class="outlet-selector-icon">
-          <i class="fa-solid fa-chevron-down"></i>
-        </span>
-      </button>
+</div>
 
-      <div id="outlet-services" class="outlet-services" hidden>
-        <div id="outlet-services-list" class="outlet-services-list"></div>
-      </div>
+  </header>  <main class="page"><section class="banner-section full-width-banner">
+  <div id="banner-list" class="banner-list">
+    <div class="skeleton banner-skeleton"></div>
+  </div>
+  <div id="banner-dots" class="banner-dots"></div>
+</section>
 
-    </div>
-
-  </header>
-
-  <main class="page">
-
-    <section class="banner-section">
-      <div id="banner-list" class="banner-list">
-        <div class="skeleton banner-skeleton"></div>
-      </div>
-      <div id="banner-dots" class="banner-dots"></div>
-    </section>
-
-  </main>
-
-  <nav class="bottom-nav">
+  </main>  <nav class="bottom-nav">
     <a class="nav-item active" href="index.html">
       <i class="fa-solid fa-house"></i>
       <span>Beranda</span>
-    </a>
+    </a><a class="nav-item" href="customer/cart.html">
+  <i class="fa-solid fa-bag-shopping"></i>
+  <span>Keranjang</span>
+</a>
 
-    <a class="nav-item" href="customer/cart.html">
-      <i class="fa-solid fa-bag-shopping"></i>
-      <span>Keranjang</span>
-    </a>
+<a class="nav-item" href="customer/orders.html">
+  <i class="fa-solid fa-receipt"></i>
+  <span>Pesanan</span>
+</a>
 
-    <a class="nav-item" href="customer/orders.html">
-      <i class="fa-solid fa-receipt"></i>
-      <span>Pesanan</span>
-    </a>
+<a class="nav-item" href="customer/profile.html">
+  <i class="fa-regular fa-user"></i>
+  <span>Akun</span>
+</a>
 
-    <a class="nav-item" href="customer/profile.html">
-      <i class="fa-regular fa-user"></i>
-      <span>Akun</span>
-    </a>
-  </nav>
-
-  <script type="module" src="product.js"></script>
-
-</body>
+  </nav>  <script type="module" src="product.js"></script></body>
 </html>
