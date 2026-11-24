@@ -42,11 +42,24 @@ img {
 .outlet-header {
   position: relative;
   top: auto;
-  z-index: 1;
+  z-index: 2;
   min-height: 0;
   padding: 15px 20px 14px;
-  overflow: hidden;
+  overflow: visible;
   isolation: isolate;
+  background: transparent;
+  border-radius: 0 0 20px 20px;
+  box-shadow: none;
+}
+
+.outlet-header::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 22px;
+  left: 0;
+  z-index: -2;
   background:
     radial-gradient(ellipse at 78% 0%, rgba(255,255,255,.95), transparent 48%),
     linear-gradient(145deg, #edf0ff 0%, #f8f8ff 52%, #e8edff 100%);
@@ -154,13 +167,15 @@ img {
 
 .outlet-content {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 100%;
   max-width: 1080px;
   margin: 0 auto;
 }
 
 .outlet-selector {
+  position: relative;
+  z-index: 2;
   width: 100%;
   min-height: 76px;
   display: flex;
@@ -249,6 +264,8 @@ img {
 }
 
 .outlet-services {
+  position: relative;
+  z-index: 2;
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -302,7 +319,7 @@ img {
 
 .page {
   position: relative;
-  z-index: 2;
+  z-index: 1;
   width: 100%;
   max-width: 1080px;
   margin: auto;
@@ -311,9 +328,9 @@ img {
 
 .banner-section {
   position: relative;
-  z-index: 3;
+  z-index: 0;
   width: 100vw;
-  margin: -12px 0 24px;
+  margin: -34px 0 24px;
   margin-left: calc(50% - 50vw);
 }
 
@@ -631,6 +648,10 @@ img {
     padding: 17px 20px 15px;
   }
 
+  .outlet-header::before {
+    bottom: 22px;
+  }
+
   .outlet-selector {
     min-height: 82px;
   }
@@ -660,6 +681,10 @@ img {
     padding-top: 0;
   }
 
+  .banner-section {
+    margin-top: -38px;
+  }
+
   .category-list {
     gap: 12px;
   }
@@ -674,6 +699,11 @@ img {
 @media (max-width: 600px) {
   .outlet-header {
     padding: 12px 15px 11px;
+    border-radius: 0 0 17px 17px;
+  }
+
+  .outlet-header::before {
+    bottom: 20px;
     border-radius: 0 0 17px 17px;
   }
 
@@ -740,7 +770,7 @@ img {
   }
 
   .banner-section {
-    margin-top: -10px;
+    margin-top: -32px;
     margin-bottom: 20px;
   }
 
@@ -805,6 +835,10 @@ img {
   .page {
     padding-right: 12px;
     padding-left: 12px;
+  }
+
+  .banner-section {
+    margin-top: -30px;
   }
 
   .product-image-link {
