@@ -267,7 +267,7 @@ function renderBanners(items) {
     <article class="banner-card">
       <img
         src="${safe(item.image)}"
-        alt="${safe(item.title || "Banner KOPICU")}"
+        alt="${safe(item.title || "Banner")}"
         loading="eager"
       >
     </article>
