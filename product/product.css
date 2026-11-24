@@ -417,6 +417,7 @@ img {
 /* MENU UTAMA */
 
 .quick-menu {
+  transform: translateY(-10px);
   position: relative;
   z-index: 4;
   display: grid;
