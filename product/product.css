@@ -39,6 +39,8 @@ img {
   display: none !important;
 }
 
+/* HEADER OUTLET */
+
 .outlet-header {
   position: relative;
   top: auto;
@@ -66,6 +68,8 @@ img {
   border-radius: 0 0 20px 20px;
   box-shadow: 0 3px 12px rgba(30, 30, 50, .06);
 }
+
+/* DEKORASI HEADER */
 
 .outlet-decoration {
   position: absolute;
@@ -165,6 +169,8 @@ img {
   font-size: 12px;
 }
 
+/* KONTEN OUTLET */
+
 .outlet-content {
   position: relative;
   z-index: 2;
@@ -172,6 +178,8 @@ img {
   max-width: 1080px;
   margin: 0 auto;
 }
+
+/* TABEL ALAMAT OUTLET */
 
 .outlet-selector {
   position: relative;
@@ -183,7 +191,7 @@ img {
   justify-content: space-between;
   gap: 12px;
   padding: 0;
-  border: 1px solid #eeeeee;
+  border: 1px solid rgba(0, 0, 0, 0.18);
   border-radius: 16px;
   background: #ffffff;
   color: #252525;
@@ -238,6 +246,8 @@ img {
   display: none !important;
 }
 
+/* IKON PEMILIH OUTLET */
+
 .outlet-selector-icon {
   width: 68px;
   min-width: 68px;
@@ -262,6 +272,8 @@ img {
 .outlet-selector-icon::after {
   content: none;
 }
+
+/* LAYANAN OUTLET */
 
 .outlet-services {
   position: relative;
@@ -317,6 +329,8 @@ img {
   border-color: #d6a65e;
 }
 
+/* HALAMAN UTAMA */
+
 .page {
   position: relative;
   z-index: 1;
@@ -325,6 +339,8 @@ img {
   margin: auto;
   padding: 0 20px 100px;
 }
+
+/* BANNER PROMOSI */
 
 .banner-section {
   position: relative;
@@ -391,6 +407,8 @@ img {
   width: 17px;
   background: #38251d;
 }
+
+/* BAGIAN KATEGORI DAN PRODUK */
 
 .section {
   margin: 0 0 30px;
@@ -568,6 +586,8 @@ img {
   padding: 35px 10px;
 }
 
+/* NAVIGASI BAWAH */
+
 .bottom-nav {
   position: fixed;
   z-index: 30;
@@ -602,6 +622,8 @@ img {
   color: #38251d;
   font-weight: 700;
 }
+
+/* LOADING SKELETON */
 
 .banner-skeleton {
   width: 100%;
@@ -642,6 +664,8 @@ img {
     background-position: -200% 0;
   }
 }
+
+/* TAMPILAN DESKTOP */
 
 @media (min-width: 700px) {
   .outlet-header {
@@ -695,6 +719,8 @@ img {
     height: 130px;
   }
 }
+
+/* TAMPILAN HP */
 
 @media (max-width: 600px) {
   .outlet-header {
@@ -797,6 +823,8 @@ img {
     font-size: 17px;
   }
 }
+
+/* TAMPILAN HP KECIL */
 
 @media (max-width: 360px) {
   .outlet-selector {
