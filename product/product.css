@@ -1078,3 +1078,151 @@ img {
     font-size: 19px;
   }
 }
+
+
+/* VOUCHER PENGGUNA BARU */
+
+.new-user-voucher {
+  width: 100%;
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #dddddd;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .08);
+}
+
+.voucher-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.voucher-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.voucher-info h3 {
+  margin: 0 0 8px;
+  color: #292929;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.voucher-info p {
+  margin: 0;
+  color: #888888;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.voucher-icon {
+  width: 85px;
+  min-width: 85px;
+  height: 85px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: #edf3fc;
+  color: #397bc5;
+  font-size: 35px;
+}
+
+.voucher-divider {
+  margin: 20px 0;
+  border-top: 2px dashed #dddddd;
+}
+
+.voucher-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.voucher-expiry {
+  color: #888888;
+  font-size: 15px;
+  line-height: 1.4;
+}
+
+.voucher-button {
+  min-height: 54px;
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 12px;
+  background: #bd2029;
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .new-user-voucher {
+    margin-top: 16px;
+    padding: 15px;
+    border-radius: 16px;
+  }
+
+  .voucher-info h3 {
+    font-size: 16px;
+  }
+
+  .voucher-info p {
+    font-size: 12px;
+  }
+
+  .voucher-icon {
+    width: 62px;
+    min-width: 62px;
+    height: 62px;
+    font-size: 27px;
+  }
+
+  .voucher-divider {
+    margin: 16px 0;
+  }
+
+  .voucher-expiry {
+    font-size: 12px;
+  }
+
+  .voucher-button {
+    min-height: 44px;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .new-user-voucher {
+    padding: 12px;
+  }
+
+  .voucher-info h3 {
+    font-size: 14px;
+  }
+
+  .voucher-info p {
+    font-size: 11px;
+  }
+
+  .voucher-icon {
+    width: 52px;
+    min-width: 52px;
+    height: 52px;
+    font-size: 23px;
+  }
+
+  .voucher-expiry {
+    font-size: 10px;
+  }
+
+  .voucher-button {
+    padding: 8px 9px;
+    font-size: 11px;
+  }
+}
