@@ -1203,8 +1203,17 @@ async function initializeCheckout() {
       window.location.replace("../product.html");
       return;
     }
-    
+
     loadAddress();
+
+    if (paymentMethod) {
+      $("payment-method").textContent = paymentMethod;
+    }
+
+    updateDeliverySelection();
+    renderProducts();
+
+    await loadStore();
 
     if (
       activeService === "delivery" &&
@@ -1215,17 +1224,7 @@ async function initializeCheckout() {
         message: "Tidak dapat menghitung jarak pengiriman. Silakan periksa kembali lokasi toko dan alamat pengiriman.",
         icon: "fa-location-dot"
       });
-      return;
     }
-    
-    if (paymentMethod) {
-      $("payment-method").textContent = paymentMethod;
-    }
-
-    updateDeliverySelection();
-    renderProducts();
-
-    await loadStore();
 
   } catch (error) {
     console.error("Gagal memuat checkout:", error);
