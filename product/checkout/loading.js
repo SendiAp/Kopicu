@@ -1,90 +1,31 @@
-const $ = id => document.getElementById(id);
-
-function createSkeleton(className) {
-  const element = document.createElement("div");
-  element.className = `skeleton ${className}`;
-  return element;
-}
-
 export function showCheckoutLoading() {
-  const targets = [
-    $("address-section"),
-    $("delivery-section"),
-    $("checkout-products-section"),
-    $("checkout-extra-section"),
-    $("checkout-summary-section")
-  ];
+  if (document.getElementById("checkout-loading")) return;
 
-  targets.forEach(section => {
-    if (!section) return;
+  const loading = document.createElement("div");
+  loading.id = "checkout-loading";
 
-    section.classList.add("checkout-loading-active");
+  loading.innerHTML = `
+    <div class="checkout-loading-content">
+      <div class="checkout-loading-spinner">
+        <div class="checkout-loading-ring"></div>
+        <div class="checkout-loading-icon">
+          <i class="fas fa-store"></i>
+        </div>
+      </div>
+    </div>
+  `;
 
-    const skeleton = document.createElement("div");
-    skeleton.className = "checkout-skeleton";
-
-    if (section.id === "address-section") {
-      skeleton.append(
-        createSkeleton("skeleton-address-title"),
-        createSkeleton("skeleton-address-line"),
-        createSkeleton("skeleton-address-line short")
-      );
-    }
-
-    if (section.id === "delivery-section") {
-      skeleton.append(
-        createSkeleton("skeleton-section-title"),
-        createSkeleton("skeleton-delivery"),
-        createSkeleton("skeleton-delivery"),
-        createSkeleton("skeleton-delivery")
-      );
-    }
-
-    if (section.id === "checkout-products-section") {
-      skeleton.append(
-        createSkeleton("skeleton-store"),
-        createSkeleton("skeleton-product"),
-        createSkeleton("skeleton-product")
-      );
-    }
-
-    if (section.id === "checkout-extra-section") {
-      skeleton.append(
-        createSkeleton("skeleton-extra"),
-        createSkeleton("skeleton-extra")
-      );
-    }
-
-    if (section.id === "checkout-summary-section") {
-      skeleton.append(
-        createSkeleton("skeleton-section-title"),
-        createSkeleton("skeleton-summary"),
-        createSkeleton("skeleton-summary"),
-        createSkeleton("skeleton-summary"),
-        createSkeleton("skeleton-summary-total")
-      );
-    }
-
-    section.appendChild(skeleton);
-  });
+  document.body.appendChild(loading);
 }
 
 export function hideCheckoutLoading() {
-  const targets = [
-    $("address-section"),
-    $("delivery-section"),
-    $("checkout-products-section"),
-    $("checkout-extra-section"),
-    $("checkout-summary-section")
-  ];
+  const loading = document.getElementById("checkout-loading");
 
-  targets.forEach(section => {
-    if (!section) return;
+  if (!loading) return;
 
-    section.querySelectorAll(".checkout-skeleton").forEach(element => {
-      element.remove();
-    });
+  loading.classList.add("checkout-loading-hide");
 
-    section.classList.remove("checkout-loading-active");
-  });
+  setTimeout(() => {
+    loading.remove();
+  }, 250);
 }
