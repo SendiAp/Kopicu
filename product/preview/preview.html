@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Detail Product - KOPICU</title>
+
+  <link rel="stylesheet" href="preview.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="preview-header">
+    <button type="button" class="back-button" onclick="history.back()" aria-label="Kembali">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+
+    <h1 id="header-product-name">Detail Product</h1>
+
+    <button type="button" class="share-button" id="share-product-button" aria-label="Bagikan produk">
+      <i class="fa-solid fa-arrow-up-from-bracket"></i>
+    </button>
+  </header>
+
+  <main class="preview-container">
+
+    <section class="product-detail">
+      <h2 id="product-name">Nama Product</h2>
+      <p id="product-description">Deskripsi product akan ditampilkan di sini.</p>
+      <p id="product-price">Rp0</p>
+    </section>
+
+    <section class="product-options" id="product-options">
+
+      <div class="option-group" id="option-group-container">
+        <div class="option-group-heading">
+          <h3 id="option-group-name">Nama Grup Opsi</h3>
+          <span id="option-group-description">Opsional · Dapat memilih lebih dari satu</span>
+        </div>
+
+        <div class="option-items" id="option-items-list">
+          <label class="option-item" id="option-item-template">
+            <div class="option-item-info">
+              <span class="option-item-name">Nama Opsi</span>
+            </div>
+
+            <div class="option-item-action">
+              <span class="option-item-price">+ Rp0</span>
+              <input type="checkbox" class="option-checkbox">
+            </div>
+          </label>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="preview-footer">
+    <div class="quantity-control">
+      <button type="button" id="decrease-quantity" aria-label="Kurangi jumlah">
+        <i class="fa-solid fa-minus"></i>
+      </button>
+
+      <span id="product-quantity">1</span>
+
+      <button type="button" id="increase-quantity" aria-label="Tambah jumlah">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+
+    <button type="button" class="add-cart-button" id="add-to-cart-button">
+      <span>+ Keranjang</span>
+      <span id="cart-total-price">Rp0</span>
+    </button>
+  </footer>
+
+  <script type="module" src="preview.js"></script>
+
+</body>
+</html>
