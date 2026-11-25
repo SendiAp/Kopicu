@@ -1319,3 +1319,29 @@ img {
     font-size: 13px;
   }
 }
+
+.cart-icon {
+  position: relative;
+}
+
+.cart-count {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50px;
+  background: #e53935;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 800;
+  border: 2px solid #ffffff;
+}
+
+.cart-count[hidden] {
+  display: none;
+}
