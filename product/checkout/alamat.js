@@ -138,6 +138,8 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
     
     $("address-detail").value =
       selectedFormattedAddress;
+
+    $("address-auto-hint").hidden = false;
     
     updateSaveButton();
     return;
