@@ -986,6 +986,7 @@ async function editProductOptions(itemId) {
       message: "Terjadi kesalahan saat mengambil grup opsi produk.",
       icon: "fa-circle-exclamation"
     });
+  }
 }
 
 function placeOrder() {
