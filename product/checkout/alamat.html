@@ -11,13 +11,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-  <link
-    rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-    crossorigin=""
-  >
 </head>
 
 <body>
@@ -47,10 +40,14 @@
       </div>
 
       <div class="map-container" id="address-map">
-        <div class="map-placeholder">
-          <i class="fa-solid fa-map-location-dot"></i>
-          <p>Menentukan lokasi...</p>
-        </div>
+        <iframe
+          id="google-map"
+          src="about:blank"
+          allowfullscreen
+          loading="eager"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Peta Google Maps"
+        ></iframe>
       </div>
 
       <div class="selected-location">
@@ -92,7 +89,8 @@
           name="addressDetail"
           rows="3"
           placeholder="Contoh: Perumahan Taman Asri Indah, Blok M190, No. 18..."
-          ></textarea>
+        ></textarea>
+
         <small id="address-auto-hint" hidden>
           Jika titik lokasi kamu sudah betul di maps, silahkan revisi lagi alamat lengkapnya diatas, dan tambahkan blok atau nomer jika belum terisi otomatis.
         </small>
@@ -193,12 +191,6 @@
       Simpan
     </button>
   </footer>
-
-  <script
-    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-    crossorigin=""
-  ></script>
 
   <script type="module" src="alamat.js"></script>
 
