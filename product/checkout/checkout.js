@@ -118,7 +118,13 @@ function calculateDeliveryFee(distance) {
 function updateDeliveryPrices() {
   const price = calculateDeliveryFee(deliveryDistanceKm);
 
-  deliveryFee = price;
+  const isDelivery = document.querySelector(
+    ".service-option.active"
+  )?.dataset.service === "delivery";
+
+  deliveryFee = isDelivery && deliveryDistanceKm !== null
+    ? price
+    : 0;
 
   document.querySelectorAll(".delivery-price").forEach(element => {
     element.textContent = deliveryDistanceKm === null
@@ -127,6 +133,7 @@ function updateDeliveryPrices() {
   });
 
   updateSummary();
+  updateOrderButton();
 }
 
 async function calculateDeliveryDistance() {
@@ -142,7 +149,8 @@ async function calculateDeliveryDistance() {
   }
 
   updateDeliveryPrices();
-
+  updateOrderButton();
+  
   if (!customer || !store) {
     if (distanceElement) {
       distanceElement.textContent = "Lokasi belum tersedia";
@@ -586,9 +594,6 @@ function updateOrderButton() {
 
   const hasAddress = Boolean(getFullAddress());
 
-  const distanceUnavailable = isDelivery &&
-    deliveryDistanceKm === null;
-  
   const isDelivery = document.querySelector(
     ".service-option.active"
   )?.dataset.service === "delivery";
@@ -597,13 +602,13 @@ function updateOrderButton() {
     !hasAddress ||
     deliveryDistanceKm === null
   );
-  
+
   button.disabled = disabled;
   button.style.background = disabled ? "#bdbdbd" : "";
   button.style.color = disabled ? "#ffffff" : "";
   button.style.cursor = disabled ? "not-allowed" : "";
 }
-
+  
 function loadAddress() {
   try {
     addressData = JSON.parse(
@@ -1201,6 +1206,18 @@ async function initializeCheckout() {
     
     loadAddress();
 
+    if (
+      activeService === "delivery" &&
+      deliveryDistanceKm === null
+    ) {
+      showPopup({
+        title: "Jarak Belum Tersedia",
+        message: "Tidak dapat menghitung jarak pengiriman. Silakan periksa kembali lokasi toko dan alamat pengiriman.",
+        icon: "fa-location-dot"
+      });
+      return;
+    }
+    
     if (paymentMethod) {
       $("payment-method").textContent = paymentMethod;
     }
