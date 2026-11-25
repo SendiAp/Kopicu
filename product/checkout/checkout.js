@@ -160,10 +160,16 @@ function updateDeliveryPrices() {
       if (deliveryDurationMinutes === null || !config) {
         timeElement.textContent = "Waktu tidak tersedia";
       } else {
-        const minutes = Math.ceil(
-          deliveryDurationMinutes * config.timeMultiplier
-        ) + 10;
-
+        const standardMinutes = Math.ceil(deliveryDurationMinutes) + 10;
+        
+        let minutes = standardMinutes;
+        
+        if (type === "priority") {
+          minutes = Math.max(5, standardMinutes - 10);
+        } else if (type === "economy") {
+          minutes = standardMinutes + 15;
+        }
+        
         timeElement.textContent = `${minutes} menit`;
       }
     }
