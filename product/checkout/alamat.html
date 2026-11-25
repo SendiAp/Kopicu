@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <title>Konfirmasi Alamat - KOPICU</title>
+
+  <link rel="stylesheet" href="alamat.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <header class="address-header">
+    <button type="button" class="back-button" id="back-button">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+    <h1>Konfirmasi Alamat</h1>
+  </header>
+
+  <main class="address-page">
+
+    <section class="map-section">
+      <div class="map-search">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input
+          type="text"
+          id="address-search"
+          placeholder="Cari alamat atau lokasi..."
+          autocomplete="off"
+        >
+        <button type="button" id="search-location-button">
+          Cari
+        </button>
+      </div>
+
+      <div class="map-container" id="address-map">
+        <div class="map-placeholder">
+          <i class="fa-solid fa-map-location-dot"></i>
+          <p>Menentukan lokasi...</p>
+        </div>
+      </div>
+
+      <div class="selected-location">
+        <div class="selected-location-icon">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+
+        <div class="selected-location-content">
+          <strong>Titik Lokasi</strong>
+          <p id="selected-address">
+            Tentukan titik lokasi pada peta
+          </p>
+          <small id="selected-coordinates">
+            Koordinat belum ditentukan
+          </small>
+        </div>
+
+        <button type="button" id="current-location-button">
+          <i class="fa-solid fa-crosshairs"></i>
+        </button>
+      </div>
+    </section>
+
+    <section class="address-form-section">
+
+      <div class="section-heading">
+        <h2>Rincian Alamat</h2>
+        <p>Lengkapi alamat agar pesanan mudah ditemukan</p>
+      </div>
+
+      <div class="form-group">
+        <label for="address-detail">
+          Rincian Alamat
+        </label>
+        <textarea
+          id="address-detail"
+          name="addressDetail"
+          rows="3"
+          placeholder="Contoh: Blok M190, No. 18, dekat pos satpam..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="full-name">
+          Nama Lengkap
+        </label>
+        <input
+          type="text"
+          id="full-name"
+          name="fullName"
+          placeholder="Masukkan nama lengkap"
+          autocomplete="name"
+        >
+      </div>
+
+      <div class="form-group">
+        <label for="phone-number">
+          No. Handphone
+        </label>
+        <input
+          type="tel"
+          id="phone-number"
+          name="phoneNumber"
+          placeholder="+628xxxxxxxxxx"
+          value="+628"
+          autocomplete="tel"
+          inputmode="tel"
+        >
+        <small>
+          <i class="fa-brands fa-whatsapp"></i>
+          Nomor ini juga digunakan untuk WhatsApp
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="email">
+          Email
+        </label>
+        <input
+          type="email"
+          id="email"
+          name="email"
+          placeholder="Masukkan alamat email"
+          autocomplete="email"
+        >
+        <small>
+          Email digunakan untuk pengiriman invoice pemesanan
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="location-type">
+          Jenis Lokasi
+        </label>
+
+        <select id="location-type" name="locationType">
+          <option value="" selected disabled>Pilih jenis lokasi</option>
+          <option value="Rumah">Rumah</option>
+          <option value="Kantor">Kantor</option>
+          <option value="Apartemen">Apartemen</option>
+          <option value="Lainnya">Lainnya</option>
+        </select>
+      </div>
+
+      <div class="form-group" id="other-location-group" hidden>
+        <label for="other-location">
+          Nama Jenis Lokasi
+        </label>
+        <input
+          type="text"
+          id="other-location"
+          name="otherLocation"
+          placeholder="Masukkan jenis lokasi"
+        >
+      </div>
+
+    </section>
+
+  </main>
+
+  <footer class="address-footer">
+    <button type="button" id="save-address-button" disabled>
+      Simpan
+    </button>
+  </footer>
+
+  <script type="module" src="alamat.js"></script>
+
+</body>
+</html>
