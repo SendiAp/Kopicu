@@ -465,3 +465,16 @@ button {
     padding-left: 20px;
   }
 }
+
+.product-detail,
+.product-options {
+  position: relative;
+}
+
+.product-detail.preview-loading-active {
+  min-height: 340px;
+}
+
+.product-options.preview-loading-active {
+  min-height: 650px;
+}
