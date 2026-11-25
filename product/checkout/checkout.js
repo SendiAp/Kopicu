@@ -694,6 +694,7 @@ async function editProductOptions(itemId) {
     }
 
     const product = productSnapshot.val();
+
     const allGroups = groupsSnapshot.exists()
       ? groupsSnapshot.val()
       : {};
@@ -740,81 +741,6 @@ async function editProductOptions(itemId) {
       return;
     }
 
-    const styleId = "checkout-option-editor-style";
-
-    if (!document.getElementById(styleId)) {
-      const style = document.createElement("style");
-      style.id = styleId;
-      style.textContent = `
-        .checkout-option-list {
-          max-height: 55vh;
-          overflow-y: auto;
-          margin-top: 18px;
-        }
-
-        .checkout-option-group {
-          padding: 14px 0;
-          border-bottom: 1px solid #eeeeee;
-        }
-
-        .checkout-option-group:last-child {
-          border-bottom: 0;
-        }
-
-        .checkout-option-group h4 {
-          margin: 0 0 4px;
-          font-size: 14px;
-          color: #242424;
-        }
-
-        .checkout-option-hint {
-          margin: 0 0 12px;
-          color: #888888;
-          font-size: 11px;
-        }
-
-        .checkout-option-choice {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 12px;
-          padding: 10px 0;
-          font-size: 13px;
-          color: #333333;
-          cursor: pointer;
-        }
-
-        .checkout-option-choice span {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-        }
-
-        .checkout-option-choice input {
-          width: 17px;
-          height: 17px;
-          accent-color: #38251d;
-        }
-
-        .checkout-option-price {
-          color: #666666;
-          white-space: nowrap;
-        }
-
-        .checkout-option-error {
-          margin-top: 12px;
-          color: #d93636;
-          font-size: 12px;
-          display: none;
-        }
-
-        .checkout-option-save {
-          margin-top: 15px;
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
     document.getElementById("checkout-popup-overlay")?.remove();
 
     const overlay = document.createElement("div");
@@ -854,7 +780,9 @@ async function editProductOptions(itemId) {
 
                 <p class="checkout-option-hint">
                   ${group.required ? "Wajib dipilih" : "Opsional"}
-                  ${group.multiple ? " · Bisa pilih lebih dari satu" : " · Pilih satu"}
+                  ${group.multiple
+                    ? " · Bisa pilih lebih dari satu"
+                    : " · Pilih satu"}
                 </p>
 
                 ${group.options.map((option, index) => {
