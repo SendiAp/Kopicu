@@ -4,6 +4,11 @@ import {
   get
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
+import {
+  showCheckoutLoading,
+  hideCheckoutLoading
+} from "./loading.js";
+
 const $ = id => document.getElementById(id);
 
 const productList = $("checkout-product-list");
@@ -524,17 +529,28 @@ $("payment-button").addEventListener("click", selectPayment);
 $("place-order-button").addEventListener("click", placeOrder);
 $("back-button").addEventListener("click", goBack);
 
-function initializeCheckout() {
-  loadCheckoutItems();
-  loadAddress();
+async function initializeCheckout() {
+  showCheckoutLoading();
 
-  if (paymentMethod) {
-    $("payment-method").textContent = paymentMethod;
+  try {
+    loadCheckoutItems();
+    loadAddress();
+
+    if (paymentMethod) {
+      $("payment-method").textContent = paymentMethod;
+    }
+
+    updateDeliverySelection();
+    renderProducts();
+
+    await loadStore();
+
+  } catch (error) {
+    console.error("Gagal memuat checkout:", error);
+  } finally {
+    hideCheckoutLoading();
   }
-
-  updateDeliverySelection();
-  renderProducts();
-  loadStore();
 }
 
 initializeCheckout();
+showCheckoutLoading();
