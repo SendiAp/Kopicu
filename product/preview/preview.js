@@ -57,6 +57,111 @@ function formatRupiah(value) {
   return "Rp" + Number(value || 0).toLocaleString("id-ID");
 }
 
+function popup(message, title = "Informasi", confirmMode = false) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+
+    overlay.style.cssText = `
+      position:fixed;
+      inset:0;
+      z-index:99999;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      background:rgba(0,0,0,.38);
+      backdrop-filter:blur(3px);
+    `;
+
+    const dialog = document.createElement("div");
+
+    dialog.style.cssText = `
+      width:100%;
+      max-width:370px;
+      padding:25px 22px 20px;
+      border:1px solid #eeeeee;
+      border-radius:15px;
+      background:#fff;
+      box-shadow:0 15px 50px rgba(0,0,0,.15);
+      font-family:"DM Sans",sans-serif;
+      text-align:center;
+      animation:popupAppear .2s ease;
+    `;
+
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    heading.style.cssText = `
+      margin:0;
+      color:#38251d;
+      font-size:17px;
+      font-weight:800;
+    `;
+
+    const description = document.createElement("p");
+    description.textContent = message;
+    description.style.cssText = `
+      margin:12px 0 22px;
+      color:#777;
+      font-size:13px;
+      line-height:1.6;
+    `;
+
+    const actions = document.createElement("div");
+    actions.style.cssText = `
+      display:flex;
+      gap:9px;
+      justify-content:center;
+    `;
+
+    function createButton(text, background, color, value) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = text;
+      button.style.cssText = `
+        flex:1;
+        min-height:42px;
+        border:0;
+        border-radius:8px;
+        background:${background};
+        color:${color};
+        font-family:inherit;
+        font-size:12px;
+        font-weight:700;
+        cursor:pointer;
+      `;
+
+      button.addEventListener("click", () => {
+        overlay.remove();
+        resolve(value);
+      });
+
+      return button;
+    }
+
+    if (confirmMode) {
+      actions.append(
+        createButton("Batal", "#eeeeee", "#555", false),
+        createButton("Ya, lanjutkan", "#38251d", "#fff", true)
+      );
+    } else {
+      actions.append(
+        createButton("Mengerti", "#38251d", "#fff", true)
+      );
+    }
+
+    dialog.append(heading, description, actions);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        overlay.remove();
+        resolve(false);
+      }
+    });
+  });
+}
+
 function getOptionGroups() {
   if (!Array.isArray(currentProduct?.optionGroups)) {
     return [];
@@ -210,7 +315,6 @@ function renderProductOptions() {
   });
 }
 
-
 async function loadRecommendation() {
   try {
     const snapshot = await get(ref(db, "products"));
@@ -242,9 +346,7 @@ async function loadRecommendation() {
       product.image || product.images?.[0] || "";
 
     recommendationImage.alt = product.name || "Product";
-
     recommendationName.textContent = product.name || "Product";
-
     recommendationPrice.textContent = formatRupiah(product.price);
 
     recommendationCard.hidden = false;
@@ -261,13 +363,12 @@ function renderProduct() {
   const name = currentProduct.name || "Product";
   const description = currentProduct.description || "";
   const price = Number(currentProduct.price || 0);
-
   const image = currentProduct.image || currentProduct.images?.[0] || "";
-  
+
   productImage.src = image;
   productImage.alt = name;
   productImage.hidden = !image;
-  
+
   headerProductName.textContent = name;
   productNameElement.textContent = name;
   productDescription.textContent = description;
@@ -299,11 +400,13 @@ function validateSelectedOptions() {
     );
 
     if (!selected) {
-      alert(`Silakan pilih opsi pada grup ${group.name}.`);
+      popup(`Silakan pilih opsi pada grup ${group.name}.`);
+
       section.scrollIntoView({
         behavior: "smooth",
         block: "center"
       });
+
       return false;
     }
   }
@@ -325,11 +428,42 @@ function getCartId() {
   return cartId;
 }
 
+function returnToProductPage() {
+  const previousPage = document.referrer;
+
+  if (previousPage) {
+    try {
+      const previousUrl = new URL(previousPage);
+
+      const isProductPage =
+        previousUrl.origin === window.location.origin &&
+        /\/product\/product\.html$/.test(previousUrl.pathname);
+
+      if (isProductPage && window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+    } catch (error) {
+      console.error("Gagal memeriksa halaman sebelumnya:", error);
+    }
+  }
+
+  window.location.href = "../product.html";
+}
+
 async function addToCart() {
   if (!currentProduct || isAddingToCart) return;
 
   if (currentProduct.available === false) {
-    alert("Product sedang tidak tersedia.");
+    await popup("Product sedang tidak tersedia.");
+    return;
+  }
+
+  if (
+    currentProduct.stock?.enabled &&
+    selectedQuantity > Number(currentProduct.stock.quantity || 0)
+  ) {
+    await popup("Jumlah product melebihi stok yang tersedia.");
     return;
   }
 
@@ -367,6 +501,7 @@ async function addToCart() {
   };
 
   isAddingToCart = true;
+
   addToCartButton.innerHTML = `
     <i class="fa-solid fa-spinner fa-spin"></i>
     <span>Menambahkan...</span>
@@ -385,32 +520,36 @@ async function addToCart() {
       updatedAt: now
     });
 
-    alert("Product berhasil dimasukkan ke keranjang.");
+    await popup("Product berhasil dimasukkan ke keranjang.");
+
+    returnToProductPage();
 
   } catch (error) {
     console.error("Gagal menambahkan ke keranjang:", error);
 
-    alert(
+    await popup(
       "Product gagal dimasukkan ke keranjang. Silakan coba lagi."
     );
 
   } finally {
     isAddingToCart = false;
 
-    addToCartButton.innerHTML = `
-      <span>+ Keranjang</span>
-      <span id="cart-total-price">${formatRupiah(calculateTotalPrice())}</span>
-    `;
+    if (currentProduct?.available !== false) {
+      addToCartButton.innerHTML = `
+        <span>+ Keranjang</span>
+        <span id="cart-total-price">${formatRupiah(calculateTotalPrice())}</span>
+      `;
 
-    updateCartTotal();
+      updateCartTotal();
+    }
   }
 }
 
 async function loadProduct() {
   if (!productId) {
     hidePreviewLoading();
-    alert("ID product tidak ditemukan.");
-    window.history.back();
+    await popup("ID product tidak ditemukan.");
+    returnToProductPage();
     return;
   }
 
@@ -423,19 +562,14 @@ async function loadProduct() {
       ]);
 
     if (!productSnapshot.exists()) {
-      alert("Product tidak ditemukan.");
-      window.history.back();
+      hidePreviewLoading();
+      await popup("Product tidak ditemukan.");
+      returnToProductPage();
       return;
     }
 
-    if (!productSnapshot.exists()) {
-      hidePreviewLoading();
-      alert("Product tidak ditemukan.");
-      window.history.back();
-      return;
-    }
-    
     currentProduct = productSnapshot.val();
+
     categories = categoriesSnapshot.exists()
       ? categoriesSnapshot.val()
       : {};
@@ -451,9 +585,12 @@ async function loadProduct() {
 
   } catch (error) {
     hidePreviewLoading();
+
     console.error("Gagal mengambil data product:", error);
 
-    alert("Product gagal dimuat. Silakan periksa koneksi internet.");
+    await popup(
+      "Product gagal dimuat. Silakan periksa koneksi internet."
+    );
   }
 }
 
@@ -464,11 +601,11 @@ decreaseQuantityButton.addEventListener("click", () => {
   updateCartTotal();
 });
 
-increaseQuantityButton.addEventListener("click", () => {
+increaseQuantityButton.addEventListener("click", async () => {
   const stock = currentProduct?.stock;
 
   if (stock?.enabled && selectedQuantity >= Number(stock.quantity || 0)) {
-    alert("Jumlah product melebihi stok yang tersedia.");
+    await popup("Jumlah product melebihi stok yang tersedia.");
     return;
   }
 
@@ -492,11 +629,14 @@ shareProductButton.addEventListener("click", async () => {
       await navigator.share(shareData);
     } else if (navigator.clipboard) {
       await navigator.clipboard.writeText(window.location.href);
-      alert("Link product berhasil disalin.");
+      await popup("Link product berhasil disalin.");
+    } else {
+      await popup("Fitur berbagi tidak tersedia pada perangkat ini.");
     }
   } catch (error) {
     if (error.name !== "AbortError") {
       console.error("Gagal membagikan product:", error);
+      await popup("Link product gagal dibagikan.");
     }
   }
 });
