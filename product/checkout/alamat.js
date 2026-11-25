@@ -2,12 +2,8 @@ const $ = id => document.getElementById(id);
 
 const ADDRESS_STORAGE_KEY = "kopicu_address";
 
-let addressMap = null;
-let addressMarker = null;
 let selectedLocation = null;
 let selectedFormattedAddress = "";
-let searchController = null;
-let reverseController = null;
 
 const addressFields = [
   $("address-detail"),
@@ -17,177 +13,13 @@ const addressFields = [
   $("location-type")
 ];
 
-async function reverseGeocode(lat, lng) {
-  if (reverseController) {
-    reverseController.abort();
-  }
-
-  reverseController = new AbortController();
-
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&accept-language=id`,
-    {
-      signal: reverseController.signal
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Gagal mengambil alamat");
-  }
-
-  return await response.json();
-}
-
 function initializeMap() {
-  const defaultLocation = [-6.200000, 106.816666];
+  const map = $("google-map");
 
-  $("address-map").innerHTML = "";
-
-  addressMap = L.map("address-map").setView(
-    defaultLocation,
-    14
-  );
-
-  L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-      maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-    }
-  ).addTo(addressMap);
-
-  addressMap.on("click", event => {
-    setSelectedLocation(
-      event.latlng.lat,
-      event.latlng.lng
-    );
-  });
+  map.src =
+    "https://maps.google.com/maps?q=Jakarta%20Indonesia&z=14&output=embed";
 
   initializeAddressSearch();
-
-  setTimeout(() => {
-    addressMap.invalidateSize();
-  }, 200);
-}
-
-function setMarker(lat, lng) {
-  const location = [lat, lng];
-
-  if (!addressMarker) {
-    addressMarker = L.marker(location, {
-      draggable: true
-    }).addTo(addressMap);
-
-    addressMarker.on("dragend", event => {
-      const position = event.target.getLatLng();
-
-      setSelectedLocation(
-        position.lat,
-        position.lng
-      );
-    });
-  } else {
-    addressMarker.setLatLng(location);
-  }
-
-  addressMap.setView(location, 17);
-}
-
-async function setSelectedLocation(lat, lng, formattedAddress = "") {
-  if (!addressMap) return;
-
-  lat = Number(lat);
-  lng = Number(lng);
-
-  if (
-    !Number.isFinite(lat) ||
-    !Number.isFinite(lng) ||
-    lat < -90 ||
-    lat > 90 ||
-    lng < -180 ||
-    lng > 180
-  ) {
-    return;
-  }
-
-  selectedLocation = {
-    lat,
-    lng
-  };
-
-  selectedFormattedAddress = "";
-
-  setMarker(lat, lng);
-
-  $("selected-coordinates").textContent =
-    `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
-
-  $("selected-address").textContent =
-    "Mengambil rincian alamat...";
-
-  updateSaveButton();
-
-  if (formattedAddress) {
-    selectedFormattedAddress = formattedAddress;
-    
-    $("selected-address").textContent =
-      formattedAddress;
-    
-    $("address-search").value =
-      formattedAddress;
-    
-    $("address-detail").value =
-      formattedAddress;
-    
-    $("address-auto-hint").hidden = false;
-    
-    updateSaveButton();
-    return;
-  }
-
-  try {
-    const result = await reverseGeocode(lat, lng);
-
-    if (
-      !selectedLocation ||
-      selectedLocation.lat !== lat ||
-      selectedLocation.lng !== lng
-    ) {
-      return;
-    }
-
-    if (!result.display_name) {
-      throw new Error("Alamat tidak ditemukan");
-    }
-
-    selectedFormattedAddress = result.display_name;
-    
-    $("selected-address").textContent =
-      selectedFormattedAddress;
-    
-    $("address-search").value =
-      selectedFormattedAddress;
-    
-    $("address-detail").value =
-      selectedFormattedAddress;
-    
-    $("address-auto-hint").hidden = false;
-    
-    updateSaveButton();
-
-  } catch (error) {
-    if (error.name === "AbortError") return;
-
-    console.error("Gagal mengambil alamat:", error);
-
-    $("selected-address").textContent =
-      "Alamat tidak dapat ditemukan";
-
-    selectedFormattedAddress = "";
-
-  } finally {
-    updateSaveButton();
-  }
 }
 
 function initializeAddressSearch() {
@@ -207,57 +39,66 @@ function initializeAddressSearch() {
   );
 }
 
-async function searchAddress() {
+function searchAddress() {
   const query = $("address-search").value.trim();
 
   if (!query) return;
 
-  if (searchController) {
-    searchController.abort();
+  $("selected-address").textContent =
+    "Menampilkan lokasi pencarian di Google Maps...";
+
+  $("google-map").src =
+    `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=17&output=embed`;
+
+  selectedLocation = null;
+  selectedFormattedAddress = "";
+
+  $("selected-coordinates").textContent =
+    "Koordinat belum ditentukan";
+
+  $("address-auto-hint").hidden = true;
+
+  updateSaveButton();
+}
+
+function setSelectedLocation(lat, lng, formattedAddress = "") {
+  lat = Number(lat);
+  lng = Number(lng);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return;
   }
 
-  searchController = new AbortController();
+  selectedLocation = { lat, lng };
+
+  selectedFormattedAddress =
+    formattedAddress || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+
+  $("google-map").src =
+    `https://maps.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
+
+  $("selected-coordinates").textContent =
+    `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
 
   $("selected-address").textContent =
-    "Mencari alamat...";
+    selectedFormattedAddress;
 
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(query)}&countrycodes=id&limit=1&accept-language=id`,
-      {
-        signal: searchController.signal
-      }
-    );
+  $("address-search").value =
+    selectedFormattedAddress;
 
-    if (!response.ok) {
-      throw new Error("Pencarian alamat gagal");
-    }
+  $("address-detail").value =
+    selectedFormattedAddress;
 
-    const results = await response.json();
+  $("address-auto-hint").hidden = false;
 
-    if (!results.length) {
-      $("selected-address").textContent =
-        "Alamat tidak ditemukan";
-
-      return;
-    }
-
-    const result = results[0];
-
-    await setSelectedLocation(
-      Number(result.lat),
-      Number(result.lon),
-      result.display_name
-    );
-
-  } catch (error) {
-    if (error.name === "AbortError") return;
-
-    console.error("Gagal mencari alamat:", error);
-
-    $("selected-address").textContent =
-      "Pencarian gagal. Silakan coba kembali.";
-  }
+  updateSaveButton();
 }
 
 function getCurrentLocation() {
@@ -269,22 +110,18 @@ function getCurrentLocation() {
     return;
   }
 
-  if (!addressMap) {
-    showAddressMessage(
-      "Peta Belum Siap",
-      "Tunggu sampai peta selesai dimuat."
-    );
-    return;
-  }
-
   $("selected-address").textContent =
     "Mengambil lokasi perangkat...";
 
   navigator.geolocation.getCurrentPosition(
     position => {
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
       setSelectedLocation(
-        position.coords.latitude,
-        position.coords.longitude
+        lat,
+        lng,
+        `${lat.toFixed(6)}, ${lng.toFixed(6)}`
       );
     },
     error => {
@@ -368,7 +205,6 @@ function initializeLocationType() {
 
 function validateAddressForm() {
   const detail = $("address-detail").value.trim();
-  const landmark = $("address-landmark").value.trim();
   const name = $("full-name").value.trim();
   const phone = $("phone-number").value.trim();
   const email = $("email").value.trim();
@@ -431,7 +267,7 @@ function saveAddress() {
     },
     updatedAt: Date.now()
   };
-  
+
   try {
     localStorage.setItem(
       ADDRESS_STORAGE_KEY,
@@ -508,7 +344,7 @@ function initializeAddressPage() {
     "input",
     updateSaveButton
   );
-  
+
   $("current-location-button").addEventListener(
     "click",
     getCurrentLocation
