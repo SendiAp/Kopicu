@@ -174,7 +174,7 @@ function renderCart() {
           }
 
           <p class="cart-item-price">
-            ${formatRupiah(item.totalPrice)}
+          ${formatRupiah(item.unitPrice)}
           </p>
 
         </div>
