@@ -34,7 +34,6 @@ let selectedDelivery = "standard";
 let deliveryFee = deliveryPrices.standard;
 let serviceFee = 0;
 let paymentMethod = localStorage.getItem("kopicu_payment_method") || "";
-
 let addressData = null;
 
 function escapeHTML(value) {
@@ -49,6 +48,194 @@ function escapeHTML(value) {
 
 function formatRupiah(value) {
   return "Rp" + Number(value || 0).toLocaleString("id-ID");
+}
+
+function getFullAddress() {
+  return String(
+    addressData?.fullAddress ||
+    addressData?.address ||
+    addressData?.alamat ||
+    ""
+  ).trim();
+}
+
+function showPopup({
+  title = "Informasi",
+  message = "",
+  icon = "fa-circle-info",
+  actions = []
+}) {
+  document.getElementById("checkout-popup-overlay")?.remove();
+
+  const styleId = "checkout-popup-style";
+
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement("style");
+    style.id = styleId;
+    style.textContent = `
+      .checkout-popup-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, 0.45);
+        animation: checkoutPopupFade 0.2s ease;
+      }
+
+      .checkout-popup {
+        width: 100%;
+        max-width: 360px;
+        padding: 24px 20px 20px;
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 8px 35px rgba(0, 0, 0, 0.14);
+        animation: checkoutPopupScale 0.2s ease;
+      }
+
+      .checkout-popup-icon {
+        width: 52px;
+        height: 52px;
+        margin: 0 auto 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: #f7f3ef;
+        color: #38251d;
+        font-size: 22px;
+      }
+
+      .checkout-popup-title {
+        margin: 0 0 9px;
+        color: #242424;
+        font-size: 17px;
+        font-weight: 700;
+        text-align: center;
+      }
+
+      .checkout-popup-message {
+        margin: 0;
+        color: #777777;
+        font-size: 13px;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      .checkout-popup-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        margin-top: 22px;
+      }
+
+      .checkout-popup-button {
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 14px;
+        border: 1px solid #eeeeee;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #38251d;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .checkout-popup-button.primary {
+        border-color: #38251d;
+        background: #38251d;
+        color: #ffffff;
+      }
+
+      .checkout-popup-button.danger {
+        border-color: #d93636;
+        background: #d93636;
+        color: #ffffff;
+      }
+
+      .checkout-popup-button:active {
+        transform: scale(0.98);
+      }
+
+      @keyframes checkoutPopupFade {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes checkoutPopupScale {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const overlay = document.createElement("div");
+  overlay.id = "checkout-popup-overlay";
+  overlay.className = "checkout-popup-overlay";
+
+  overlay.innerHTML = `
+    <div class="checkout-popup">
+      <div class="checkout-popup-icon">
+        <i class="fa-solid ${escapeHTML(icon)}"></i>
+      </div>
+
+      <h3 class="checkout-popup-title">
+        ${escapeHTML(title)}
+      </h3>
+
+      <p class="checkout-popup-message">
+        ${escapeHTML(message)}
+      </p>
+
+      <div class="checkout-popup-actions"></div>
+    </div>
+  `;
+
+  const actionContainer = overlay.querySelector(
+    ".checkout-popup-actions"
+  );
+
+  actions.forEach(action => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = `checkout-popup-button ${action.type || ""}`;
+    button.innerHTML = action.html || escapeHTML(action.label);
+
+    button.addEventListener("click", () => {
+      overlay.remove();
+      action.onClick?.();
+    });
+
+    actionContainer.appendChild(button);
+  });
+
+  if (!actions.length) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "checkout-popup-button primary";
+    button.textContent = "Mengerti";
+    button.addEventListener("click", () => overlay.remove());
+    actionContainer.appendChild(button);
+  }
+
+  overlay.addEventListener("click", event => {
+    if (event.target === overlay) {
+      overlay.remove();
+    }
+  });
+
+  document.body.appendChild(overlay);
 }
 
 function getItemOptions(item) {
@@ -106,6 +293,7 @@ function renderProducts() {
       </div>
     `;
 
+    updateSummary();
     return;
   }
 
@@ -252,10 +440,9 @@ function updateQuantity(itemId, change) {
 
 function updateOrderButton() {
   const button = $("place-order-button");
-  const hasAddress = Boolean(
-    addressData &&
-    (addressData.fullAddress || addressData.address || addressData.alamat)
-  );
+  if (!button) return;
+
+  const hasAddress = Boolean(getFullAddress());
 
   const isDelivery = document.querySelector(
     ".service-option.active"
@@ -282,10 +469,7 @@ function loadAddress() {
     addressData = null;
   }
 
-  const fullAddress = addressData?.fullAddress ||
-    addressData?.address ||
-    addressData?.alamat ||
-    "";
+  const fullAddress = getFullAddress();
 
   const customerName = addressData?.name ||
     addressData?.customerName ||
@@ -303,7 +487,7 @@ function loadAddress() {
     addressData?.patokan ||
     "";
 
-  const hasAddress = Boolean(fullAddress.trim());
+  const hasAddress = Boolean(fullAddress);
 
   addressCard.hidden = !hasAddress;
   addressEmpty.hidden = hasAddress;
@@ -320,7 +504,7 @@ function loadAddress() {
 
   $("address-landmark").textContent =
     landmark || "-";
-  
+
   updateOrderButton();
 }
 
@@ -328,18 +512,9 @@ function renderServices() {
   const services = storeData?.services || {};
 
   const serviceButtons = [
-    {
-      key: "delivery",
-      label: "Delivery"
-    },
-    {
-      key: "pickup",
-      label: "Pickup"
-    },
-    {
-      key: "dineIn",
-      label: "Dine In"
-    }
+    { key: "delivery" },
+    { key: "pickup" },
+    { key: "dineIn" }
   ];
 
   const availableServices = serviceButtons.filter(service =>
@@ -365,6 +540,15 @@ function renderServices() {
     });
 
     updateService(firstService);
+  } else {
+    document.querySelectorAll(".service-option").forEach(button => {
+      button.classList.remove("active");
+    });
+
+    $("summary-delivery-row").hidden = true;
+    deliveryFee = 0;
+    updateSummary();
+    updateOrderButton();
   }
 }
 
@@ -377,10 +561,11 @@ function updateService(service) {
   });
 
   const isDelivery = service === "delivery";
+  const hasAddress = Boolean(getFullAddress());
 
-  addressCard.hidden = !isDelivery || !addressData;
-  addressEmpty.hidden = !isDelivery || Boolean(addressData);
-  deliverySection.hidden = !isDelivery || !addressData;
+  addressCard.hidden = !isDelivery || !hasAddress;
+  addressEmpty.hidden = !isDelivery || hasAddress;
+  deliverySection.hidden = !isDelivery || !hasAddress;
 
   $("summary-delivery-row").hidden = !isDelivery;
 
@@ -415,6 +600,8 @@ function updateDeliverySelection() {
   document.querySelectorAll(".delivery-option").forEach(option => {
     const radio = option.querySelector("input");
 
+    if (!radio) return;
+
     option.classList.toggle(
       "active",
       radio.checked
@@ -434,21 +621,31 @@ function updateDeliverySelection() {
 }
 
 function selectPayment() {
-  const current = paymentMethod || "Belum dipilih";
+  showPopup({
+    title: "Metode Pembayaran",
+    message: "Pilih metode pembayaran yang ingin digunakan.",
+    icon: "fa-wallet",
+    actions: [
+      {
+        label: "COD",
+        html: '<i class="fa-solid fa-money-bill-wave"></i> COD',
+        type: paymentMethod === "COD" ? "primary" : "",
+        onClick: () => setPaymentMethod("COD")
+      },
+      {
+        label: "QRIS",
+        html: '<i class="fa-solid fa-qrcode"></i> QRIS',
+        type: paymentMethod === "QRIS" ? "primary" : "",
+        onClick: () => setPaymentMethod("QRIS")
+      },
+      {
+        label: "Batal"
+      }
+    ]
+  });
+}
 
-  const selected = window.prompt(
-    `Pilih metode pembayaran:\n1. COD\n2. QRIS\n\nMetode saat ini: ${current}\n\nKetik COD atau QRIS`
-  );
-
-  if (!selected) return;
-
-  const method = selected.trim().toUpperCase();
-
-  if (!["COD", "QRIS"].includes(method)) {
-    window.alert("Metode pembayaran tidak valid.");
-    return;
-  }
-
+function setPaymentMethod(method) {
   paymentMethod = method;
 
   localStorage.setItem(
@@ -460,18 +657,28 @@ function selectPayment() {
 }
 
 function showVoucher() {
-  window.alert("Voucher belum tersedia.");
+  showPopup({
+    title: "Voucher",
+    message: "Voucher belum tersedia. Silakan coba kembali nanti.",
+    icon: "fa-ticket"
+  });
 }
 
 function editProductOptions(itemId) {
-  window.alert(
-    "Pengaturan grup opsi akan dibuat pada tahap berikutnya."
-  );
+  showPopup({
+    title: "Ubah Pesanan",
+    message: "Pengaturan grup opsi produk akan tersedia pada tahap berikutnya.",
+    icon: "fa-sliders"
+  });
 }
 
 function placeOrder() {
   if (!checkoutItems.length) {
-    window.alert("Belum ada produk yang dipilih.");
+    showPopup({
+      title: "Pesanan Kosong",
+      message: "Belum ada produk yang dipilih.",
+      icon: "fa-basket-shopping"
+    });
     return;
   }
 
@@ -480,27 +687,59 @@ function placeOrder() {
   )?.dataset.service;
 
   if (!activeService) {
-    window.alert("Layanan belum tersedia.");
+    showPopup({
+      title: "Layanan Tidak Tersedia",
+      message: "Silakan pilih layanan pesanan terlebih dahulu.",
+      icon: "fa-store"
+    });
     return;
   }
 
-  if (
-    activeService === "delivery" &&
-    !addressData
-  ) {
-    window.alert("Tambahkan alamat terlebih dahulu!");
-    window.location.href = "alamat.html";
+  if (activeService === "delivery" && !getFullAddress()) {
+    showPopup({
+      title: "Alamat Belum Diisi",
+      message: "Tambahkan alamat terlebih dahulu sebelum melanjutkan pesanan.",
+      icon: "fa-location-dot",
+      actions: [
+        {
+          label: "Tambahkan Alamat",
+          type: "primary",
+          onClick: () => {
+            window.location.href = "alamat.html";
+          }
+        },
+        {
+          label: "Batal"
+        }
+      ]
+    });
     return;
   }
 
   if (!paymentMethod) {
-    window.alert("Silakan pilih metode pembayaran terlebih dahulu.");
+    showPopup({
+      title: "Pembayaran Belum Dipilih",
+      message: "Silakan pilih metode pembayaran terlebih dahulu.",
+      icon: "fa-wallet",
+      actions: [
+        {
+          label: "Pilih Pembayaran",
+          type: "primary",
+          onClick: selectPayment
+        },
+        {
+          label: "Batal"
+        }
+      ]
+    });
     return;
   }
 
-  window.alert(
-    "Fitur pengiriman pesanan akan dihubungkan pada tahap berikutnya."
-  );
+  showPopup({
+    title: "Pesanan Siap",
+    message: "Fitur pengiriman pesanan akan dihubungkan pada tahap berikutnya.",
+    icon: "fa-circle-check"
+  });
 }
 
 function goBack() {
@@ -575,4 +814,3 @@ async function initializeCheckout() {
 }
 
 initializeCheckout();
-showCheckoutLoading();
