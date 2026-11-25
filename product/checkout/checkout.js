@@ -141,13 +141,14 @@ function updateDeliveryPrices() {
 
   document.querySelectorAll(".delivery-option").forEach(option => {
     const radio = option.querySelector('input[name="delivery-type"]');
-    const priceElement = option.querySelector(".delivery-price");
-    const timeElement = option.querySelector(".delivery-time");
 
     if (!radio) return;
 
     const type = radio.value;
     const config = deliveryTypes[type];
+
+    const priceElement = option.querySelector(".delivery-price");
+    const timeElement = $(`${type}-time`);
 
     if (priceElement) {
       priceElement.textContent = deliveryDistanceKm === null
@@ -157,7 +158,7 @@ function updateDeliveryPrices() {
 
     if (timeElement) {
       if (deliveryDurationMinutes === null || !config) {
-        timeElement.textContent = "Menghitung waktu...";
+        timeElement.textContent = "Waktu tidak tersedia";
       } else {
         const minutes = Math.ceil(
           deliveryDurationMinutes * config.timeMultiplier
@@ -167,6 +168,14 @@ function updateDeliveryPrices() {
       }
     }
   });
+
+  deliveryFee = isDelivery && deliveryDistanceKm !== null
+    ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
+    : 0;
+
+  updateSummary();
+  updateOrderButton();
+}
 
   deliveryFee = isDelivery && deliveryDistanceKm !== null
     ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
@@ -191,12 +200,14 @@ async function calculateDeliveryDistance() {
 
   updateDeliveryPrices();
   updateOrderButton();
-  
+
   if (!customer || !store) {
     if (distanceElement) {
       distanceElement.textContent = "Lokasi belum tersedia";
     }
 
+    updateDeliveryPrices();
+    updateOrderButton();
     return;
   }
 
@@ -214,20 +225,21 @@ async function calculateDeliveryDistance() {
 
     const result = await response.json();
 
-    const distanceMeters = result.routes?.[0]?.distance;
-    const durationSeconds = result.routes?.[0]?.duration;
-    
-    if (!Number.isFinite(durationSeconds)) {
-      throw new Error("Estimasi waktu tidak ditemukan");
-    }
-    
-    deliveryDurationMinutes = durationSeconds / 60;
-
-    if (!Number.isFinite(distanceMeters)) {
-      throw new Error("Jarak rute tidak ditemukan");
+    if (result.code !== "Ok" || !result.routes?.length) {
+      throw new Error(result.message || "Rute tidak ditemukan");
     }
 
-    deliveryDistanceKm = distanceMeters / 1000;
+    const route = result.routes[0];
+
+    if (
+      !Number.isFinite(route.distance) ||
+      !Number.isFinite(route.duration)
+    ) {
+      throw new Error("Jarak atau estimasi waktu tidak ditemukan");
+    }
+
+    deliveryDistanceKm = route.distance / 1000;
+    deliveryDurationMinutes = route.duration / 60;
 
     if (distanceElement) {
       distanceElement.textContent =
@@ -238,23 +250,22 @@ async function calculateDeliveryDistance() {
     }
 
     updateDeliveryPrices();
+    updateOrderButton();
 
   } catch (error) {
     console.error("Gagal menghitung jarak pengiriman:", error);
 
     deliveryDistanceKm = null;
-    updateDeliveryPrices();
+    deliveryDurationMinutes = null;
     deliveryFee = 0;
 
     if (distanceElement) {
       distanceElement.textContent = "Jarak tidak tersedia";
     }
 
-    document.querySelectorAll(".delivery-price").forEach(element => {
-      element.textContent = "Tidak tersedia";
-    });
-
+    updateDeliveryPrices();
     updateSummary();
+    updateOrderButton();
   }
 }
 
