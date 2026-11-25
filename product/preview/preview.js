@@ -8,6 +8,11 @@ import {
   update
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
+import {
+  showPreviewLoading,
+  hidePreviewLoading
+} from "./loading.js";
+
 const $ = id => document.getElementById(id);
 
 const headerProductName = $("header-product-name");
@@ -21,6 +26,7 @@ const increaseQuantityButton = $("increase-quantity");
 const addToCartButton = $("add-to-cart-button");
 const cartTotalPrice = $("cart-total-price");
 const shareProductButton = $("share-product-button");
+const productImage = $("product-image");
 
 const productId = new URLSearchParams(window.location.search).get("id");
 
@@ -205,6 +211,12 @@ function renderProduct() {
   const description = currentProduct.description || "";
   const price = Number(currentProduct.price || 0);
 
+  const image = currentProduct.image || currentProduct.images?.[0] || "";
+  
+  productImage.src = image;
+  productImage.alt = name;
+  productImage.hidden = !image;
+  
   headerProductName.textContent = name;
   productNameElement.textContent = name;
   productDescription.textContent = description;
@@ -344,6 +356,7 @@ async function addToCart() {
 
 async function loadProduct() {
   if (!productId) {
+    hidePreviewLoading();
     alert("ID product tidak ditemukan.");
     window.history.back();
     return;
@@ -363,6 +376,13 @@ async function loadProduct() {
       return;
     }
 
+    if (!productSnapshot.exists()) {
+      hidePreviewLoading();
+      alert("Product tidak ditemukan.");
+      window.history.back();
+      return;
+    }
+    
     currentProduct = productSnapshot.val();
     categories = categoriesSnapshot.exists()
       ? categoriesSnapshot.val()
@@ -374,9 +394,11 @@ async function loadProduct() {
 
     currentCategory = categories[currentProduct.categoryId] || null;
 
+    hidePreviewLoading();
     renderProduct();
 
   } catch (error) {
+    hidePreviewLoading();
     console.error("Gagal mengambil data product:", error);
 
     alert("Product gagal dimuat. Silakan periksa koneksi internet.");
@@ -427,4 +449,5 @@ shareProductButton.addEventListener("click", async () => {
   }
 });
 
+showPreviewLoading();
 loadProduct();
