@@ -477,6 +477,7 @@ async function addToCart() {
   const cartItem = {
     id: "item_" + now + "_" + Math.random().toString(36).slice(2),
     productId,
+    image: currentProduct.image || currentProduct.images?.[0] || "",
     name: currentProduct.name || "",
     description: currentProduct.description || "",
     categoryId: currentProduct.categoryId || "",
