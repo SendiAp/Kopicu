@@ -16,11 +16,13 @@ const addressCard = $("address-card");
 const addressEmpty = $("address-empty");
 const deliverySection = $("delivery-section");
 
-const deliveryPrices = {
-  priority: 10000,
-  standard: 7500,
-  economy: 1500
+const deliveryRates = {
+  baseFee: 10700,
+  baseDistance: 4,
+  extraPerKm: 2675
 };
+
+let deliveryDistanceKm = null;
 
 const deliveryLabels = {
   priority: "Prioritas",
@@ -31,7 +33,7 @@ const deliveryLabels = {
 let checkoutItems = [];
 let storeData = {};
 let selectedDelivery = "standard";
-let deliveryFee = deliveryPrices.standard;
+let deliveryFee = 0;
 let serviceFee = 0;
 let paymentMethod = localStorage.getItem("kopicu_payment_method") || "";
 let addressData = null;
@@ -57,6 +59,146 @@ function getFullAddress() {
     addressData?.alamat ||
     ""
   ).trim();
+}
+
+function getCustomerCoordinates() {
+  const coordinates = addressData?.coordinates;
+
+  const lat = Number(coordinates?.lat);
+  const lng = Number(coordinates?.lng);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return null;
+  }
+
+  return { lat, lng };
+}
+
+function getStoreCoordinates() {
+  const lat = Number(storeData?.latitude);
+  const lng = Number(storeData?.longitude);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return null;
+  }
+
+  return { lat, lng };
+}
+
+function calculateDeliveryFee(distance) {
+  if (!Number.isFinite(distance) || distance < 0) {
+    return 0;
+  }
+
+  const roundedDistance = Math.ceil(distance);
+
+  if (roundedDistance <= deliveryRates.baseDistance) {
+    return deliveryRates.baseFee;
+  }
+
+  return deliveryRates.baseFee +
+    (roundedDistance - deliveryRates.baseDistance) *
+    deliveryRates.extraPerKm;
+}
+
+function updateDeliveryPrices() {
+  const price = calculateDeliveryFee(deliveryDistanceKm);
+
+  deliveryFee = price;
+
+  document.querySelectorAll(".delivery-price").forEach(element => {
+    element.textContent = deliveryDistanceKm === null
+      ? "Tidak tersedia"
+      : formatRupiah(price);
+  });
+
+  updateSummary();
+}
+
+async function calculateDeliveryDistance() {
+  const distanceElement = $("delivery-distance");
+  const customer = getCustomerCoordinates();
+  const store = getStoreCoordinates();
+
+  deliveryDistanceKm = null;
+  deliveryFee = 0;
+
+  if (distanceElement) {
+    distanceElement.textContent = "Menghitung jarak...";
+  }
+
+  updateDeliveryPrices();
+
+  if (!customer || !store) {
+    if (distanceElement) {
+      distanceElement.textContent = "Lokasi belum tersedia";
+    }
+
+    return;
+  }
+
+  try {
+    const url =
+      `https://router.project-osrm.org/route/v1/driving/` +
+      `${store.lng},${store.lat};${customer.lng},${customer.lat}` +
+      `?overview=false`;
+
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error("Gagal mendapatkan rute");
+    }
+
+    const result = await response.json();
+
+    const distanceMeters = result.routes?.[0]?.distance;
+
+    if (!Number.isFinite(distanceMeters)) {
+      throw new Error("Jarak rute tidak ditemukan");
+    }
+
+    deliveryDistanceKm = distanceMeters / 1000;
+
+    if (distanceElement) {
+      distanceElement.textContent =
+        `(${deliveryDistanceKm.toLocaleString("id-ID", {
+          minimumFractionDigits: 1,
+          maximumFractionDigits: 1
+        })} km)`;
+    }
+
+    updateDeliveryPrices();
+
+  } catch (error) {
+    console.error("Gagal menghitung jarak pengiriman:", error);
+
+    deliveryDistanceKm = null;
+    deliveryFee = 0;
+
+    if (distanceElement) {
+      distanceElement.textContent = "Jarak tidak tersedia";
+    }
+
+    document.querySelectorAll(".delivery-price").forEach(element => {
+      element.textContent = "Tidak tersedia";
+    });
+
+    updateSummary();
+  }
 }
 
 function showPopup({
@@ -444,12 +586,18 @@ function updateOrderButton() {
 
   const hasAddress = Boolean(getFullAddress());
 
+  const distanceUnavailable = isDelivery &&
+    deliveryDistanceKm === null;
+  
   const isDelivery = document.querySelector(
     ".service-option.active"
   )?.dataset.service === "delivery";
 
-  const disabled = isDelivery && !hasAddress;
-
+  const disabled = isDelivery && (
+    !hasAddress ||
+    deliveryDistanceKm === null
+  );
+  
   button.disabled = disabled;
   button.style.background = disabled ? "#bdbdbd" : "";
   button.style.color = disabled ? "#ffffff" : "";
@@ -569,8 +717,8 @@ function updateService(service) {
 
   $("summary-delivery-row").hidden = !isDelivery;
 
-  deliveryFee = isDelivery
-    ? deliveryPrices[selectedDelivery]
+  deliveryFee = isDelivery && deliveryDistanceKm !== null
+    ? calculateDeliveryFee(deliveryDistanceKm)
     : 0;
 
   updateSummary();
@@ -590,6 +738,7 @@ async function loadStore() {
       "KOPICU";
 
     renderServices();
+    await calculateDeliveryDistance();
 
   } catch (error) {
     console.error("Gagal memuat data toko:", error);
@@ -602,10 +751,7 @@ function updateDeliverySelection() {
 
     if (!radio) return;
 
-    option.classList.toggle(
-      "active",
-      radio.checked
-    );
+    option.classList.toggle("active", radio.checked);
   });
 
   const selected = document.querySelector(
@@ -615,7 +761,14 @@ function updateDeliverySelection() {
   if (!selected) return;
 
   selectedDelivery = selected.value;
-  deliveryFee = deliveryPrices[selectedDelivery] || 0;
+
+  const isDelivery = document.querySelector(
+    ".service-option.active"
+  )?.dataset.service === "delivery";
+
+  deliveryFee = isDelivery && deliveryDistanceKm !== null
+    ? calculateDeliveryFee(deliveryDistanceKm)
+    : 0;
 
   updateSummary();
 }
