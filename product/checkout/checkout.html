@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Keranjang belanja KOPICU.">
+  <title>Keranjang Saya - KOPICU</title>
+
+  <link rel="stylesheet" href="keranjang.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+  <header class="cart-header">
+    <button
+      id="back-button"
+      class="back-button"
+      type="button"
+      aria-label="Kembali"
+    >
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <h1>
+      Keranjang Saya
+      <span id="cart-total-count">(0)</span>
+    </h1>
+
+    <button
+      id="edit-cart-button"
+      class="edit-cart-button"
+      type="button"
+    >
+      Ubah
+    </button>
+  </header>
+
+  <main class="cart-page">
+
+    <section id="cart-list" class="cart-list">
+
+      <article class="cart-item" data-cart-item-id="">
+
+        <label class="cart-item-checkbox">
+          <input
+            type="checkbox"
+            class="cart-select-checkbox"
+          >
+          <span class="custom-checkbox"></span>
+        </label>
+
+        <div class="cart-item-image">
+          <img src="" alt="Product">
+        </div>
+
+        <div class="cart-item-content">
+
+          <div class="cart-item-top">
+            <h2 class="cart-item-name">Nama Product</h2>
+
+            <div class="cart-item-quantity">
+              <button
+                class="quantity-decrease"
+                type="button"
+                aria-label="Kurangi jumlah"
+              >
+                <i class="fa-solid fa-minus"></i>
+              </button>
+
+              <span class="quantity-value">1</span>
+
+              <button
+                class="quantity-increase"
+                type="button"
+                aria-label="Tambah jumlah"
+              >
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+          </div>
+
+          <p class="cart-item-options">
+            Normal Sugar + Normal Ice
+          </p>
+
+          <p class="cart-item-price">
+            Rp0
+          </p>
+
+        </div>
+
+      </article>
+
+    </section>
+
+    <section id="cart-empty" class="cart-empty" hidden>
+      <div class="cart-empty-icon">
+        <i class="fa-solid fa-cart-shopping"></i>
+      </div>
+
+      <h2>Keranjang masih kosong</h2>
+
+      <p>Yuk, pilih menu favorit kamu di KOPICU.</p>
+
+      <a href="../product.html" class="cart-empty-button">
+        Lihat Menu
+      </a>
+    </section>
+
+  </main>
+
+  <footer class="cart-footer">
+
+    <div class="cart-footer-selection">
+
+      <label class="select-all-label">
+        <input
+          type="checkbox"
+          id="select-all-checkbox"
+        >
+        <span class="custom-checkbox"></span>
+        <span>Semua</span>
+      </label>
+
+      <div id="cart-footer-total" class="cart-footer-total">
+        <span id="cart-selected-total">Rp0</span>
+
+        <button
+          id="checkout-button"
+          class="checkout-button"
+          type="button"
+          disabled
+        >
+          Checkout (0)
+        </button>
+
+        <button
+          id="delete-selected-button"
+          class="delete-selected-button"
+          type="button"
+          hidden
+        >
+          <i class="fa-solid fa-trash"></i>
+          Hapus
+        </button>
+      </div>
+
+    </div>
+
+  </footer>
+
+  <script type="module" src="keranjang.js"></script>
+</body>
+</html>
