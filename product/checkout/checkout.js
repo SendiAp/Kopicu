@@ -664,12 +664,334 @@ function showVoucher() {
   });
 }
 
-function editProductOptions(itemId) {
-  showPopup({
-    title: "Ubah Pesanan",
-    message: "Pengaturan grup opsi produk akan tersedia pada tahap berikutnya.",
-    icon: "fa-sliders"
-  });
+
+async function editProductOptions(itemId) {
+  const item = checkoutItems.find(item => item.id === itemId);
+
+  if (!item) return;
+
+  if (!item.productId) {
+    showPopup({
+      title: "Produk Tidak Ditemukan",
+      message: "ID produk tidak tersedia. Silakan tambahkan ulang produk ke keranjang.",
+      icon: "fa-circle-exclamation"
+    });
+    return;
+  }
+
+  showCheckoutLoading();
+
+  try {
+    const [productSnapshot, groupsSnapshot] = await Promise.all([
+      get(ref(db, `products/${item.productId}`)),
+      get(ref(db, "optionGroups"))
+    ]);
+
+    if (!productSnapshot.exists()) {
+      showPopup({
+        title: "Produk Tidak Ditemukan",
+        message: "Data produk tidak tersedia.",
+        icon: "fa-circle-exclamation"
+      });
+      return;
+    }
+
+    const product = productSnapshot.val();
+    const allGroups = groupsSnapshot.exists()
+      ? groupsSnapshot.val()
+      : {};
+
+    const groupIds = Array.isArray(product.optionGroups)
+      ? product.optionGroups
+      : [];
+
+    if (!groupIds.length) {
+      showPopup({
+        title: "Tidak Ada Pilihan",
+        message: "Produk ini tidak memiliki grup opsi.",
+        icon: "fa-circle-info"
+      });
+      return;
+    }
+
+    const previousSelections = item.selectedOptions || [];
+
+    const groups = groupIds
+      .map(groupId => {
+        const group = allGroups[groupId];
+
+        if (!group) return null;
+
+        return {
+          id: groupId,
+          name: group.name || "Pilihan",
+          required: group.required === true,
+          multiple: group.multiple === true,
+          options: Array.isArray(group.options)
+            ? group.options
+            : Object.values(group.options || {})
+        };
+      })
+      .filter(Boolean);
+
+    if (!groups.length) {
+      showPopup({
+        title: "Pilihan Tidak Tersedia",
+        message: "Grup opsi produk tidak ditemukan.",
+        icon: "fa-circle-info"
+      });
+      return;
+    }
+
+    const styleId = "checkout-option-editor-style";
+
+    if (!document.getElementById(styleId)) {
+      const style = document.createElement("style");
+      style.id = styleId;
+      style.textContent = `
+        .checkout-option-list {
+          max-height: 55vh;
+          overflow-y: auto;
+          margin-top: 18px;
+        }
+
+        .checkout-option-group {
+          padding: 14px 0;
+          border-bottom: 1px solid #eeeeee;
+        }
+
+        .checkout-option-group:last-child {
+          border-bottom: 0;
+        }
+
+        .checkout-option-group h4 {
+          margin: 0 0 4px;
+          font-size: 14px;
+          color: #242424;
+        }
+
+        .checkout-option-hint {
+          margin: 0 0 12px;
+          color: #888888;
+          font-size: 11px;
+        }
+
+        .checkout-option-choice {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 12px;
+          padding: 10px 0;
+          font-size: 13px;
+          color: #333333;
+          cursor: pointer;
+        }
+
+        .checkout-option-choice span {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+        }
+
+        .checkout-option-choice input {
+          width: 17px;
+          height: 17px;
+          accent-color: #38251d;
+        }
+
+        .checkout-option-price {
+          color: #666666;
+          white-space: nowrap;
+        }
+
+        .checkout-option-error {
+          margin-top: 12px;
+          color: #d93636;
+          font-size: 12px;
+          display: none;
+        }
+
+        .checkout-option-save {
+          margin-top: 15px;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    document.getElementById("checkout-popup-overlay")?.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "checkout-popup-overlay";
+    overlay.className = "checkout-popup-overlay";
+
+    overlay.innerHTML = `
+      <div class="checkout-popup">
+        <div class="checkout-popup-icon">
+          <i class="fa-solid fa-sliders"></i>
+        </div>
+
+        <h3 class="checkout-popup-title">Ubah Pilihan</h3>
+
+        <p class="checkout-popup-message">
+          Sesuaikan kembali pilihan untuk ${escapeHTML(item.name || "produk ini")}.
+        </p>
+
+        <div class="checkout-option-list">
+          ${groups.map(group => {
+            const previousGroup = previousSelections.find(
+              selected => selected.groupId === group.id
+            );
+
+            const selectedNames = (previousGroup?.options || [])
+              .map(option => option.name);
+
+            return `
+              <div
+                class="checkout-option-group"
+                data-group-id="${escapeHTML(group.id)}"
+                data-group-name="${escapeHTML(group.name)}"
+                data-required="${group.required}"
+                data-multiple="${group.multiple}"
+              >
+                <h4>${escapeHTML(group.name)}</h4>
+
+                <p class="checkout-option-hint">
+                  ${group.required ? "Wajib dipilih" : "Opsional"}
+                  ${group.multiple ? " · Bisa pilih lebih dari satu" : " · Pilih satu"}
+                </p>
+
+                ${group.options.map((option, index) => {
+                  const checked = selectedNames.includes(option.name);
+                  const inputType = group.multiple ? "checkbox" : "radio";
+
+                  return `
+                    <label class="checkout-option-choice">
+                      <span>
+                        <input
+                          type="${inputType}"
+                          name="checkout-option-${escapeHTML(group.id)}"
+                          value="${index}"
+                          data-option-name="${escapeHTML(option.name)}"
+                          data-option-price="${Number(option.price) || 0}"
+                          ${checked ? "checked" : ""}
+                        >
+                        ${escapeHTML(option.name)}
+                      </span>
+
+                      <span class="checkout-option-price">
+                        ${Number(option.price) > 0
+                          ? "+" + formatRupiah(option.price)
+                          : "Gratis"}
+                      </span>
+                    </label>
+                  `;
+                }).join("")}
+              </div>
+            `;
+          }).join("")}
+        </div>
+
+        <p class="checkout-option-error">
+          Lengkapi pilihan yang wajib dipilih.
+        </p>
+
+        <div class="checkout-popup-actions">
+          <button
+            type="button"
+            class="checkout-popup-button primary checkout-option-save"
+          >
+            Simpan Perubahan
+          </button>
+
+          <button
+            type="button"
+            class="checkout-popup-button checkout-option-cancel"
+          >
+            Batal
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    overlay.querySelector(".checkout-option-save")
+      .addEventListener("click", () => {
+        const selectedOptions = [];
+        let invalid = false;
+
+        overlay.querySelectorAll(".checkout-option-group")
+          .forEach(groupElement => {
+            const groupId = groupElement.dataset.groupId;
+            const groupName = groupElement.dataset.groupName;
+            const required = groupElement.dataset.required === "true";
+
+            const checkedInputs = groupElement.querySelectorAll(
+              "input:checked"
+            );
+
+            if (required && !checkedInputs.length) {
+              invalid = true;
+            }
+
+            selectedOptions.push({
+              groupId,
+              groupName,
+              options: Array.from(checkedInputs).map(input => ({
+                name: input.dataset.optionName,
+                price: Number(input.dataset.optionPrice) || 0
+              }))
+            });
+          });
+
+        if (invalid) {
+          overlay.querySelector(".checkout-option-error").style.display =
+            "block";
+          return;
+        }
+
+        const optionTotal = selectedOptions.reduce(
+          (total, group) =>
+            total + group.options.reduce(
+              (sum, option) => sum + option.price,
+              0
+            ),
+          0
+        );
+
+        item.selectedOptions = selectedOptions;
+        item.unitPrice = Number(item.basePrice || 0) + optionTotal;
+        item.totalPrice = item.unitPrice * item.quantity;
+        item.updatedAt = Date.now();
+
+        saveCheckoutItems();
+        renderProducts();
+
+        overlay.remove();
+      });
+
+    overlay.querySelector(".checkout-option-cancel")
+      .addEventListener("click", () => {
+        overlay.remove();
+      });
+
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) {
+        overlay.remove();
+      }
+    });
+
+  } catch (error) {
+    console.error("Gagal memuat grup opsi:", error);
+
+    showPopup({
+      title: "Gagal Memuat Pilihan",
+      message: "Terjadi kesalahan saat mengambil grup opsi produk.",
+      icon: "fa-circle-exclamation"
+    });
+  } finally {
+    hideCheckoutLoading();
+  }
 }
 
 function placeOrder() {
