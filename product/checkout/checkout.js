@@ -250,6 +250,25 @@ function updateQuantity(itemId, change) {
   renderProducts();
 }
 
+function updateOrderButton() {
+  const button = $("place-order-button");
+  const hasAddress = Boolean(
+    addressData &&
+    (addressData.fullAddress || addressData.address || addressData.alamat)
+  );
+
+  const isDelivery = document.querySelector(
+    ".service-option.active"
+  )?.dataset.service === "delivery";
+
+  const disabled = isDelivery && !hasAddress;
+
+  button.disabled = disabled;
+  button.style.background = disabled ? "#bdbdbd" : "";
+  button.style.color = disabled ? "#ffffff" : "";
+  button.style.cursor = disabled ? "not-allowed" : "";
+}
+
 function loadAddress() {
   try {
     addressData = JSON.parse(
@@ -301,6 +320,8 @@ function loadAddress() {
 
   $("address-landmark").textContent =
     landmark || "-";
+  
+  updateOrderButton();
 }
 
 function renderServices() {
@@ -368,6 +389,7 @@ function updateService(service) {
     : 0;
 
   updateSummary();
+  updateOrderButton();
 }
 
 async function loadStore() {
