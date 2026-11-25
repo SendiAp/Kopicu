@@ -1,11 +1,10 @@
 import { db } from "../../database/firebase.js";
 
+import { db } from "../../database/firebase.js";
+
 import {
   ref,
-  get,
-  push,
-  set,
-  update
+  get
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 import {
@@ -414,18 +413,12 @@ function validateSelectedOptions() {
   return true;
 }
 
-function getCartId() {
-  let cartId = localStorage.getItem("kopicu_cart_id");
-
-  if (!cartId) {
-    cartId = typeof crypto.randomUUID === "function"
-      ? crypto.randomUUID()
-      : "cart_" + Date.now() + "_" + Math.random().toString(36).slice(2);
-
-    localStorage.setItem("kopicu_cart_id", cartId);
+function getCartItems() {
+  try {
+    return JSON.parse(localStorage.getItem("kopicu_cart") || "[]");
+  } catch (error) {
+    return [];
   }
-
-  return cartId;
 }
 
 function returnToProductPage() {
@@ -470,7 +463,6 @@ async function addToCart() {
   if (!validateSelectedOptions()) return;
 
   const selectedOptions = getSelectedOptions();
-  const cartId = getCartId();
 
   const basePrice = Number(currentProduct.price || 0);
 
@@ -485,6 +477,7 @@ async function addToCart() {
   const now = Date.now();
 
   const cartItem = {
+    id: "item_" + now + "_" + Math.random().toString(36).slice(2),
     productId,
     name: currentProduct.name || "",
     description: currentProduct.description || "",
@@ -510,22 +503,21 @@ async function addToCart() {
   addToCartButton.disabled = true;
 
   try {
-    const cartRef = ref(db, `carts/${cartId}`);
-    const cartItemsRef = ref(db, `carts/${cartId}/items`);
-    const newCartItemRef = push(cartItemsRef);
+    const cartItems = getCartItems();
 
-    await set(newCartItemRef, cartItem);
+    cartItems.push(cartItem);
 
-    await update(cartRef, {
-      updatedAt: now
-    });
+    localStorage.setItem(
+      "kopicu_cart",
+      JSON.stringify(cartItems)
+    );
 
     await popup("Product berhasil dimasukkan ke keranjang.");
 
     returnToProductPage();
 
   } catch (error) {
-    console.error("Gagal menambahkan ke keranjang:", error);
+    console.error("Gagal menyimpan keranjang:", error);
 
     await popup(
       "Product gagal dimasukkan ke keranjang. Silakan coba lagi."
