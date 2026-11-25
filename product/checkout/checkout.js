@@ -664,7 +664,6 @@ function showVoucher() {
   });
 }
 
-
 async function editProductOptions(itemId) {
   const item = checkoutItems.find(item => item.id === itemId);
 
@@ -678,8 +677,6 @@ async function editProductOptions(itemId) {
     });
     return;
   }
-
-  showCheckoutLoading();
 
   try {
     const [productSnapshot, groupsSnapshot] = await Promise.all([
@@ -989,9 +986,6 @@ async function editProductOptions(itemId) {
       message: "Terjadi kesalahan saat mengambil grup opsi produk.",
       icon: "fa-circle-exclamation"
     });
-  } finally {
-    hideCheckoutLoading();
-  }
 }
 
 function placeOrder() {
