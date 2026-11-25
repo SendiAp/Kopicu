@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Konfirmasi pesanan KOPICU.">
+  <title>Konfirmasi Pesanan - KOPICU</title>
+
+  <link rel="stylesheet" href="checkout.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+  <header class="checkout-header">
+    <button
+      type="button"
+      id="back-button"
+      class="back-button"
+      aria-label="Kembali"
+    >
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <h1>Konfirmasi Pesanan</h1>
+  </header>
+
+  <main class="checkout-page">
+
+    <section class="service-section">
+      <div class="service-selector" id="service-selector">
+
+        <button
+          type="button"
+          class="service-option active"
+          data-service="delivery"
+        >
+          <i class="fa-solid fa-motorcycle"></i>
+          <span>Delivery</span>
+        </button>
+
+        <button
+          type="button"
+          class="service-option"
+          data-service="pickup"
+        >
+          <i class="fa-solid fa-bag-shopping"></i>
+          <span>Pickup</span>
+        </button>
+
+        <button
+          type="button"
+          class="service-option"
+          data-service="dineIn"
+        >
+          <i class="fa-solid fa-utensils"></i>
+          <span>Dine In</span>
+        </button>
+
+      </div>
+    </section>
+
+    <section class="address-section" id="address-section">
+
+      <div class="address-card" id="address-card">
+
+        <div class="address-icon">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+
+        <div class="address-content">
+
+          <div class="address-heading">
+            <h2>Alamat Pengiriman</h2>
+            <i class="fa-solid fa-chevron-right"></i>
+          </div>
+
+          <p id="address-detail">
+            Alamat belum diatur
+          </p>
+
+          <div class="address-customer">
+            <span id="customer-name">{Nama CS}</span>
+            <span class="address-separator">|</span>
+            <span id="customer-phone">{No. CS}</span>
+          </div>
+
+          <p class="address-landmark" id="address-landmark">
+            {Alamat lengkap / patokan}
+          </p>
+
+        </div>
+
+      </div>
+
+      <div class="address-empty" id="address-empty" hidden>
+        <div class="address-empty-icon">
+          <i class="fa-solid fa-location-dot"></i>
+        </div>
+
+        <h2>Alamat belum tersedia</h2>
+
+        <p>Tambahkan alamat terlebih dahulu!</p>
+
+        <a href="alamat.html" class="add-address-button">
+          Tambahkan Alamat
+        </a>
+      </div>
+
+    </section>
+
+    <section class="delivery-section" id="delivery-section">
+
+      <div class="section-heading">
+        <div>
+          <h2>Pesan Antar</h2>
+          <p id="delivery-distance">(0,3 km)</p>
+        </div>
+      </div>
+
+      <div class="delivery-options" id="delivery-options">
+
+        <label class="delivery-option">
+          <input
+            type="radio"
+            name="delivery-type"
+            value="priority"
+          >
+
+          <span class="delivery-radio"></span>
+
+          <span class="delivery-option-content">
+            <strong>Prioritas</strong>
+            <small>32 Menit</small>
+          </span>
+
+          <strong class="delivery-price">Rp10.000</strong>
+        </label>
+
+        <label class="delivery-option active">
+          <input
+            type="radio"
+            name="delivery-type"
+            value="standard"
+            checked
+          >
+
+          <span class="delivery-radio"></span>
+
+          <span class="delivery-option-content">
+            <strong>Standar</strong>
+            <small>35 Menit</small>
+          </span>
+
+          <strong class="delivery-price">Rp7.500</strong>
+        </label>
+
+        <label class="delivery-option">
+          <input
+            type="radio"
+            name="delivery-type"
+            value="economy"
+          >
+
+          <span class="delivery-radio"></span>
+
+          <span class="delivery-option-content">
+            <strong>Hemat</strong>
+            <small>36 Menit</small>
+          </span>
+
+          <strong class="delivery-price">Rp1.500</strong>
+        </label>
+
+      </div>
+
+    </section>
+
+    <section class="checkout-products-section">
+
+      <div class="store-heading">
+        <div class="store-info">
+          <div class="store-icon">
+            <i class="fa-solid fa-store"></i>
+          </div>
+
+          <div>
+            <h2 id="store-name">KOPICU</h2>
+            <p>Pesanan dari toko</p>
+          </div>
+        </div>
+
+        <a href="../product.html" class="add-order-button">
+          Tambah Pesanan
+        </a>
+      </div>
+
+      <div class="checkout-product-list" id="checkout-product-list">
+
+        <article class="checkout-product" data-product-id="">
+
+          <div class="checkout-product-image">
+            <img src="" alt="Foto produk">
+          </div>
+
+          <div class="checkout-product-content">
+
+            <div class="checkout-product-heading">
+              <h3 class="checkout-product-name">
+                Nama Menu
+              </h3>
+
+              <button
+                type="button"
+                class="edit-product-button"
+                data-action="edit-options"
+              >
+                Ubah
+              </button>
+            </div>
+
+            <p class="checkout-product-price">
+              Rp0
+            </p>
+
+            <p class="checkout-product-options">
+              Pilihan opsi produk
+            </p>
+
+            <div class="checkout-product-bottom">
+
+              <span class="checkout-product-unit-price">
+                Rp0
+              </span>
+
+              <div class="checkout-quantity">
+                <button
+                  type="button"
+                  class="quantity-decrease"
+                  aria-label="Kurangi jumlah"
+                >
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+
+                <span class="quantity-value">1</span>
+
+                <button
+                  type="button"
+                  class="quantity-increase"
+                  aria-label="Tambah jumlah"
+                >
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+
+            </div>
+
+          </div>
+
+        </article>
+
+      </div>
+
+      <div class="product-total">
+        <span id="product-total-count">Total 1 Menu</span>
+        <strong id="product-total-price">Rp0</strong>
+      </div>
+
+    </section>
+
+    <section class="checkout-extra-section">
+
+      <button
+        type="button"
+        class="checkout-extra-item"
+        id="voucher-button"
+      >
+        <span class="checkout-extra-icon">
+          <i class="fa-solid fa-ticket"></i>
+        </span>
+
+        <span class="checkout-extra-content">
+          <strong>Voucher</strong>
+          <small id="voucher-status">Belum Tersedia</small>
+        </span>
+
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+      <button
+        type="button"
+        class="checkout-extra-item"
+        id="payment-button"
+      >
+        <span class="checkout-extra-icon">
+          <i class="fa-solid fa-wallet"></i>
+        </span>
+
+        <span class="checkout-extra-content">
+          <strong>Pilih Pembayaran</strong>
+          <small id="payment-method">COD / QRIS</small>
+        </span>
+
+        <i class="fa-solid fa-chevron-right"></i>
+      </button>
+
+    </section>
+
+    <section class="checkout-summary-section">
+
+      <h2>Ringkasan Pembayaran</h2>
+
+      <div class="summary-row">
+        <span id="summary-product-count">Total Pesanan (1 menu)</span>
+        <strong id="summary-product-total">Rp0</strong>
+      </div>
+
+      <div class="summary-row" id="summary-delivery-row">
+        <span>Total Biaya Pengiriman</span>
+        <strong id="summary-delivery-total">Rp7.500</strong>
+      </div>
+
+      <div class="summary-row">
+        <span>Biaya Layanan</span>
+        <strong id="summary-service-fee">Rp0</strong>
+      </div>
+
+      <div class="summary-divider"></div>
+
+      <div class="summary-row summary-grand-total">
+        <strong>Total</strong>
+        <strong id="summary-grand-total">Rp0</strong>
+      </div>
+
+      <p class="tax-information">
+        Sudah Termasuk Pajak
+      </p>
+
+    </section>
+
+  </main>
+
+  <footer class="checkout-footer">
+
+    <div class="checkout-footer-total">
+      <span>Total</span>
+      <strong id="footer-grand-total">Rp0</strong>
+    </div>
+
+    <button
+      type="button"
+      id="place-order-button"
+      class="place-order-button"
+    >
+      Pesan Sekarang
+    </button>
+
+  </footer>
+
+  <script type="module" src="checkout.js"></script>
+</body>
+</html>
