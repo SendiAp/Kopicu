@@ -4,6 +4,8 @@ const ADDRESS_STORAGE_KEY = "kopicu_address";
 
 let selectedLocation = null;
 let selectedFormattedAddress = "";
+let locationRequestId = 0;
+let searchController = null;
 
 const addressFields = [
   $("address-detail"),
@@ -13,10 +15,62 @@ const addressFields = [
   $("location-type")
 ];
 
-function initializeMap() {
-  const map = $("google-map");
+async function searchGeocoding(query, signal) {
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    q: query,
+    countrycodes: "id",
+    limit: "1",
+    "accept-language": "id"
+  });
 
-  map.src =
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/search?${params}`,
+    { signal }
+  );
+
+  if (!response.ok) {
+    throw new Error("Gagal mencari alamat.");
+  }
+
+  const results = await response.json();
+
+  if (!results.length) {
+    throw new Error("Alamat tidak ditemukan.");
+  }
+
+  return results[0];
+}
+
+async function reverseGeocode(lat, lng) {
+  const params = new URLSearchParams({
+    format: "jsonv2",
+    lat: String(lat),
+    lon: String(lng),
+    "accept-language": "id",
+    zoom: "18",
+    addressdetails: "1"
+  });
+
+  const response = await fetch(
+    `https://nominatim.openstreetmap.org/reverse?${params}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Gagal mendapatkan alamat lengkap.");
+  }
+
+  const result = await response.json();
+
+  if (!result.display_name) {
+    throw new Error("Alamat lengkap tidak ditemukan.");
+  }
+
+  return result.display_name;
+}
+
+function initializeMap() {
+  $("google-map").src =
     "https://maps.google.com/maps?q=Jakarta%20Indonesia&z=14&output=embed";
 
   initializeAddressSearch();
@@ -39,29 +93,51 @@ function initializeAddressSearch() {
   );
 }
 
-function searchAddress() {
+async function searchAddress() {
   const query = $("address-search").value.trim();
 
   if (!query) return;
 
+  if (searchController) {
+    searchController.abort();
+  }
+
+  searchController = new AbortController();
+
   $("selected-address").textContent =
-    "Menampilkan lokasi pencarian di Google Maps...";
-
-  $("google-map").src =
-    `https://maps.google.com/maps?q=${encodeURIComponent(query)}&z=17&output=embed`;
-
-  selectedLocation = null;
-  selectedFormattedAddress = "";
-
-  $("selected-coordinates").textContent =
-    "Koordinat belum ditentukan";
+    "Sedang mencari alamat...";
 
   $("address-auto-hint").hidden = true;
 
-  updateSaveButton();
+  try {
+    const result = await searchGeocoding(
+      query,
+      searchController.signal
+    );
+
+    await setSelectedLocation(
+      Number(result.lat),
+      Number(result.lon),
+      result.display_name
+    );
+
+  } catch (error) {
+    if (error.name === "AbortError") return;
+
+    $("selected-address").textContent =
+      error.message || "Alamat tidak ditemukan.";
+
+    selectedLocation = null;
+    selectedFormattedAddress = "";
+
+    $("selected-coordinates").textContent =
+      "Koordinat belum ditentukan";
+
+    updateSaveButton();
+  }
 }
 
-function setSelectedLocation(lat, lng, formattedAddress = "") {
+async function setSelectedLocation(lat, lng, formattedAddress = "") {
   lat = Number(lat);
   lng = Number(lng);
 
@@ -76,10 +152,10 @@ function setSelectedLocation(lat, lng, formattedAddress = "") {
     return;
   }
 
-  selectedLocation = { lat, lng };
+  const requestId = ++locationRequestId;
 
-  selectedFormattedAddress =
-    formattedAddress || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  selectedLocation = { lat, lng };
+  selectedFormattedAddress = "";
 
   $("google-map").src =
     `https://maps.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
@@ -88,15 +164,38 @@ function setSelectedLocation(lat, lng, formattedAddress = "") {
     `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
 
   $("selected-address").textContent =
-    selectedFormattedAddress;
+    formattedAddress || "Mengambil alamat lengkap...";
 
-  $("address-search").value =
-    selectedFormattedAddress;
+  $("address-detail").value = "";
+  $("address-auto-hint").hidden = true;
 
-  $("address-detail").value =
-    selectedFormattedAddress;
+  updateSaveButton();
 
-  $("address-auto-hint").hidden = false;
+  try {
+    const address = formattedAddress || await reverseGeocode(lat, lng);
+
+    if (requestId !== locationRequestId) return;
+
+    selectedFormattedAddress = address;
+
+    $("selected-address").textContent = address;
+    $("address-search").value = address;
+    $("address-detail").value = address;
+
+    $("address-auto-hint").hidden = false;
+
+  } catch (error) {
+    if (requestId !== locationRequestId) return;
+
+    console.error("Gagal mendapatkan alamat:", error);
+
+    selectedFormattedAddress = "";
+
+    $("selected-address").textContent =
+      "Alamat otomatis tidak ditemukan. Silakan isi alamat lengkap secara manual.";
+
+    $("address-detail").value = "";
+  }
 
   updateSaveButton();
 }
@@ -118,11 +217,7 @@ function getCurrentLocation() {
       const lat = position.coords.latitude;
       const lng = position.coords.longitude;
 
-      setSelectedLocation(
-        lat,
-        lng,
-        `${lat.toFixed(6)}, ${lng.toFixed(6)}`
-      );
+      setSelectedLocation(lat, lng);
     },
     error => {
       let message =
@@ -222,7 +317,6 @@ function validateAddressForm() {
 
   return Boolean(
     selectedLocation &&
-    selectedFormattedAddress &&
     detail &&
     name &&
     validPhone &&
