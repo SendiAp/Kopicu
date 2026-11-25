@@ -27,6 +27,29 @@ const safe = value => String(value ?? "").replace(/[&<>"']/g, char => ({
   "'": "&#039;"
 }[char]));
 
+function updateCartCount() {
+  const cartCount = document.getElementById("cart-count");
+
+  if (!cartCount) return;
+
+  let cartItems = [];
+
+  try {
+    cartItems = JSON.parse(
+      localStorage.getItem("kopicu_cart") || "[]"
+    );
+  } catch (error) {
+    cartItems = [];
+  }
+
+  const totalItems = Array.isArray(cartItems)
+    ? cartItems.length
+    : 0;
+
+  cartCount.textContent = totalItems > 99 ? "99+" : totalItems;
+  cartCount.hidden = totalItems === 0;
+}
+
 function toArray(data) {
   if (!data || typeof data !== "object") return [];
 
@@ -452,7 +475,6 @@ async function loadHome() {
   }
 }
 
-
 async function loadProducts() {
   const [categorySnap, productSnap] = await Promise.all([
     get(ref(db, "categories")),
@@ -538,3 +560,12 @@ function renderProducts(categories, products) {
 
 loadHome();
 loadProducts();
+updateCartCount();
+
+window.addEventListener("pageshow", updateCartCount);
+
+window.addEventListener("storage", event => {
+  if (event.key === "kopicu_cart") {
+    updateCartCount();
+  }
+});
