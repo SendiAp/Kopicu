@@ -24,6 +24,23 @@ const deliveryRates = {
 
 let deliveryDistanceKm = null;
 
+let deliveryDurationMinutes = null;
+
+const deliveryTypes = {
+  priority: {
+    multiplier: 1.25,
+    timeMultiplier: 0.85
+  },
+  standard: {
+    multiplier: 1,
+    timeMultiplier: 1
+  },
+  economy: {
+    multiplier: 0.85,
+    timeMultiplier: 1.2
+  }
+};
+
 const deliveryLabels = {
   priority: "Prioritas",
   standard: "Standar",
@@ -99,38 +116,61 @@ function getStoreCoordinates() {
   return { lat, lng };
 }
 
-function calculateDeliveryFee(distance) {
-  if (!Number.isFinite(distance) || distance < 0) {
-    return 0;
-  }
+function calculateDeliveryFee(distance, type = "standard") {
+  if (!Number.isFinite(distance) || distance < 0) return 0;
 
   const roundedDistance = Math.ceil(distance);
 
-  if (roundedDistance <= deliveryRates.baseDistance) {
-    return deliveryRates.baseFee;
+  let basePrice = deliveryRates.baseFee;
+
+  if (roundedDistance > deliveryRates.baseDistance) {
+    basePrice +=
+      (roundedDistance - deliveryRates.baseDistance) *
+      deliveryRates.extraPerKm;
   }
 
-  return deliveryRates.baseFee +
-    (roundedDistance - deliveryRates.baseDistance) *
-    deliveryRates.extraPerKm;
+  const multiplier = deliveryTypes[type]?.multiplier || 1;
+
+  return Math.round((basePrice * multiplier) / 500) * 500;
 }
 
 function updateDeliveryPrices() {
-  const price = calculateDeliveryFee(deliveryDistanceKm);
-
   const isDelivery = document.querySelector(
     ".service-option.active"
   )?.dataset.service === "delivery";
 
-  deliveryFee = isDelivery && deliveryDistanceKm !== null
-    ? price
-    : 0;
+  document.querySelectorAll(".delivery-option").forEach(option => {
+    const radio = option.querySelector('input[name="delivery-type"]');
+    const priceElement = option.querySelector(".delivery-price");
+    const timeElement = option.querySelector(".delivery-time");
 
-  document.querySelectorAll(".delivery-price").forEach(element => {
-    element.textContent = deliveryDistanceKm === null
-      ? "Tidak tersedia"
-      : formatRupiah(price);
+    if (!radio) return;
+
+    const type = radio.value;
+    const config = deliveryTypes[type];
+
+    if (priceElement) {
+      priceElement.textContent = deliveryDistanceKm === null
+        ? "Tidak tersedia"
+        : formatRupiah(calculateDeliveryFee(deliveryDistanceKm, type));
+    }
+
+    if (timeElement) {
+      if (deliveryDurationMinutes === null || !config) {
+        timeElement.textContent = "Menghitung waktu...";
+      } else {
+        const minutes = Math.ceil(
+          deliveryDurationMinutes * config.timeMultiplier
+        ) + 10;
+
+        timeElement.textContent = `${minutes} menit`;
+      }
+    }
   });
+
+  deliveryFee = isDelivery && deliveryDistanceKm !== null
+    ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
+    : 0;
 
   updateSummary();
   updateOrderButton();
@@ -142,6 +182,7 @@ async function calculateDeliveryDistance() {
   const store = getStoreCoordinates();
 
   deliveryDistanceKm = null;
+  deliveryDurationMinutes = null;
   deliveryFee = 0;
 
   if (distanceElement) {
@@ -174,6 +215,13 @@ async function calculateDeliveryDistance() {
     const result = await response.json();
 
     const distanceMeters = result.routes?.[0]?.distance;
+    const durationSeconds = result.routes?.[0]?.duration;
+    
+    if (!Number.isFinite(durationSeconds)) {
+      throw new Error("Estimasi waktu tidak ditemukan");
+    }
+    
+    deliveryDurationMinutes = durationSeconds / 60;
 
     if (!Number.isFinite(distanceMeters)) {
       throw new Error("Jarak rute tidak ditemukan");
@@ -195,6 +243,7 @@ async function calculateDeliveryDistance() {
     console.error("Gagal menghitung jarak pengiriman:", error);
 
     deliveryDistanceKm = null;
+    updateDeliveryPrices();
     deliveryFee = 0;
 
     if (distanceElement) {
@@ -723,7 +772,7 @@ function updateService(service) {
   $("summary-delivery-row").hidden = !isDelivery;
 
   deliveryFee = isDelivery && deliveryDistanceKm !== null
-    ? calculateDeliveryFee(deliveryDistanceKm)
+    ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
     : 0;
 
   updateSummary();
@@ -772,10 +821,11 @@ function updateDeliverySelection() {
   )?.dataset.service === "delivery";
 
   deliveryFee = isDelivery && deliveryDistanceKm !== null
-    ? calculateDeliveryFee(deliveryDistanceKm)
+    ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
     : 0;
 
   updateSummary();
+  updateDeliveryPrices();
 }
 
 function selectPayment() {
@@ -1216,7 +1266,8 @@ async function initializeCheckout() {
     await loadStore();
 
     if (
-      activeService === "delivery" &&
+      document.querySelector(".service-option.active")
+      ?.dataset.service === "delivery" &&
       deliveryDistanceKm === null
     ) {
       showPopup({
