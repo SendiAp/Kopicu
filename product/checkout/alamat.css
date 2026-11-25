@@ -381,6 +381,18 @@ button {
   z-index: 1;
 }
 
+#address-auto-hint {
+  display: block;
+  margin-top: 7px;
+  color: #888888;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+#address-auto-hint[hidden] {
+  display: none;
+}
+
 #address-map .leaflet-control-attribution {
   font-size: 9px;
 }
