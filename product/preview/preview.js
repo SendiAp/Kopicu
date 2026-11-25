@@ -27,6 +27,11 @@ const addToCartButton = $("add-to-cart-button");
 const cartTotalPrice = $("cart-total-price");
 const shareProductButton = $("share-product-button");
 const productImage = $("product-image");
+const additionalNote = $("additional-note");
+const recommendationCard = $("recommendation-card");
+const recommendationImage = $("recommendation-image");
+const recommendationName = $("recommendation-name");
+const recommendationPrice = $("recommendation-price");
 
 const productId = new URLSearchParams(window.location.search).get("id");
 
@@ -36,6 +41,7 @@ let categories = {};
 let optionGroups = {};
 let selectedQuantity = 1;
 let isAddingToCart = false;
+let recommendationProductId = null;
 
 function escapeHTML(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => ({
@@ -204,6 +210,51 @@ function renderProductOptions() {
   });
 }
 
+
+async function loadRecommendation() {
+  try {
+    const snapshot = await get(ref(db, "products"));
+
+    if (!snapshot.exists()) {
+      recommendationCard.hidden = true;
+      return;
+    }
+
+    const entries = Object.entries(snapshot.val()).filter(([id, product]) =>
+      id !== productId &&
+      product &&
+      product.available !== false &&
+      product.availabilityStatus !== "hidden"
+    );
+
+    if (entries.length === 0) {
+      recommendationCard.hidden = true;
+      return;
+    }
+
+    const [id, product] = entries[
+      Math.floor(Math.random() * entries.length)
+    ];
+
+    recommendationProductId = id;
+
+    recommendationImage.src =
+      product.image || product.images?.[0] || "";
+
+    recommendationImage.alt = product.name || "Product";
+
+    recommendationName.textContent = product.name || "Product";
+
+    recommendationPrice.textContent = formatRupiah(product.price);
+
+    recommendationCard.hidden = false;
+
+  } catch (error) {
+    console.error("Gagal mengambil rekomendasi product:", error);
+    recommendationCard.hidden = true;
+  }
+}
+
 function renderProduct() {
   if (!currentProduct) return;
 
@@ -310,6 +361,7 @@ async function addToCart() {
     unitPrice,
     quantity: selectedQuantity,
     totalPrice,
+    additionalNote: additionalNote.value.trim(),
     createdAt: now,
     updatedAt: now
   };
@@ -449,5 +501,13 @@ shareProductButton.addEventListener("click", async () => {
   }
 });
 
+recommendationCard.addEventListener("click", () => {
+  if (!recommendationProductId) return;
+
+  window.location.href =
+    `preview.html?id=${encodeURIComponent(recommendationProductId)}`;
+});
+
 showPreviewLoading();
 loadProduct();
+loadRecommendation();
