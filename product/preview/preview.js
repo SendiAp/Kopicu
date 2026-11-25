@@ -1,7 +1,5 @@
 import { db } from "../../database/firebase.js";
 
-import { db } from "../../database/firebase.js";
-
 import {
   ref,
   get
