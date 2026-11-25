@@ -1040,6 +1040,12 @@ async function initializeCheckout() {
 
   try {
     loadCheckoutItems();
+
+    if (!checkoutItems.length) {
+      window.location.replace("../product.html");
+      return;
+    }
+    
     loadAddress();
 
     if (paymentMethod) {
