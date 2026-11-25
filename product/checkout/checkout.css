@@ -821,3 +821,10 @@ a {
     transform: translateX(100%);
   }
 }
+
+#place-order-button:disabled {
+  background: #bdbdbd;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1;
+}
