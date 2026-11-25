@@ -128,17 +128,17 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
   updateSaveButton();
 
   if (formattedAddress) {
-    selectedFormattedAddress = result.display_name;
+    selectedFormattedAddress = formattedAddress;
     
     $("selected-address").textContent =
-      selectedFormattedAddress;
+      formattedAddress;
     
     $("address-search").value =
-      selectedFormattedAddress;
+      formattedAddress;
     
     $("address-detail").value =
-      selectedFormattedAddress;
-
+      formattedAddress;
+    
     $("address-auto-hint").hidden = false;
     
     updateSaveButton();
@@ -168,9 +168,10 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
     $("address-search").value =
       selectedFormattedAddress;
     
-    
     $("address-detail").value =
       selectedFormattedAddress;
+    
+    $("address-auto-hint").hidden = false;
     
     updateSaveButton();
 
