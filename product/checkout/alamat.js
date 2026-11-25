@@ -128,13 +128,17 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
   updateSaveButton();
 
   if (formattedAddress) {
-    selectedFormattedAddress = formattedAddress;
-
+    selectedFormattedAddress = result.display_name;
+    
     $("selected-address").textContent =
-      formattedAddress;
-
-    $("address-search").value = formattedAddress;
-
+      selectedFormattedAddress;
+    
+    $("address-search").value =
+      selectedFormattedAddress;
+    
+    $("address-detail").value =
+      selectedFormattedAddress;
+    
     updateSaveButton();
     return;
   }
@@ -155,12 +159,18 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
     }
 
     selectedFormattedAddress = result.display_name;
-
+    
     $("selected-address").textContent =
       selectedFormattedAddress;
-
+    
     $("address-search").value =
       selectedFormattedAddress;
+    
+    
+    $("address-detail").value =
+      selectedFormattedAddress;
+    
+    updateSaveButton();
 
   } catch (error) {
     if (error.name === "AbortError") return;
@@ -355,6 +365,7 @@ function initializeLocationType() {
 
 function validateAddressForm() {
   const detail = $("address-detail").value.trim();
+  const landmark = $("address-landmark").value.trim();
   const name = $("full-name").value.trim();
   const phone = $("phone-number").value.trim();
   const email = $("email").value.trim();
@@ -393,6 +404,7 @@ function saveAddress() {
   }
 
   const detail = $("address-detail").value.trim();
+  const landmark = $("address-landmark").value.trim();
   const name = $("full-name").value.trim();
   const phone = $("phone-number").value.trim();
   const email = $("email").value.trim();
@@ -403,9 +415,9 @@ function saveAddress() {
       : $("location-type").value;
 
   const addressData = {
-    fullAddress: `${selectedFormattedAddress}, ${detail}`,
-    address: selectedFormattedAddress,
-    landmark: detail,
+    fullAddress: `${detail}${landmark ? ", Patokan: " + landmark : ""}`,
+    address: detail,
+    landmark,
     name,
     phone,
     email,
@@ -416,7 +428,7 @@ function saveAddress() {
     },
     updatedAt: Date.now()
   };
-
+  
   try {
     localStorage.setItem(
       ADDRESS_STORAGE_KEY,
@@ -489,6 +501,11 @@ function initializeAddressPage() {
     field.addEventListener("change", updateSaveButton);
   });
 
+  $("address-landmark").addEventListener(
+    "input",
+    updateSaveButton
+  );
+  
   $("current-location-button").addEventListener(
     "click",
     getCurrentLocation
