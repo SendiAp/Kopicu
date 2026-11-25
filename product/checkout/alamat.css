@@ -376,3 +376,72 @@ button {
     padding: 7px 9px;
   }
 }
+
+#address-map {
+  z-index: 1;
+}
+
+#address-map .leaflet-control-attribution {
+  font-size: 9px;
+}
+
+#address-map .leaflet-control-zoom a {
+  color: #38251d;
+}
+
+.checkout-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.checkout-popup {
+  width: 100%;
+  max-width: 340px;
+  padding: 25px 20px;
+  border-radius: 16px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+}
+
+.checkout-popup-icon {
+  margin-bottom: 13px;
+  color: #38251d;
+  font-size: 35px;
+}
+
+.checkout-popup-title {
+  margin: 0 0 8px;
+  color: #252525;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.checkout-popup-message {
+  margin: 0;
+  color: #777777;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.checkout-popup-actions {
+  display: flex;
+  margin-top: 22px;
+}
+
+.checkout-popup-button {
+  width: 100%;
+  min-height: 43px;
+  border: none;
+  border-radius: 8px;
+  background: #38251d;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
