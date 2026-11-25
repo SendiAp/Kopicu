@@ -177,14 +177,6 @@ function updateDeliveryPrices() {
   updateOrderButton();
 }
 
-  deliveryFee = isDelivery && deliveryDistanceKm !== null
-    ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
-    : 0;
-
-  updateSummary();
-  updateOrderButton();
-}
-
 async function calculateDeliveryDistance() {
   const distanceElement = $("delivery-distance");
   const customer = getCustomerCoordinates();
