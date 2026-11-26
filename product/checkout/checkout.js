@@ -1331,20 +1331,63 @@ async function initializeCheckout() {
 
     await loadStore();
 
-    if (
-      document.querySelector(".service-option.active")
-      ?.dataset.service === "delivery" &&
-      deliveryDistanceKm === null
-    ) {
+    const isDelivery = document.querySelector(
+      ".service-option.active"
+    )?.dataset.service === "delivery";
+
+    if (isDelivery && !getFullAddress()) {
       showPopup({
         title: "Announcement",
-        message: "Alamat tujuan belum ditambahkan, silahkan tambahkan terlebih dahulu agar proses pemesanan mudah diproses.",
-        icon: "fa-location-dot"
+        message: "Silakan tambahkan alamat tujuan terlebih dahulu agar pesanan dapat diproses.",
+        icon: "fa-location-dot",
+        actions: [
+          {
+            label: "Tambahkan Alamat",
+            type: "primary",
+            onClick: () => {
+              window.location.href = "alamat.html";
+            }
+          },
+          {
+            label: "Batal"
+          }
+        ]
       });
+
+      return;
+    }
+
+    if (isDelivery && !getCustomerCoordinates()) {
+      showPopup({
+        title: "Announcement",
+        message: "Alamat sudah tersimpan, tetapi titik koordinat tujuan belum terbaca, silakan atur ulang titik lokasi alamat.",
+        icon: "fa-map-location-dot",
+        actions: [
+          {
+            label: "Atur Lokasi",
+            type: "primary",
+            onClick: () => {
+              window.location.href = "alamat.html";
+            }
+          },
+          {
+            label: "Batal"
+          }
+        ]
+      });
+
+      return;
     }
 
   } catch (error) {
     console.error("Gagal memuat checkout:", error);
+
+    showPopup({
+      title: "Announcement",
+      message: "Terjadi kesalahan saat memuat informasi checkout, silakan coba kembali.",
+      icon: "fa-circle-exclamation"
+    });
+
   } finally {
     hideCheckoutLoading();
   }
