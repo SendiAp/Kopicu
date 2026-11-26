@@ -6,6 +6,14 @@ let selectedLocation = null;
 let selectedFormattedAddress = "";
 let locationRequestId = 0;
 let searchController = null;
+let smallMap = null;
+let fullscreenMap = null;
+let smallMarker = null;
+let fullscreenMarker = null;
+let pendingMapLocation = null;
+let searchDebounce = null;
+let suggestionController = null;
+let suggestionResults = [];
 
 const addressFields = [
   $("address-detail"),
@@ -18,15 +26,22 @@ const addressFields = [
 async function searchGeocoding(query, signal) {
   const params = new URLSearchParams({
     format: "jsonv2",
-    q: query,
+    q: query.trim(),
     countrycodes: "id",
-    limit: "1",
+    limit: "5",
+    addressdetails: "1",
     "accept-language": "id"
   });
 
   const response = await fetch(
-    `https://nominatim.openstreetmap.org/search?${params}`,
-    { signal }
+    `https://nominatim.openstreetmap.org/search?${params.toString()}`,
+    {
+      method: "GET",
+      signal,
+      headers: {
+        "Accept": "application/json"
+      }
+    }
   );
 
   if (!response.ok) {
@@ -35,11 +50,7 @@ async function searchGeocoding(query, signal) {
 
   const results = await response.json();
 
-  if (!results.length) {
-    throw new Error("Alamat tidak ditemukan.");
-  }
-
-  return results[0];
+  return Array.isArray(results) ? results : [];
 }
 
 async function reverseGeocode(lat, lng) {
@@ -70,27 +81,225 @@ async function reverseGeocode(lat, lng) {
 }
 
 function initializeMap() {
-  $("google-map").src =
-    "https://maps.google.com/maps?q=Jakarta%20Indonesia&z=14&output=embed";
+  smallMap = L.map("map").setView([-6.2088, 106.8456], 13);
 
+  fullscreenMap = L.map("fullscreen-map").setView(
+    [-6.2088, 106.8456],
+    13
+  );
+
+  const tileUrl =
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+
+  const tileOptions = {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+  };
+
+  L.tileLayer(tileUrl, tileOptions).addTo(smallMap);
+  L.tileLayer(tileUrl, tileOptions).addTo(fullscreenMap);
+
+  smallMap.on("click", event => {
+    setMapPendingLocation(
+      event.latlng.lat,
+      event.latlng.lng
+    );
+  });
+
+  fullscreenMap.on("click", event => {
+    setMapPendingLocation(
+      event.latlng.lat,
+      event.latlng.lng
+    );
+  });
+
+  initializeMapControls();
   initializeAddressSearch();
 }
 
+function initializeMapControls() {
+  $("open-map-button").addEventListener("click", () => {
+    openFullscreenMap();
+  });
+
+  $("close-map-button").addEventListener("click", () => {
+    $("map-overlay").hidden = true;
+  });
+
+  $("confirm-map-location").addEventListener("click", async () => {
+    if (!pendingMapLocation) {
+      showAddressMessage(
+        "Titik Belum Dipilih",
+        "Silakan ketuk lokasi yang ingin digunakan pada peta."
+      );
+      return;
+    }
+
+    const { lat, lng } = pendingMapLocation;
+
+    $("map-overlay").hidden = true;
+
+    await setSelectedLocation(lat, lng);
+  });
+}
+
+function openFullscreenMap() {
+  $("map-overlay").hidden = false;
+
+  setTimeout(() => {
+    fullscreenMap.invalidateSize();
+
+    const location = pendingMapLocation || selectedLocation;
+
+    if (location) {
+      fullscreenMap.setView(
+        [location.lat, location.lng],
+        17
+      );
+    } else {
+      fullscreenMap.setView(
+        smallMap.getCenter(),
+        smallMap.getZoom()
+      );
+    }
+  }, 100);
+}
+
+function setMapPendingLocation(lat, lng) {
+  pendingMapLocation = { lat, lng };
+
+  const position = [lat, lng];
+
+  if (smallMarker) {
+    smallMarker.setLatLng(position);
+  } else {
+    smallMarker = L.marker(position).addTo(smallMap);
+  }
+
+  if (fullscreenMarker) {
+    fullscreenMarker.setLatLng(position);
+  } else {
+    fullscreenMarker = L.marker(position).addTo(fullscreenMap);
+  }
+
+  smallMap.setView(position, 17);
+  fullscreenMap.setView(position, 17);
+}
+
 function initializeAddressSearch() {
+  const input = $("address-search");
+  const suggestions = $("address-suggestions");
+
+  input.addEventListener("input", () => {
+    clearTimeout(searchDebounce);
+
+    if (suggestionController) {
+      suggestionController.abort();
+    }
+
+    const query = input.value.trim();
+
+    if (query.length < 3) {
+      suggestions.hidden = true;
+      suggestions.replaceChildren();
+      return;
+    }
+
+    searchDebounce = setTimeout(() => {
+      loadAddressSuggestions(query);
+    }, 1000);
+  });
+
+  input.addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      searchAddress();
+    }
+
+    if (event.key === "Escape") {
+      suggestions.hidden = true;
+    }
+  });
+
   $("search-location-button").addEventListener(
     "click",
     searchAddress
   );
 
-  $("address-search").addEventListener(
-    "keydown",
-    event => {
-      if (event.key === "Enter") {
-        event.preventDefault();
-        searchAddress();
-      }
+  suggestions.addEventListener("click", event => {
+    const button = event.target.closest(
+      ".address-suggestion-item"
+    );
+
+    if (!button) return;
+
+    const index = Number(button.dataset.index);
+    const result = suggestionResults[index];
+
+    if (!result) return;
+
+    suggestions.hidden = true;
+
+    setSelectedLocation(
+      Number(result.lat),
+      Number(result.lon),
+      result.display_name
+    );
+  });
+
+  document.addEventListener("click", event => {
+    if (!event.target.closest(".map-search")) {
+      suggestions.hidden = true;
     }
-  );
+  });
+}
+
+async function loadAddressSuggestions(query) {
+  if (suggestionController) {
+    suggestionController.abort();
+  }
+
+  suggestionController = new AbortController();
+
+  const suggestions = $("address-suggestions");
+
+  try {
+    const results = await searchGeocoding(
+      query,
+      suggestionController.signal
+    );
+
+    suggestionResults = results;
+    suggestions.replaceChildren();
+
+    if (!results.length) {
+      suggestions.hidden = true;
+      return;
+    }
+
+    results.forEach((result, index) => {
+      const button = document.createElement("button");
+      const icon = document.createElement("i");
+      const text = document.createElement("span");
+
+      button.type = "button";
+      button.className = "address-suggestion-item";
+      button.dataset.index = index;
+
+      icon.className = "fa-solid fa-location-dot";
+      text.textContent = result.display_name;
+
+      button.append(icon, text);
+      suggestions.appendChild(button);
+    });
+
+    suggestions.hidden = false;
+
+  } catch (error) {
+    if (error.name !== "AbortError") {
+      console.error("Pencarian rekomendasi gagal:", error);
+    }
+  }
 }
 
 async function searchAddress() {
@@ -110,16 +319,24 @@ async function searchAddress() {
   $("address-auto-hint").hidden = true;
 
   try {
-    const result = await searchGeocoding(
+    const results = await searchGeocoding(
       query,
       searchController.signal
     );
+
+    if (!results.length) {
+      throw new Error("Alamat tidak ditemukan.");
+    }
+
+    const result = results[0];
 
     await setSelectedLocation(
       Number(result.lat),
       Number(result.lon),
       result.display_name
     );
+
+    $("address-suggestions").hidden = true;
 
   } catch (error) {
     if (error.name === "AbortError") return;
@@ -157,9 +374,25 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
   selectedLocation = { lat, lng };
   selectedFormattedAddress = "";
 
-  $("google-map").src =
-    `https://maps.google.com/maps?q=${lat},${lng}&z=17&output=embed`;
-
+  pendingMapLocation = { lat, lng };
+  
+  const position = [lat, lng];
+  
+  if (smallMarker) {
+    smallMarker.setLatLng(position);
+  } else {
+    smallMarker = L.marker(position).addTo(smallMap);
+  }
+  
+  if (fullscreenMarker) {
+    fullscreenMarker.setLatLng(position);
+  } else {
+    fullscreenMarker = L.marker(position).addTo(fullscreenMap);
+  }
+  
+  smallMap.setView(position, 17);
+  fullscreenMap.setView(position, 17);
+  
   $("selected-coordinates").textContent =
     `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
 
