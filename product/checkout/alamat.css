@@ -10,11 +10,17 @@
   text-rendering: optimizeLegibility;
 }
 
+html {
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   min-width: 320px;
+  min-height: 100vh;
   background: #ffffff;
-  padding-bottom: 95px;
+  padding-bottom: 110px;
 }
 
 button,
@@ -91,6 +97,7 @@ button {
 }
 
 .map-search > i {
+  flex-shrink: 0;
   color: #888888;
   font-size: 14px;
 }
@@ -129,6 +136,7 @@ button {
   z-index: 1000;
   max-height: 260px;
   overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid #eeeeee;
   border-radius: 9px;
   background: #ffffff;
@@ -144,6 +152,7 @@ button {
   align-items: flex-start;
   gap: 10px;
   width: 100%;
+  min-height: 44px;
   padding: 12px;
   border: none;
   border-bottom: 1px solid #f1f1f1;
@@ -152,13 +161,19 @@ button {
   text-align: left;
   font-size: 11px;
   line-height: 1.5;
+  cursor: pointer;
 }
 
 .address-suggestion-item:last-child {
   border-bottom: none;
 }
 
+.address-suggestion-item:active {
+  background: #f7f5f4;
+}
+
 .address-suggestion-item i {
+  flex-shrink: 0;
   margin-top: 2px;
   color: #38251d;
 }
@@ -174,9 +189,21 @@ button {
 }
 
 #map {
+  position: relative;
   width: 100%;
   height: 100%;
   z-index: 1;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  font-family: "DM Sans", sans-serif;
+  z-index: 1;
+}
+
+.leaflet-control-attribution {
+  font-size: 9px;
 }
 
 #open-map-button {
@@ -195,6 +222,10 @@ button {
   font-size: 11px;
   font-weight: 700;
   box-shadow: 0 3px 12px rgba(0, 0, 0, 0.15);
+}
+
+#open-map-button:active {
+  background: #50372c;
 }
 
 .selected-location {
@@ -256,6 +287,10 @@ button {
   background: #ffffff;
   color: #38251d;
   font-size: 15px;
+}
+
+#current-location-button:active {
+  background: #f7f5f4;
 }
 
 .address-form-section {
@@ -376,7 +411,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 16px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
   background: #ffffff;
   border-top: 1px solid #eeeeee;
   box-shadow: 0 -3px 15px rgba(0, 0, 0, 0.035);
@@ -468,6 +503,10 @@ button {
   z-index: 99999;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
   background: #ffffff;
 }
 
@@ -522,6 +561,10 @@ button {
   font-weight: 800;
 }
 
+#confirm-map-location:active {
+  background: #50372c;
+}
+
 @media (min-width: 650px) {
   .address-page {
     border-right: 1px solid #f2f2f2;
@@ -530,6 +573,10 @@ button {
 }
 
 @media (max-width: 360px) {
+  body {
+    padding-bottom: 105px;
+  }
+
   .map-container {
     height: 250px;
   }
