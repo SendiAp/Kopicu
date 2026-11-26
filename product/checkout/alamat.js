@@ -16,6 +16,7 @@ let pendingMapLocation = null;
 let searchDebounce = null;
 let suggestionController = null;
 let suggestionResults = [];
+let currentLocationRequest = null;
 
 const addressFields = [
   $("address-detail"),
@@ -41,7 +42,7 @@ async function searchGeocoding(query, signal) {
       method: "GET",
       signal,
       headers: {
-        "Accept": "application/json"
+        Accept: "application/json"
       }
     }
   );
@@ -82,14 +83,7 @@ async function reverseGeocode(lat, lng) {
   return result.display_name;
 }
 
-function initializeMap() {
-  smallMap = L.map("map").setView([-6.2088, 106.8456], 13);
-
-  fullscreenMap = L.map("fullscreen-map").setView(
-    [-6.2088, 106.8456],
-    13
-  );
-
+function createMapLayers(map) {
   const attribution =
     '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
@@ -97,7 +91,8 @@ function initializeMap() {
     "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
     {
       maxZoom: 19,
-      attribution
+      attribution,
+      crossOrigin: true
     }
   );
 
@@ -105,8 +100,8 @@ function initializeMap() {
     "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
     {
       maxZoom: 19,
-      attribution:
-        "Tiles &copy; Esri"
+      attribution: "Tiles &copy; Esri",
+      crossOrigin: true
     }
   );
 
@@ -115,18 +110,39 @@ function initializeMap() {
     {
       maxZoom: 17,
       attribution:
-        '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+        '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>',
+      crossOrigin: true
     }
   );
 
-  streetLayer.addTo(smallMap);
-  streetLayer.addTo(fullscreenMap);
+  streetLayer.addTo(map);
+
+  return {
+    streetLayer,
+    satelliteLayer,
+    terrainLayer
+  };
+}
+
+function initializeMap() {
+  smallMap = L.map("map", {
+    zoomControl: true,
+    scrollWheelZoom: true
+  }).setView([-6.2088, 106.8456], 13);
+
+  fullscreenMap = L.map("fullscreen-map", {
+    zoomControl: true,
+    scrollWheelZoom: true
+  }).setView([-6.2088, 106.8456], 13);
+
+  const smallLayers = createMapLayers(smallMap);
+  const fullscreenLayers = createMapLayers(fullscreenMap);
 
   L.control.layers(
     {
-      "Peta Jalan": streetLayer,
-      "Satelit": satelliteLayer,
-      "Topografi": terrainLayer
+      "Peta Jalan": fullscreenLayers.streetLayer,
+      "Satelit": fullscreenLayers.satelliteLayer,
+      "Topografi": fullscreenLayers.terrainLayer
     },
     null,
     {
@@ -149,8 +165,65 @@ function initializeMap() {
     );
   });
 
+  initializeFullscreenLocationButton();
   initializeMapControls();
   initializeAddressSearch();
+
+  setTimeout(() => {
+    smallMap.invalidateSize();
+    fullscreenMap.invalidateSize();
+  }, 300);
+}
+
+function initializeFullscreenLocationButton() {
+  const LocationControl = L.Control.extend({
+    options: {
+      position: "topleft"
+    },
+
+    onAdd: function () {
+      const container = L.DomUtil.create(
+        "div",
+        "leaflet-bar leaflet-control"
+      );
+
+      const button = L.DomUtil.create(
+        "button",
+        "",
+        container
+      );
+
+      button.type = "button";
+      button.title = "Gunakan lokasi perangkat";
+      button.setAttribute(
+        "aria-label",
+        "Gunakan lokasi perangkat"
+      );
+
+      button.innerHTML =
+        '<i class="fa-solid fa-crosshairs"></i>';
+
+      button.style.width = "42px";
+      button.style.height = "42px";
+      button.style.border = "none";
+      button.style.background = "#ffffff";
+      button.style.color = "#38251d";
+      button.style.fontSize = "16px";
+      button.style.cursor = "pointer";
+
+      L.DomEvent.disableClickPropagation(container);
+      L.DomEvent.disableScrollPropagation(container);
+
+      L.DomEvent.on(button, "click", event => {
+        L.DomEvent.preventDefault(event);
+        locateCurrentPositionOnMap();
+      });
+
+      return container;
+    }
+  });
+
+  fullscreenMap.addControl(new LocationControl());
 }
 
 function initializeMapControls() {
@@ -160,6 +233,26 @@ function initializeMapControls() {
 
   $("close-map-button").addEventListener("click", () => {
     $("map-overlay").hidden = true;
+
+    if (pendingMapLocation) {
+      const location = selectedLocation;
+
+      if (location) {
+        setMapPendingLocation(location.lat, location.lng);
+      } else {
+        pendingMapLocation = null;
+
+        if (smallMarker) {
+          smallMap.removeLayer(smallMarker);
+          smallMarker = null;
+        }
+
+        if (fullscreenMarker) {
+          fullscreenMap.removeLayer(fullscreenMarker);
+          fullscreenMarker = null;
+        }
+      }
+    }
   });
 
   $("confirm-map-location").addEventListener("click", async () => {
@@ -198,10 +291,24 @@ function openFullscreenMap() {
         smallMap.getZoom()
       );
     }
-  }, 100);
+  }, 150);
 }
 
 function setMapPendingLocation(lat, lng) {
+  lat = Number(lat);
+  lng = Number(lng);
+
+  if (
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng) ||
+    lat < -90 ||
+    lat > 90 ||
+    lng < -180 ||
+    lng > 180
+  ) {
+    return;
+  }
+
   pendingMapLocation = { lat, lng };
 
   const position = [lat, lng];
@@ -231,6 +338,7 @@ function initializeAddressSearch() {
 
     if (suggestionController) {
       suggestionController.abort();
+      suggestionController = null;
     }
 
     if (searchController) {
@@ -284,18 +392,29 @@ function initializeAddressSearch() {
 
     if (!result) return;
 
+    clearTimeout(searchDebounce);
+
     if (searchController) {
       searchController.abort();
       searchController = null;
     }
 
+    if (suggestionController) {
+      suggestionController.abort();
+      suggestionController = null;
+    }
+
     addressSearching = false;
     suggestions.hidden = true;
 
-    setSelectedLocation(
+    setMapPendingLocation(
       Number(result.lat),
-      Number(result.lon),
-      result.display_name
+      Number(result.lon)
+    );
+
+    fullscreenMap.setView(
+      [Number(result.lat), Number(result.lon)],
+      17
     );
   });
 
@@ -363,8 +482,15 @@ async function searchAddress() {
 
   if (!query) return;
 
+  clearTimeout(searchDebounce);
+
   if (searchController) {
     searchController.abort();
+  }
+
+  if (suggestionController) {
+    suggestionController.abort();
+    suggestionController = null;
   }
 
   const controller = new AbortController();
@@ -392,12 +518,18 @@ async function searchAddress() {
     }
 
     const result = results[0];
+    const lat = Number(result.lat);
+    const lng = Number(result.lon);
 
     addressSearching = false;
 
+    setMapPendingLocation(lat, lng);
+
+    fullscreenMap.setView([lat, lng], 17);
+
     await setSelectedLocation(
-      Number(result.lat),
-      Number(result.lon),
+      lat,
+      lng,
       result.display_name
     );
 
@@ -418,6 +550,7 @@ async function searchAddress() {
 
   } finally {
     if (searchController === controller) {
+      searchController = null;
       addressSearching = false;
       updateSaveButton();
     }
@@ -476,7 +609,8 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
   updateSaveButton();
 
   try {
-    const address = formattedAddress || await reverseGeocode(lat, lng);
+    const address =
+      formattedAddress || await reverseGeocode(lat, lng);
 
     if (requestId !== locationRequestId) return;
 
@@ -508,7 +642,7 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
   }
 }
 
-function getCurrentLocation() {
+function locateCurrentPositionOnMap() {
   if (!navigator.geolocation) {
     showAddressMessage(
       "Lokasi Tidak Didukung",
@@ -517,8 +651,85 @@ function getCurrentLocation() {
     return;
   }
 
-  $("selected-address").textContent =
-    "Mengambil lokasi perangkat...";
+  if (currentLocationRequest) {
+    currentLocationRequest.abort();
+  }
+
+  const controller = new AbortController();
+  currentLocationRequest = controller;
+
+  const button = document.querySelector(
+    "#fullscreen-map .leaflet-control button"
+  );
+
+  if (button) {
+    button.disabled = true;
+    button.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i>';
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      if (currentLocationRequest !== controller) return;
+
+      currentLocationRequest = null;
+
+      if (button) {
+        button.disabled = false;
+        button.innerHTML =
+          '<i class="fa-solid fa-crosshairs"></i>';
+      }
+
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+
+      setMapPendingLocation(lat, lng);
+
+      fullscreenMap.setView([lat, lng], 18);
+    },
+    error => {
+      if (currentLocationRequest !== controller) return;
+
+      currentLocationRequest = null;
+
+      if (button) {
+        button.disabled = false;
+        button.innerHTML =
+          '<i class="fa-solid fa-crosshairs"></i>';
+      }
+
+      let message =
+        "Tidak dapat mengambil lokasi perangkat.";
+
+      if (error.code === error.PERMISSION_DENIED) {
+        message =
+          "Izinkan akses lokasi pada browser kamu.";
+      } else if (error.code === error.POSITION_UNAVAILABLE) {
+        message =
+          "Informasi lokasi tidak tersedia.";
+      } else if (error.code === error.TIMEOUT) {
+        message =
+          "Pengambilan lokasi terlalu lama.";
+      }
+
+      showAddressMessage("Lokasi Gagal", message);
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 15000,
+      maximumAge: 0
+    }
+  );
+}
+
+function getCurrentLocation() {
+  if (!navigator.geolocation) {
+    showAddressMessage(
+      "Lokasi Tidak Didukung",
+      "Perangkat kamu tidak mendukung fitur lokasi."
+    );
+    return;
+  }
 
   navigator.geolocation.getCurrentPosition(
     position => {
@@ -748,7 +959,6 @@ function initializeAddressPage() {
     "input",
     updateSaveButton
   );
-
   $("current-location-button").addEventListener(
     "click",
     getCurrentLocation
