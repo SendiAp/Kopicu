@@ -2,6 +2,8 @@ const $ = id => document.getElementById(id);
 
 const ADDRESS_STORAGE_KEY = "kopicu_address";
 
+let locationResolving = false;
+let addressSearching = false;
 let selectedLocation = null;
 let selectedFormattedAddress = "";
 let locationRequestId = 0;
@@ -259,15 +261,18 @@ async function loadAddressSuggestions(query) {
     suggestionController.abort();
   }
 
-  suggestionController = new AbortController();
+  const controller = new AbortController();
+  suggestionController = controller;
 
   const suggestions = $("address-suggestions");
 
   try {
     const results = await searchGeocoding(
       query,
-      suggestionController.signal
+      controller.signal
     );
+
+    if (suggestionController !== controller) return;
 
     suggestionResults = results;
     suggestions.replaceChildren();
@@ -311,18 +316,25 @@ async function searchAddress() {
     searchController.abort();
   }
 
-  searchController = new AbortController();
+  const controller = new AbortController();
+  searchController = controller;
 
-  $("selected-address").textContent =
-    "Sedang mencari alamat...";
+  const requestId = ++locationRequestId;
 
+  addressSearching = true;
+  $("address-suggestions").hidden = true;
+  $("selected-address").textContent = "Sedang mencari alamat...";
   $("address-auto-hint").hidden = true;
+
+  updateSaveButton();
 
   try {
     const results = await searchGeocoding(
       query,
-      searchController.signal
+      controller.signal
     );
+
+    if (searchController !== controller) return;
 
     if (!results.length) {
       throw new Error("Alamat tidak ditemukan.");
@@ -330,27 +342,34 @@ async function searchAddress() {
 
     const result = results[0];
 
+    addressSearching = false;
+
     await setSelectedLocation(
       Number(result.lat),
       Number(result.lon),
       result.display_name
     );
 
-    $("address-suggestions").hidden = true;
-
   } catch (error) {
     if (error.name === "AbortError") return;
+    if (searchController !== controller) return;
 
-    $("selected-address").textContent =
-      error.message || "Alamat tidak ditemukan.";
+    if (requestId === locationRequestId) {
+      selectedLocation = null;
+      selectedFormattedAddress = "";
 
-    selectedLocation = null;
-    selectedFormattedAddress = "";
+      $("selected-address").textContent =
+        error.message || "Alamat tidak ditemukan.";
 
-    $("selected-coordinates").textContent =
-      "Koordinat belum ditentukan";
+      $("selected-coordinates").textContent =
+        "Koordinat belum ditentukan";
+    }
 
-    updateSaveButton();
+  } finally {
+    if (searchController === controller) {
+      addressSearching = false;
+      updateSaveButton();
+    }
   }
 }
 
@@ -373,26 +392,27 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
 
   selectedLocation = { lat, lng };
   selectedFormattedAddress = "";
-
   pendingMapLocation = { lat, lng };
-  
+
+  locationResolving = true;
+
   const position = [lat, lng];
-  
+
   if (smallMarker) {
     smallMarker.setLatLng(position);
   } else {
     smallMarker = L.marker(position).addTo(smallMap);
   }
-  
+
   if (fullscreenMarker) {
     fullscreenMarker.setLatLng(position);
   } else {
     fullscreenMarker = L.marker(position).addTo(fullscreenMap);
   }
-  
+
   smallMap.setView(position, 17);
   fullscreenMap.setView(position, 17);
-  
+
   $("selected-coordinates").textContent =
     `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
 
@@ -428,9 +448,13 @@ async function setSelectedLocation(lat, lng, formattedAddress = "") {
       "Alamat otomatis tidak ditemukan. Silakan isi alamat lengkap secara manual.";
 
     $("address-detail").value = "";
-  }
 
-  updateSaveButton();
+  } finally {
+    if (requestId === locationRequestId) {
+      locationResolving = false;
+      updateSaveButton();
+    }
+  }
 }
 
 function getCurrentLocation() {
@@ -550,6 +574,8 @@ function validateAddressForm() {
 
   return Boolean(
     selectedLocation &&
+    !locationResolving &&
+    !addressSearching &&
     detail &&
     name &&
     validPhone &&
