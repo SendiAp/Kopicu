@@ -183,52 +183,19 @@ function updateDeliveryPrices() {
   updateOrderButton();
 }
 
-async function getCityFromCoordinates(lat, lng) {
-  const params = new URLSearchParams({
-    format: "jsonv2",
-    lat: String(lat),
-    lon: String(lng),
-    zoom: "10",
-    addressdetails: "1"
-  });
-
-  const response = await fetch(
-    `https://nominatim.openstreetmap.org/reverse?${params}`
-  );
-
-  if (!response.ok) {
-    throw new Error("Gagal memeriksa wilayah kota.");
-  }
-
-  const result = await response.json();
-  const address = result.address || {};
-
-  const city =
-    address.city ||
-    address.town ||
-    address.municipality ||
-    address.village ||
-    address.county ||
-    address.state_district;
-
-  if (!city) {
-    throw new Error("Wilayah kota tidak dapat ditentukan.");
-  }
-
-  return city.trim().toLowerCase();
-}
-
 async function calculateDeliveryDistance() {
   const distanceElement = $("delivery-distance");
   const customer = getCustomerCoordinates();
   const store = getStoreCoordinates();
+
+  const MAX_DELIVERY_DISTANCE_KM = 30;
 
   deliveryDistanceKm = null;
   deliveryDurationMinutes = null;
   deliveryFee = 0;
 
   if (distanceElement) {
-    distanceElement.textContent = "Memeriksa wilayah pengiriman...";
+    distanceElement.textContent = "Menghitung jarak pengiriman...";
   }
 
   updateDeliveryPrices();
@@ -245,32 +212,6 @@ async function calculateDeliveryDistance() {
   }
 
   try {
-    const [storeCity, customerCity] = await Promise.all([
-      getCityFromCoordinates(store.lat, store.lng),
-      getCityFromCoordinates(customer.lat, customer.lng)
-    ]);
-
-    if (storeCity !== customerCity) {
-      deliveryDistanceKm = null;
-      deliveryDurationMinutes = null;
-      deliveryFee = 0;
-
-      if (distanceElement) {
-        distanceElement.textContent = "Di luar kota cabang";
-      }
-
-      updateDeliveryPrices();
-      updateOrderButton();
-
-      showPopup({
-        title: "Announcement",
-        message: "Jarak pengiriman terlalu jauh, pastikan masih berada di dalam kota cabang restoran.",
-        icon: "fa-location-crosshairs"
-      });
-
-      return;
-    }
-
     const url =
       `https://router.project-osrm.org/route/v1/driving/` +
       `${store.lng},${store.lat};${customer.lng},${customer.lat}` +
@@ -297,7 +238,30 @@ async function calculateDeliveryDistance() {
       throw new Error("Jarak atau estimasi waktu tidak ditemukan");
     }
 
-    deliveryDistanceKm = route.distance / 1000;
+    const calculatedDistance = route.distance / 1000;
+
+    if (calculatedDistance > MAX_DELIVERY_DISTANCE_KM) {
+      deliveryDistanceKm = null;
+      deliveryDurationMinutes = null;
+      deliveryFee = 0;
+
+      if (distanceElement) {
+        distanceElement.textContent = "Melebihi batas 30 km";
+      }
+
+      updateDeliveryPrices();
+      updateOrderButton();
+
+      showPopup({
+        title: "Announcement",
+        message: "Jarak pengiriman terlalu jauh, pastikan masih berada di dalam kota cabang restoran.",
+        icon: "fa-location-crosshairs"
+      });
+
+      return;
+    }
+
+    deliveryDistanceKm = calculatedDistance;
     deliveryDurationMinutes = route.duration / 60;
 
     if (distanceElement) {
