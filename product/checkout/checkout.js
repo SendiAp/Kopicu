@@ -1205,11 +1205,7 @@ function placeOrder() {
 }
 
 function goBack() {
-  if (window.history.length > 1) {
-    window.history.back();
-  } else {
-    window.location.href = "../keranjang/keranjang.html";
-  }
+  window.location.href = "../keranjang/keranjang.html";
 }
 
 productList.addEventListener("click", event => {
