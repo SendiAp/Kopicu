@@ -765,17 +765,22 @@ function loadAddress() {
   addressEmpty.hidden = hasAddress;
   deliverySection.hidden = !hasAddress;
 
-  $("address-detail").textContent =
-    fullAddress || "-";
+  $("address-detail").textContent = fullAddress || "-";
+  $("customer-name").textContent = customerName || "-";
+  $("customer-phone").textContent = customerPhone || "-";
+  $("address-landmark").textContent = landmark || "-";
 
-  $("customer-name").textContent =
-    customerName || "-";
+  addressCard.style.cursor = hasAddress ? "pointer" : "";
 
-  $("customer-phone").textContent =
-    customerPhone || "-";
+  addressCard.onclick = hasAddress
+    ? () => {
+        window.location.href = "alamat.html";
+      }
+    : null;
 
-  $("address-landmark").textContent =
-    landmark || "-";
+  addressEmpty.onclick = () => {
+    window.location.href = "alamat.html";
+  };
 
   updateOrderButton();
 }
