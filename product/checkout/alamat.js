@@ -30,7 +30,7 @@ async function searchGeocoding(query, signal) {
     format: "jsonv2",
     q: query.trim(),
     countrycodes: "id",
-    limit: "5",
+    limit: "10",
     addressdetails: "1",
     "accept-language": "id"
   });
@@ -90,16 +90,50 @@ function initializeMap() {
     13
   );
 
-  const tileUrl =
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+  const attribution =
+    '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 
-  const tileOptions = {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-  };
+  const streetLayer = L.tileLayer(
+    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 19,
+      attribution
+    }
+  );
 
-  L.tileLayer(tileUrl, tileOptions).addTo(smallMap);
-  L.tileLayer(tileUrl, tileOptions).addTo(fullscreenMap);
+  const satelliteLayer = L.tileLayer(
+    "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    {
+      maxZoom: 19,
+      attribution:
+        "Tiles &copy; Esri"
+    }
+  );
+
+  const terrainLayer = L.tileLayer(
+    "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    {
+      maxZoom: 17,
+      attribution:
+        '&copy; <a href="https://opentopomap.org">OpenTopoMap</a>'
+    }
+  );
+
+  streetLayer.addTo(smallMap);
+  streetLayer.addTo(fullscreenMap);
+
+  L.control.layers(
+    {
+      "Peta Jalan": streetLayer,
+      "Satelit": satelliteLayer,
+      "Topografi": terrainLayer
+    },
+    null,
+    {
+      position: "topright",
+      collapsed: true
+    }
+  ).addTo(fullscreenMap);
 
   smallMap.on("click", event => {
     setMapPendingLocation(
@@ -199,17 +233,27 @@ function initializeAddressSearch() {
       suggestionController.abort();
     }
 
+    if (searchController) {
+      searchController.abort();
+      searchController = null;
+    }
+
+    addressSearching = false;
+    locationRequestId++;
+
     const query = input.value.trim();
 
     if (query.length < 3) {
       suggestions.hidden = true;
       suggestions.replaceChildren();
+      suggestionResults = [];
+      updateSaveButton();
       return;
     }
 
     searchDebounce = setTimeout(() => {
       loadAddressSuggestions(query);
-    }, 1000);
+    }, 700);
   });
 
   input.addEventListener("keydown", event => {
@@ -240,6 +284,12 @@ function initializeAddressSearch() {
 
     if (!result) return;
 
+    if (searchController) {
+      searchController.abort();
+      searchController = null;
+    }
+
+    addressSearching = false;
     suggestions.hidden = true;
 
     setSelectedLocation(
@@ -273,6 +323,7 @@ async function loadAddressSuggestions(query) {
     );
 
     if (suggestionController !== controller) return;
+    if ($("address-search").value.trim() !== query) return;
 
     suggestionResults = results;
     suggestions.replaceChildren();
