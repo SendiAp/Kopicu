@@ -496,7 +496,7 @@ function renderProducts() {
   if (!checkoutItems.length) {
     productList.innerHTML = `
       <div class="checkout-empty">
-        <p>Tidak ada produk yang dipilih.</p>
+        <p>Tidak ada product yang dipilih.</p>
         <a href="../product.html">Kembali ke Menu</a>
       </div>
     `;
@@ -705,7 +705,7 @@ function loadAddress() {
   deliverySection.hidden = !hasAddress;
 
   $("address-detail").textContent =
-    fullAddress || "Alamat belum diatur";
+    fullAddress || "-";
 
   $("customer-name").textContent =
     customerName || "-";
@@ -798,7 +798,7 @@ async function loadStore() {
       storeData.name ||
       storeData.storeName ||
       storeData.outletName ||
-      "KOPICU";
+      "Toko";
 
     renderServices();
     await calculateDeliveryDistance();
@@ -875,8 +875,8 @@ function setPaymentMethod(method) {
 
 function showVoucher() {
   showPopup({
-    title: "Voucher",
-    message: "Voucher belum tersedia. Silakan coba kembali nanti.",
+    title: "Announcement",
+    message: "Voucher belum tersedia, silakan coba kembali nanti.",
     icon: "fa-ticket"
   });
 }
@@ -888,8 +888,8 @@ async function editProductOptions(itemId) {
 
   if (!item.productId) {
     showPopup({
-      title: "Produk Tidak Ditemukan",
-      message: "ID produk tidak tersedia. Silakan tambahkan ulang produk ke keranjang.",
+      title: "Announcement",
+      message: "ID Product tidak tersedia, silakan tambahkan ulang product ke keranjang.",
       icon: "fa-circle-exclamation"
     });
     return;
@@ -903,8 +903,8 @@ async function editProductOptions(itemId) {
 
     if (!productSnapshot.exists()) {
       showPopup({
-        title: "Produk Tidak Ditemukan",
-        message: "Data produk tidak tersedia.",
+        title: "Announcement",
+        message: "Data product tidak tersedia.",
         icon: "fa-circle-exclamation"
       });
       return;
@@ -922,8 +922,8 @@ async function editProductOptions(itemId) {
 
     if (!groupIds.length) {
       showPopup({
-        title: "Tidak Ada Pilihan",
-        message: "Produk ini tidak memiliki grup opsi.",
+        title: "Announcement",
+        message: "Product ini tidak memiliki grup opsi.",
         icon: "fa-circle-info"
       });
       return;
@@ -1127,8 +1127,8 @@ async function editProductOptions(itemId) {
     console.error("Gagal memuat grup opsi:", error);
 
     showPopup({
-      title: "Gagal Memuat Pilihan",
-      message: "Terjadi kesalahan saat mengambil grup opsi produk.",
+      title: "Announcement",
+      message: "Terjadi kesalahan saat mengambil grup opsi product.",
       icon: "fa-circle-exclamation"
     });
   }
@@ -1137,8 +1137,8 @@ async function editProductOptions(itemId) {
 function placeOrder() {
   if (!checkoutItems.length) {
     showPopup({
-      title: "Pesanan Kosong",
-      message: "Belum ada produk yang dipilih.",
+      title: "Announcement",
+      message: "Belum ada product yang dipilih.",
       icon: "fa-basket-shopping"
     });
     return;
@@ -1150,7 +1150,7 @@ function placeOrder() {
 
   if (!activeService) {
     showPopup({
-      title: "Layanan Tidak Tersedia",
+      title: "Announcement",
       message: "Silakan pilih layanan pesanan terlebih dahulu.",
       icon: "fa-store"
     });
@@ -1159,7 +1159,7 @@ function placeOrder() {
 
   if (activeService === "delivery" && !getFullAddress()) {
     showPopup({
-      title: "Alamat Belum Diisi",
+      title: "Announcement",
       message: "Tambahkan alamat terlebih dahulu sebelum melanjutkan pesanan.",
       icon: "fa-location-dot",
       actions: [
@@ -1276,8 +1276,8 @@ async function initializeCheckout() {
       deliveryDistanceKm === null
     ) {
       showPopup({
-        title: "Jarak Belum Tersedia",
-        message: "Tidak dapat menghitung jarak pengiriman. Silakan periksa kembali lokasi toko dan alamat pengiriman.",
+        title: "Announcement",
+        message: "Alamat tujuan belum ditambahkan, silahkan tambahkan terlebih dahulu agar proses pemesanan mudah diproses.",
         icon: "fa-location-dot"
       });
     }
