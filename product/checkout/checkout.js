@@ -1,7 +1,8 @@
 import { db } from "../../database/firebase.js";
 import {
   ref,
-  get
+  get,
+  set
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 import {
@@ -1263,7 +1264,7 @@ async function editProductOptions(itemId) {
   }
 }
 
-function placeOrder() {
+async function placeOrder() {
   if (!checkoutItems.length) {
     showPopup({
       title: "Announcement",
@@ -1307,6 +1308,39 @@ function placeOrder() {
     return;
   }
 
+  if (activeService === "delivery" && !getCustomerCoordinates()) {
+    showPopup({
+      title: "Announcement",
+      message: "Titik koordinat alamat belum tersedia. Silakan atur ulang lokasi alamat.",
+      icon: "fa-map-location-dot",
+      actions: [
+        {
+          label: "Atur Lokasi",
+          type: "primary",
+          onClick: () => {
+            window.location.href = "alamat.html";
+          }
+        },
+        {
+          label: "Batal"
+        }
+      ]
+    });
+    return;
+  }
+
+  if (
+    activeService === "delivery" &&
+    deliveryDistanceKm === null
+  ) {
+    showPopup({
+      title: "Announcement",
+      message: "Jarak pengiriman belum tersedia atau melebihi batas pengiriman.",
+      icon: "fa-location-crosshairs"
+    });
+    return;
+  }
+
   if (!paymentMethod) {
     showPopup({
       title: "Announcement",
@@ -1326,28 +1360,158 @@ function placeOrder() {
     return;
   }
 
+  const button = $("place-order-button");
+
+  if (button.disabled) return;
+
   const productTotal = checkoutItems.reduce(
     (total, item) =>
-      total + Number(item.unitPrice || 0) * Number(item.quantity || 0),
+      total +
+      Number(item.unitPrice || 0) *
+      Number(item.quantity || 0),
     0
   );
 
-  const grandTotal = productTotal + deliveryFee + serviceFee;
+  const voucherDiscount = 0;
+  const grandTotal =
+    productTotal +
+    deliveryFee +
+    serviceFee -
+    voucherDiscount;
 
-  const goToOrders = () => {
-    window.location.href = "../pesananku/pesananku.html";
+  const storeAddress = String(
+    storeData?.fullAddress ||
+    storeData?.address ||
+    storeData?.alamat ||
+    storeData?.storeAddress ||
+    ""
+  ).trim();
+
+  const customerCoordinates = getCustomerCoordinates();
+  const storeCoordinates = getStoreCoordinates();
+
+  const orderNumber = String(
+    Math.floor(10000000000 + Math.random() * 90000000000)
+  );
+
+  const orderId = `ORDER-${Date.now()}-${orderNumber}`;
+
+  const orderData = {
+    orderNumber,
+    status: "processing",
+
+    service: activeService,
+
+    paymentMethod,
+
+    items: checkoutItems.map(item => ({
+      productId: item.productId || item.id || "",
+      name: item.name || "Product",
+      image: item.image || item.images?.[0] || "",
+      quantity: Number(item.quantity) || 1,
+      unitPrice: Number(item.unitPrice) || 0,
+      totalPrice:
+        Number(item.unitPrice || 0) *
+        Number(item.quantity || 1),
+      selectedOptions: Array.isArray(item.selectedOptions)
+        ? item.selectedOptions
+        : []
+    })),
+
+    subtotal: productTotal,
+    voucherDiscount,
+    deliveryFee,
+    serviceFee,
+    total: grandTotal,
+
+    store: {
+      name:
+        storeData.name ||
+        storeData.storeName ||
+        storeData.outletName ||
+        "KOPICU",
+      address: storeAddress,
+      latitude: storeCoordinates?.lat ?? null,
+      longitude: storeCoordinates?.lng ?? null
+    },
+
+    customer: {
+      name:
+        addressData?.name ||
+        addressData?.customerName ||
+        addressData?.nama ||
+        "",
+      phone:
+        addressData?.phone ||
+        addressData?.customerPhone ||
+        addressData?.nomorTelepon ||
+        addressData?.noHp ||
+        "",
+      address: activeService === "delivery"
+        ? getFullAddress()
+        : "",
+      latitude: customerCoordinates?.lat ?? null,
+      longitude: customerCoordinates?.lng ?? null
+    },
+
+    pickupAddress: activeService === "pickup"
+      ? storeAddress
+      : "",
+
+    delivery: {
+      type: activeService === "delivery"
+        ? selectedDelivery
+        : null,
+      distanceKm: activeService === "delivery"
+        ? deliveryDistanceKm
+        : null
+    },
+
+    additionalNote: "",
+
+    createdAt: Date.now()
+  };
+
+  const saveAndNavigate = async () => {
+    button.disabled = true;
+
+    try {
+      await set(
+        ref(db, `orders/${orderId}`),
+        orderData
+      );
+
+      localStorage.setItem(
+        "kopicu_current_order_id",
+        orderId
+      );
+
+      window.location.href =
+        "../pesananku/pesananku.html";
+
+    } catch (error) {
+      console.error("Gagal menyimpan pesanan:", error);
+
+      button.disabled = false;
+
+      showPopup({
+        title: "Announcement",
+        message: "Pesanan belum berhasil disimpan, silakan coba kembali.",
+        icon: "fa-circle-exclamation"
+      });
+    }
   };
 
   if (activeService === "pickup" && paymentMethod === "COD") {
     showPopup({
       title: "Announcement",
-      message: `Saat anda sampai, anda harus bayar senilai ${formatRupiah(grandTotal)}. Paham?`,
+      message: `Saat anda sampai anda harus bayar senilai ${formatRupiah(grandTotal)}. Paham?`,
       icon: "fa-money-bill-wave",
       actions: [
         {
           label: "Ya, Paham",
           type: "primary",
-          onClick: goToOrders
+          onClick: saveAndNavigate
         },
         {
           label: "Batal"
@@ -1358,7 +1522,7 @@ function placeOrder() {
     return;
   }
 
-  goToOrders();
+  await saveAndNavigate();
 }
 
 function goBack() {
