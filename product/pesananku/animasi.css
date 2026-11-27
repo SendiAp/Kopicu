@@ -1,0 +1,197 @@
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(22px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeDown {
+  from {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes statusPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(164, 112, 79, 0.2);
+  }
+
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 0 7px rgba(164, 112, 79, 0);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(164, 112, 79, 0);
+  }
+}
+
+@keyframes progressShimmer {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes softBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes rotateIn {
+  from {
+    opacity: 0;
+    transform: rotate(-35deg) scale(0.7);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(0) scale(1);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeUp 0.65s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+.animate-fade-down {
+  animation: fadeDown 0.55s ease both;
+}
+
+.order-status-section {
+  animation-delay: 0.08s;
+}
+
+.pickup-location-section {
+  animation-delay: 0.16s;
+}
+
+.order-detail-section {
+  animation-delay: 0.24s;
+}
+
+.order-information-section {
+  animation-delay: 0.32s;
+}
+
+.order-action-section {
+  animation-delay: 0.4s;
+}
+
+.status-item.active .status-icon {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.status-progress .progress-start i {
+  animation: softBounce 1.8s ease-in-out infinite;
+}
+
+.section-title > i {
+  animation: rotateIn 0.55s ease both;
+}
+
+.order-product {
+  animation: fadeUp 0.5s ease both;
+}
+
+.order-product:nth-child(1) {
+  animation-delay: 0.08s;
+}
+
+.order-product:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.order-product:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.order-product:nth-child(4) {
+  animation-delay: 0.32s;
+}
+
+.pickup-hint > i {
+  animation: softBounce 2s ease-in-out infinite;
+}
+
+.order-number button i {
+  transition: transform 0.25s ease;
+}
+
+.order-number button:active i {
+  transform: scale(0.85);
+}
+
+#order-again-button i {
+  transition: transform 0.35s ease;
+}
+
+#order-again-button:hover i {
+  transform: rotate(180deg);
+}
+
+.back-button i,
+.help-button i {
+  transition: transform 0.25s ease;
+}
+
+.back-button:active i {
+  transform: translateX(-3px);
+}
+
+.help-button:active i {
+  transform: scale(1.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
