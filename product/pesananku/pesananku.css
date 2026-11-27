@@ -595,3 +595,65 @@ button:focus-visible {
   overflow-wrap: anywhere;
   line-height: 1.5;
 }
+
+.order-cancel-section {
+  margin: 20px 0 30px;
+  padding: 0 16px;
+}
+
+.cancel-order-button {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #f0dada;
+  border-radius: 12px;
+  background: #fff5f5;
+  color: #c0392b;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s ease;
+}
+
+.cancel-order-button:active {
+  transform: scale(0.98);
+}
+
+.cancel-confirmation {
+  padding: 16px;
+  border: 1px solid #eeeeee;
+  border-radius: 14px;
+  background: #ffffff;
+  text-align: center;
+}
+
+.cancel-confirmation p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #38251d;
+}
+
+.cancel-confirmation-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.cancel-confirmation-actions button {
+  flex: 1;
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#confirm-cancel-yes {
+  background: #c0392b;
+  color: #ffffff;
+}
+
+#confirm-cancel-no {
+  background: #eeeeee;
+  color: #38251d;
+}
