@@ -2,7 +2,9 @@ import { db } from "../../database/firebase.js";
 
 import {
   ref,
-  onValue
+  get,
+  onValue,
+  remove
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-database.js";
 
 const $ = id => document.getElementById(id);
@@ -20,6 +22,12 @@ const CURRENT_ORDER_KEY = "kopicu_current_order_id";
 
 let currentOrderId = localStorage.getItem(CURRENT_ORDER_KEY);
 let currentOrder = null;
+
+const ORDER_HISTORY_KEY = "kopicu_order_history";
+
+let pendingCancelTimer = null;
+let pendingCancelSince = null;
+let isCancellingOrder = false;
 
 const STATUS_LIST = [
   {
@@ -403,6 +411,9 @@ function renderOrder(order) {
   if (isPickup) {
     renderStoreMap(order);
   }
+
+  renderCancellationControls(order);
+  schedulePendingCancellation(order);
 }
 
 function renderStoreMap(order) {
@@ -556,6 +567,229 @@ function listenOrder() {
   );
 }
 
+function saveOrderHistory(order, status = "Dibatalkan") {
+  const history = JSON.parse(
+    localStorage.getItem(ORDER_HISTORY_KEY) || "[]"
+  );
+
+  const savedOrder = {
+    orderId: currentOrderId,
+    orderNumber: order.orderNumber || currentOrderId,
+    status,
+    items: order.items || [],
+    subtotal: order.subtotal || 0,
+    voucherDiscount: order.voucherDiscount || order.discount || 0,
+    serviceFee: order.serviceFee || 0,
+    deliveryFee: order.deliveryFee || 0,
+    total: order.total || 0,
+    paymentMethod: order.paymentMethod || "—",
+    service: order.service || order.serviceType || "",
+    additionalNote: order.additionalNote || "",
+    createdAt: order.createdAt || order.orderDate || order.timestamp || Date.now(),
+    cancelledAt: Date.now()
+  };
+
+  const existingIndex = history.findIndex(
+    item => item.orderId === currentOrderId
+  );
+
+  if (existingIndex >= 0) {
+    history[existingIndex] = savedOrder;
+  } else {
+    history.unshift(savedOrder);
+  }
+
+  localStorage.setItem(
+    ORDER_HISTORY_KEY,
+    JSON.stringify(history)
+  );
+}
+
+async function cancelOrder() {
+  if (!currentOrder || !currentOrderId || isCancellingOrder) {
+    return;
+  }
+
+  isCancellingOrder = true;
+
+  try {
+    saveOrderHistory(currentOrder);
+
+    await remove(ref(db, `orders/${currentOrderId}`));
+
+    if (pendingCancelTimer) {
+      clearTimeout(pendingCancelTimer);
+      pendingCancelTimer = null;
+    }
+
+    localStorage.removeItem(
+      `kopicu_pending_since_${currentOrderId}`
+    );
+
+    const cancelSection = $("order-cancel-section");
+
+    if (cancelSection) {
+      cancelSection.innerHTML = `
+        <div class="empty-order">
+          <i class="fa-solid fa-circle-check"></i>
+          <p>Pesanan berhasil dibatalkan.</p>
+        </div>
+      `;
+    }
+
+    isCancellingOrder = false;
+
+  } catch (error) {
+    console.error("Gagal membatalkan pesanan:", error);
+
+    alert("Pesanan gagal dibatalkan. Silakan coba kembali.");
+
+    isCancellingOrder = false;
+  }
+}
+
+function confirmCancelOrder() {
+  const section = $("order-cancel-section");
+
+  if (!section) return;
+
+  section.innerHTML = `
+    <div class="cancel-confirmation">
+      <p>Apa kamu yakin ingin membatalkan pesanan ini?</p>
+
+      <div class="cancel-confirmation-actions">
+        <button type="button" id="confirm-cancel-yes">
+          Ya
+        </button>
+
+        <button type="button" id="confirm-cancel-no">
+          Tidak
+        </button>
+      </div>
+    </div>
+  `;
+
+  $("confirm-cancel-yes").addEventListener(
+    "click",
+    cancelOrder
+  );
+
+  $("confirm-cancel-no").addEventListener("click", () => {
+    section.innerHTML = "";
+  });
+}
+
+function renderCancellationControls(order) {
+  let section = $("order-cancel-section");
+
+  if (!section) {
+    section = document.createElement("div");
+    section.id = "order-cancel-section";
+    section.className = "order-cancel-section";
+
+    const page = document.querySelector(".order-page");
+
+    if (page) {
+      page.appendChild(section);
+    }
+  }
+
+  const agreement = String(order.agreement || "pending")
+    .toLowerCase()
+    .trim();
+
+  section.innerHTML = "";
+
+  if (agreement === "pending") {
+    section.innerHTML = `
+      <button
+        type="button"
+        id="cancel-order-button"
+        class="cancel-order-button"
+      >
+        <i class="fa-solid fa-xmark"></i>
+        Batalkan Pesanan
+      </button>
+    `;
+
+    $("cancel-order-button").addEventListener(
+      "click",
+      cancelOrder
+    );
+
+  } else if (agreement === "approved") {
+    confirmCancelOrder();
+  } else {
+    section.remove();
+  }
+}
+
+function schedulePendingCancellation(order) {
+  const agreement = String(order.agreement || "pending")
+    .toLowerCase()
+    .trim();
+
+  if (pendingCancelTimer) {
+    clearTimeout(pendingCancelTimer);
+    pendingCancelTimer = null;
+  }
+
+  if (agreement !== "pending") {
+    localStorage.removeItem(
+      `kopicu_pending_since_${currentOrderId}`
+    );
+
+    return;
+  }
+
+  const storageKey =
+    `kopicu_pending_since_${currentOrderId}`;
+
+  const agreementTime = Number(
+    order.agreementAt ||
+    order.agreementPendingAt ||
+    localStorage.getItem(storageKey) ||
+    order.createdAt ||
+    Date.now()
+  );
+
+  if (!localStorage.getItem(storageKey)) {
+    localStorage.setItem(storageKey, agreementTime);
+  }
+
+  pendingCancelSince = agreementTime;
+
+  const fiveMinutes = 5 * 60 * 1000;
+  const remainingTime = Math.max(
+    0,
+    fiveMinutes - (Date.now() - agreementTime)
+  );
+
+  pendingCancelTimer = setTimeout(async () => {
+    if (!currentOrder || isCancellingOrder) return;
+
+    const latestSnapshot = await get(
+      ref(db, `orders/${currentOrderId}`)
+    );
+
+    if (!latestSnapshot.exists()) return;
+
+    const latestOrder = latestSnapshot.val();
+
+    if (
+      String(latestOrder.agreement || "")
+        .toLowerCase()
+        .trim() !== "pending"
+    ) {
+      return;
+    }
+
+    currentOrder = latestOrder;
+
+    await cancelOrder();
+  }, remainingTime);
+}
+
 async function copyOrderNumber() {
   const value = orderNumber.textContent.trim();
 
@@ -618,10 +852,46 @@ function orderAgain() {
   window.location.href = "../product.html";
 }
 
-function showHelp() {
-  alert(
-    "Silakan hubungi KOPICU jika membutuhkan bantuan terkait pesanan."
-  );
+async function showHelp() {
+  try {
+    const snapshot = await get(
+      ref(db, "store/restaurantPhone")
+    );
+
+    if (!snapshot.exists()) {
+      alert("Nomor WhatsApp restoran belum tersedia.");
+      return;
+    }
+
+    let phone = String(snapshot.val()).replace(/\D/g, "");
+
+    if (phone.startsWith("0")) {
+      phone = "62" + phone.slice(1);
+    } else if (phone.startsWith("8")) {
+      phone = "62" + phone;
+    }
+
+    if (!phone) {
+      alert("Nomor WhatsApp restoran tidak valid.");
+      return;
+    }
+
+    const orderCode =
+      currentOrder?.orderNumber || currentOrderId || "";
+
+    const message = encodeURIComponent(
+      `Halo, saya ingin bertanya mengenai pesanan ${orderCode}.`
+    );
+
+    window.open(
+      `https://wa.me/${phone}?text=${message}`,
+      "_blank"
+    );
+
+  } catch (error) {
+    console.error("Gagal mengambil nomor WhatsApp:", error);
+    alert("Tidak dapat membuka WhatsApp. Silakan coba kembali.");
+  }
 }
 
 function initializePesananku() {
