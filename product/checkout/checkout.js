@@ -1398,6 +1398,7 @@ async function placeOrder() {
 
   const orderData = {
     orderNumber,
+    agreement: "pending",
     status: "processing",
 
     service: activeService,
