@@ -195,3 +195,30 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+@keyframes progressMoving {
+  0% {
+    transform: translateX(-100%);
+  }
+
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.status-progress .progress-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.status-progress .progress-line:first-of-type::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: #a4704f;
+  animation: progressMoving 1.8s ease-in-out infinite;
+}
