@@ -802,6 +802,7 @@ function updateService(service) {
   });
 
   const isDelivery = service === "delivery";
+  const isPickup = service === "pickup";
   const hasAddress = Boolean(getFullAddress());
 
   addressCard.hidden = !isDelivery || !hasAddress;
@@ -810,12 +811,74 @@ function updateService(service) {
 
   $("summary-delivery-row").hidden = !isDelivery;
 
+  const pickupLocation = $("pickup-store-location");
+
+  if (pickupLocation) {
+    pickupLocation.hidden = !isPickup;
+  }
+
   deliveryFee = isDelivery && deliveryDistanceKm !== null
     ? calculateDeliveryFee(deliveryDistanceKm, selectedDelivery)
     : 0;
 
   updateSummary();
   updateOrderButton();
+}
+
+function renderPickupStoreLocation() {
+  let locationCard = $("pickup-store-location");
+
+  if (!locationCard) {
+    locationCard = document.createElement("div");
+    locationCard.id = "pickup-store-location";
+
+    if (productList?.parentElement) {
+      productList.parentElement.insertBefore(locationCard, productList);
+    }
+  }
+
+  const storeAddress = String(
+    storeData?.fullAddress ||
+    storeData?.address ||
+    storeData?.alamat ||
+    storeData?.storeAddress ||
+    ""
+  ).trim();
+
+  const coordinates = getStoreCoordinates();
+
+  const mapUrl = coordinates
+    ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}`
+    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeAddress)}`;
+
+  locationCard.hidden = !storeAddress && !coordinates;
+
+  locationCard.innerHTML = `
+    <div style="padding:14px 0;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
+        <i class="fa-solid fa-location-dot" style="color:#38251d;"></i>
+        <strong style="font-size:14px;">Lokasi Pickup</strong>
+      </div>
+
+      <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#555;">
+        ${escapeHTML(storeAddress || "Alamat lengkap toko belum tersedia.")}
+      </p>
+
+      <a
+        href="${escapeHTML(mapUrl)}"
+        target="_blank"
+        rel="noopener noreferrer"
+        style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#38251d;text-decoration:none;font-weight:600;"
+      >
+        <i class="fa-solid fa-map"></i>
+        Lihat titik lokasi di Google Maps
+      </a>
+    </div>
+  `;
+
+  locationCard.hidden = !document.querySelector(
+    '.service-option.active[data-service="pickup"]'
+  );
 }
 
 async function loadStore() {
@@ -831,6 +894,8 @@ async function loadStore() {
       "Toko";
 
     renderServices();
+    renderPickupStoreLocation();
+
     await calculateDeliveryDistance();
 
   } catch (error) {
@@ -1210,7 +1275,7 @@ function placeOrder() {
 
   if (!paymentMethod) {
     showPopup({
-      title: "Pembayaran Belum Dipilih",
+      title: "Announcement",
       message: "Silakan pilih metode pembayaran terlebih dahulu.",
       icon: "fa-wallet",
       actions: [
@@ -1227,11 +1292,39 @@ function placeOrder() {
     return;
   }
 
-  showPopup({
-    title: "Pesanan Siap",
-    message: "Fitur pengiriman pesanan akan dihubungkan pada tahap berikutnya.",
-    icon: "fa-circle-check"
-  });
+  const productTotal = checkoutItems.reduce(
+    (total, item) =>
+      total + Number(item.unitPrice || 0) * Number(item.quantity || 0),
+    0
+  );
+
+  const grandTotal = productTotal + deliveryFee + serviceFee;
+
+  const goToOrders = () => {
+    window.location.href = "../pesananku/pesananku.html";
+  };
+
+  if (activeService === "pickup" && paymentMethod === "COD") {
+    showPopup({
+      title: "Announcement",
+      message: `Saat driver sampai, Anda harus bayar senilai ${formatRupiah(grandTotal)}. Paham?`,
+      icon: "fa-money-bill-wave",
+      actions: [
+        {
+          label: "Ya, Paham",
+          type: "primary",
+          onClick: goToOrders
+        },
+        {
+          label: "Batal"
+        }
+      ]
+    });
+
+    return;
+  }
+
+  goToOrders();
 }
 
 function goBack() {
