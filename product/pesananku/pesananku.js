@@ -20,7 +20,24 @@ const CURRENT_ORDER_KEY = "kopicu_current_order_id";
 
 let currentOrderId = localStorage.getItem(CURRENT_ORDER_KEY);
 let currentOrder = null;
-let redirectingToMaps = false;
+
+const STATUS_LIST = [
+  {
+    title: "Proses!",
+    description: "Pesananmu Sedang Disiapkan.",
+    icon: "fa-clock"
+  },
+  {
+    title: "Siap!",
+    description: "Pesananmu Siap Diambil.",
+    icon: "fa-utensils"
+  },
+  {
+    title: "Berhasil!",
+    description: "Pesananmu Berhasil Diambil!",
+    icon: "fa-circle-check"
+  }
+];
 
 function rupiah(value) {
   return new Intl.NumberFormat("id-ID", {
@@ -40,12 +57,32 @@ function escapeHTML(value) {
   })[char]);
 }
 
+function getSafeImageUrl(value) {
+  const url = String(value || "").trim();
+
+  if (
+    url.startsWith("https://") ||
+    url.startsWith("http://") ||
+    url.startsWith("data:image/")
+  ) {
+    return url;
+  }
+
+  return "";
+}
+
 function formatDate(value) {
-  if (!value) return "-";
+  if (!value) return "—";
 
-  const date = new Date(value);
+  let date;
 
-  if (Number.isNaN(date.getTime())) return "-";
+  if (typeof value === "number" || /^\d+$/.test(String(value))) {
+    date = new Date(Number(value));
+  } else {
+    date = new Date(value);
+  }
+
+  if (Number.isNaN(date.getTime())) return "—";
 
   return new Intl.DateTimeFormat("id-ID", {
     day: "2-digit",
@@ -57,16 +94,40 @@ function formatDate(value) {
   }).format(date).replace(/\./g, ":");
 }
 
+function getOrderItems(items) {
+  if (Array.isArray(items)) {
+    return items;
+  }
+
+  if (items && typeof items === "object") {
+    return Object.values(items);
+  }
+
+  return [];
+}
+
 function getOrderStatus(status) {
   const normalized = String(status || "processing")
     .toLowerCase()
-    .trim();
+    .trim()
+    .replace(/[\s-]+/g, "_");
 
-  if (["ready", "siap", "prepared"].includes(normalized)) {
+  if (
+    ["ready", "siap", "prepared", "ready_for_pickup"].includes(normalized)
+  ) {
     return 1;
   }
 
-  if (["completed", "success", "berhasil", "picked_up"].includes(normalized)) {
+  if (
+    [
+      "completed",
+      "success",
+      "berhasil",
+      "picked_up",
+      "done",
+      "selesai"
+    ].includes(normalized)
+  ) {
     return 2;
   }
 
@@ -75,52 +136,65 @@ function getOrderStatus(status) {
 
 function renderStatus(status) {
   const activeIndex = getOrderStatus(status);
+
   const items = document.querySelectorAll(".status-item");
   const progressLines = document.querySelectorAll(".progress-line");
   const progressIcons = document.querySelectorAll(".status-progress span");
 
   items.forEach((item, index) => {
     item.classList.toggle("active", index <= activeIndex);
+    item.classList.toggle("completed", index < activeIndex);
+
+    const title = item.querySelector("h3");
+    const description = item.querySelector("p");
+    const icon = item.querySelector(".status-icon i");
+
+    if (title) {
+      title.textContent = STATUS_LIST[index].title;
+    }
+
+    if (description) {
+      description.textContent = STATUS_LIST[index].description;
+    }
+
+    if (icon) {
+      icon.className = `fa-solid ${STATUS_LIST[index].icon}`;
+    }
   });
 
   progressLines.forEach((line, index) => {
-    line.style.background = index < activeIndex ? "#38251d" : "#eeeeee";
+    line.style.background =
+      index < activeIndex ? "#38251d" : "#eeeeee";
   });
 
   progressIcons.forEach((icon, index) => {
-    icon.style.background = index <= activeIndex ? "#fff0e3" : "#f1f1f1";
-  });
+    const active = index <= activeIndex;
 
-  const statusDescriptions = [
-    "Pesananmu Sedang Disiapkan.",
-    "Pesananmu Siap Diambil.",
-    "Pesananmu Berhasil Diambil!"
-  ];
-
-  items.forEach((item, index) => {
-    const description = item.querySelector("p");
-
-    if (description) {
-      description.textContent = statusDescriptions[index];
-    }
+    icon.style.background = active ? "#fff0e3" : "#f1f1f1";
+    icon.style.color = active ? "#38251d" : "#999999";
+    icon.style.borderColor = active ? "#f1dfd2" : "#eeeeee";
   });
 
   actionSection.hidden = activeIndex !== 2;
 }
 
 function renderProducts(items = []) {
-  if (!Array.isArray(items) || !items.length) {
+  const products = getOrderItems(items);
+
+  if (!products.length) {
     orderList.innerHTML = `
-      <p style="color:#888;font-size:12px;">
-        Rincian produk tidak tersedia.
-      </p>
+      <div class="empty-order">
+        <i class="fa-solid fa-basket-shopping"></i>
+        <p>Rincian produk belum tersedia.</p>
+      </div>
     `;
     return;
   }
 
-  orderList.innerHTML = items.map(item => {
-    const quantity = Number(item.quantity) || 1;
-    const price = Number(
+  orderList.innerHTML = products.map(item => {
+    const quantity = Math.max(1, Number(item.quantity) || 1);
+
+    const unitPrice = Number(
       item.unitPrice ??
       item.price ??
       item.basePrice ??
@@ -128,24 +202,60 @@ function renderProducts(items = []) {
     );
 
     const totalPrice = Number(
-      item.totalPrice ?? price * quantity
+      item.totalPrice ?? unitPrice * quantity
     );
 
-    const image = item.image || item.imageUrl || "";
+    const image = getSafeImageUrl(
+      item.image ||
+      item.imageUrl ||
+      item.images?.[0]
+    );
+
+    const name = escapeHTML(item.name || "Produk");
+
+    const options = Array.isArray(item.selectedOptions)
+      ? item.selectedOptions
+          .map(option => {
+            if (typeof option === "string") return option;
+            return option?.name || option?.label || "";
+          })
+          .filter(Boolean)
+          .join(", ")
+      : "";
 
     return `
       <div class="order-product">
-        <img
-          src="${escapeHTML(image)}"
-          alt="${escapeHTML(item.name || "Produk")}"
-          class="product-image"
-          ${image ? "" : "hidden"}
-        >
+        ${
+          image
+            ? `
+              <img
+                src="${escapeHTML(image)}"
+                alt="${name}"
+                class="product-image"
+                loading="lazy"
+              >
+            `
+            : `
+              <div class="product-image product-image-placeholder">
+                <i class="fa-solid fa-mug-hot"></i>
+              </div>
+            `
+        }
 
         <div class="product-info">
           <p class="product-name">
-            ${quantity} × ${escapeHTML(item.name || "Produk")}
+            ${quantity} × ${name}
           </p>
+
+          ${
+            options
+              ? `
+                <small class="product-options">
+                  ${escapeHTML(options)}
+                </small>
+              `
+              : ""
+          }
         </div>
 
         <strong class="product-price">
@@ -157,49 +267,80 @@ function renderProducts(items = []) {
 }
 
 function renderPriceSummary(order) {
-  const subtotal = Number(order.subtotal) || 0;
-  const discount = Number(
-    order.voucherDiscount ?? order.discount ?? 0
-  );
-  const serviceFee = Number(order.serviceFee) || 0;
-  const total = Number(
-    order.total ?? subtotal - discount + serviceFee
-  );
+  const items = getOrderItems(order.items);
 
-  const menuCount = Array.isArray(order.items)
-    ? order.items.reduce(
-        (total, item) => total + (Number(item.quantity) || 1),
+  const subtotal = Number(
+    order.subtotal ??
+    items.reduce((total, item) => {
+      const quantity = Number(item.quantity) || 1;
+      const price = Number(
+        item.unitPrice ??
+        item.price ??
+        item.basePrice ??
         0
-      )
-    : 0;
+      );
 
-  const summary = document.querySelector(".price-summary");
+      return total + price * quantity;
+    }, 0)
+  );
 
-  if (!summary) return;
+  const discount = Number(
+    order.voucherDiscount ??
+    order.discount ??
+    0
+  );
 
-  summary.innerHTML = `
-    <div class="price-row">
-      <span>Subtotal Pesanan (${menuCount} menu)</span>
-      <strong>${rupiah(subtotal)}</strong>
-    </div>
+  const serviceFee = Number(order.serviceFee) || 0;
 
-    <div class="price-row">
-      <span>Voucher Diskon</span>
-      <strong>-${rupiah(discount)}</strong>
-    </div>
+  const deliveryFee = Number(order.deliveryFee) || 0;
 
-    <div class="price-row">
-      <span>Biaya Layanan</span>
-      <strong>${rupiah(serviceFee)}</strong>
-    </div>
+  const total = Number(
+    order.total ??
+    subtotal - discount + serviceFee + deliveryFee
+  );
 
-    <div class="price-divider"></div>
+  const menuCount = items.reduce(
+    (count, item) => count + (Number(item.quantity) || 1),
+    0
+  );
 
-    <div class="grand-total">
-      <strong>${rupiah(total)}</strong>
-      <span>Sudah Termasuk Pajak</span>
-    </div>
-  `;
+  const subtotalElement = $("order-subtotal");
+  const discountElement = $("order-discount");
+  const serviceFeeElement = $("order-service-fee");
+  const totalElement = $("order-total");
+
+  if (subtotalElement) {
+    subtotalElement.textContent =
+      `${rupiah(subtotal)} (${menuCount} menu)`;
+  }
+
+  if (discountElement) {
+    discountElement.textContent = `-${rupiah(discount)}`;
+  }
+
+  if (serviceFeeElement) {
+    serviceFeeElement.textContent = rupiah(
+      serviceFee + deliveryFee
+    );
+  }
+
+  if (totalElement) {
+    totalElement.textContent = rupiah(total);
+  }
+}
+
+function getStoreAddress(order) {
+  const store = order.store || {};
+
+  return (
+    store.address ||
+    store.fullAddress ||
+    store.alamat ||
+    store.storeAddress ||
+    order.storeAddress ||
+    order.pickupAddress ||
+    "Alamat toko belum tersedia."
+  );
 }
 
 function renderOrder(order) {
@@ -210,32 +351,24 @@ function renderOrder(order) {
   renderPriceSummary(order);
 
   orderNumber.textContent =
-    order.orderNumber || currentOrderId || "-";
+    order.orderNumber ||
+    currentOrderId ||
+    "—";
 
   orderDate.textContent = formatDate(
-    order.createdAt || order.orderDate
+    order.createdAt ||
+    order.orderDate ||
+    order.timestamp
   );
 
   paymentMethod.textContent =
-    order.paymentMethod || "-";
+    order.paymentMethod || "—";
 
-  pickupAddress.textContent =
-    order.store?.address ||
-    order.storeAddress ||
-    order.pickupAddress ||
-    "Alamat toko belum tersedia.";
+  const noteElement = $("order-note");
 
-  const note = document.querySelector(
-    ".order-information-section .information-row"
-  );
-
-  if (note) {
-    const noteValue = note.querySelector("strong");
-
-    if (noteValue) {
-      noteValue.textContent =
-        order.additionalNote?.trim() || "Tidak Ada";
-    }
+  if (noteElement) {
+    noteElement.textContent =
+      String(order.additionalNote || "").trim() || "Tidak Ada";
   }
 
   const isPickup =
@@ -250,38 +383,60 @@ function renderOrder(order) {
     pickupSection.hidden = !isPickup;
   }
 
+  if (isPickup && pickupAddress) {
+    pickupAddress.textContent = getStoreAddress(order);
+  }
+
   if (
     isPickup &&
-    getOrderStatus(order.status) === 1 &&
-    !redirectingToMaps
+    getOrderStatus(order.status) === 1
   ) {
     redirectToStore(order);
   }
 }
 
 function redirectToStore(order) {
+  const redirectKey = `kopicu_maps_redirected_${currentOrderId}`;
+
+  if (sessionStorage.getItem(redirectKey)) {
+    return;
+  }
+
   const store = order.store || {};
 
-  const latitude = store.latitude ?? order.storeLatitude;
-  const longitude = store.longitude ?? order.storeLongitude;
+  const latitude =
+    store.latitude ??
+    store.lat ??
+    order.storeLatitude;
 
-  const address =
-    store.address ||
-    order.storeAddress ||
-    order.pickupAddress ||
-    "";
+  const longitude =
+    store.longitude ??
+    store.lng ??
+    order.storeLongitude;
+
+  const address = getStoreAddress(order);
 
   let destination = "";
 
-  if (latitude && longitude) {
+  if (
+    latitude !== null &&
+    latitude !== undefined &&
+    longitude !== null &&
+    longitude !== undefined &&
+    latitude !== "" &&
+    longitude !== ""
+  ) {
     destination = `${latitude},${longitude}`;
-  } else if (address) {
+  } else if (
+    address &&
+    address !== "Alamat toko belum tersedia."
+  ) {
     destination = address;
   }
 
   if (!destination) return;
 
-  redirectingToMaps = true;
+  sessionStorage.setItem(redirectKey, "true");
 
   const mapsUrl =
     `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
@@ -289,52 +444,107 @@ function redirectToStore(order) {
   window.location.href = mapsUrl;
 }
 
+function renderOrderMessage(icon, message) {
+  orderList.innerHTML = `
+    <div class="empty-order">
+      <i class="fa-solid ${icon}"></i>
+      <p>${escapeHTML(message)}</p>
+    </div>
+  `;
+}
+
 function listenOrder() {
   if (!currentOrderId) {
-    orderList.innerHTML = `
-      <p style="color:#888;font-size:13px;text-align:center;">
-        Pesanan tidak ditemukan.
-      </p>
-    `;
+    renderOrderMessage(
+      "fa-receipt",
+      "Pesanan tidak ditemukan. Silakan lakukan pemesanan terlebih dahulu."
+    );
 
     return;
   }
 
   const orderRef = ref(db, `orders/${currentOrderId}`);
 
-  onValue(orderRef, snapshot => {
-    if (!snapshot.exists()) {
-      orderList.innerHTML = `
-        <p style="color:#888;font-size:13px;text-align:center;">
-          Data pesanan tidak ditemukan.
-        </p>
-      `;
+  onValue(
+    orderRef,
+    snapshot => {
+      if (!snapshot.exists()) {
+        renderOrderMessage(
+          "fa-circle-exclamation",
+          "Data pesanan tidak ditemukan."
+        );
 
-      return;
+        return;
+      }
+
+      renderOrder(snapshot.val());
+    },
+    error => {
+      console.error("Gagal memuat pesanan:", error);
+
+      renderOrderMessage(
+        "fa-wifi",
+        "Gagal memuat pesanan. Periksa koneksi internet kamu."
+      );
     }
-
-    renderOrder(snapshot.val());
-  }, error => {
-    console.error("Gagal memuat pesanan:", error);
-  });
+  );
 }
 
 async function copyOrderNumber() {
   const value = orderNumber.textContent.trim();
 
-  if (!value || value === "-") return;
+  if (!value || value === "—") return;
 
   try {
     await navigator.clipboard.writeText(value);
 
-    copyButton.textContent = "TERSALIN";
+    copyButton.innerHTML = `
+      <i class="fa-solid fa-check"></i>
+      <span>Tersalin</span>
+    `;
+
+    copyButton.disabled = true;
 
     setTimeout(() => {
-      copyButton.textContent = "SALIN";
-    }, 1500);
+      copyButton.innerHTML = `
+        <i class="fa-regular fa-copy"></i>
+        <span>Salin</span>
+      `;
+
+      copyButton.disabled = false;
+    }, 1600);
 
   } catch (error) {
     console.error("Gagal menyalin nomor pesanan:", error);
+
+    const textArea = document.createElement("textarea");
+
+    textArea.value = value;
+    textArea.style.position = "fixed";
+    textArea.style.opacity = "0";
+
+    document.body.appendChild(textArea);
+    textArea.select();
+
+    try {
+      document.execCommand("copy");
+
+      copyButton.innerHTML = `
+        <i class="fa-solid fa-check"></i>
+        <span>Tersalin</span>
+      `;
+    } catch {
+      alert("Nomor pesanan gagal disalin.");
+    }
+
+    textArea.remove();
+
+    setTimeout(() => {
+      copyButton.innerHTML = `
+        <i class="fa-regular fa-copy"></i>
+        <span>Salin</span>
+      `;
+    }, 1600);
   }
 }
 
@@ -342,15 +552,26 @@ function orderAgain() {
   window.location.href = "../product.html";
 }
 
+function showHelp() {
+  alert(
+    "Silakan hubungi KOPICU jika membutuhkan bantuan terkait pesanan."
+  );
+}
+
 function initializePesananku() {
-  copyButton.addEventListener("click", copyOrderNumber);
-  orderAgainButton.addEventListener("click", orderAgain);
+  if (copyButton) {
+    copyButton.addEventListener("click", copyOrderNumber);
+  }
+
+  if (orderAgainButton) {
+    orderAgainButton.addEventListener("click", orderAgain);
+  }
 
   const helpButton = document.querySelector(".help-button");
 
-  helpButton?.addEventListener("click", () => {
-    alert("Silakan hubungi KOPICU jika membutuhkan bantuan terkait pesanan.");
-  });
+  if (helpButton) {
+    helpButton.addEventListener("click", showHelp);
+  }
 
   listenOrder();
 }
