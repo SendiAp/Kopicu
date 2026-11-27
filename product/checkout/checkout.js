@@ -1341,7 +1341,7 @@ function placeOrder() {
   if (activeService === "pickup" && paymentMethod === "COD") {
     showPopup({
       title: "Announcement",
-      message: `Saat driver sampai, Anda harus bayar senilai ${formatRupiah(grandTotal)}. Paham?`,
+      message: `Saat anda sampai, anda harus bayar senilai ${formatRupiah(grandTotal)}. Paham?`,
       icon: "fa-money-bill-wave",
       actions: [
         {
