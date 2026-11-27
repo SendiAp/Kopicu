@@ -138,6 +138,8 @@ function renderStatus(status) {
   const activeIndex = getOrderStatus(status);
 
   const items = document.querySelectorAll(".status-item");
+  const progressLines = document.querySelectorAll(".progress-line");
+  const progressIcons = document.querySelectorAll(".status-progress span");
 
   items.forEach((item, index) => {
     const isActive = index === activeIndex;
@@ -152,17 +154,31 @@ function renderStatus(status) {
     const description = item.querySelector("p");
     const icon = item.querySelector(".status-icon i");
 
-    if (title) {
-      title.textContent = STATUS_LIST[index].title;
-    }
-
-    if (description) {
-      description.textContent = STATUS_LIST[index].description;
-    }
+    if (title) title.textContent = STATUS_LIST[index].title;
+    if (description) description.textContent = STATUS_LIST[index].description;
 
     if (icon) {
       icon.className = `fa-solid ${STATUS_LIST[index].icon}`;
     }
+  });
+
+  progressLines.forEach((line, index) => {
+    line.style.background =
+      index < activeIndex ? "#38251d" : "#eeeeee";
+  });
+
+  progressIcons.forEach((icon, index) => {
+    const isActive = index === activeIndex;
+    const isCompleted = index < activeIndex;
+
+    icon.style.background =
+      isActive || isCompleted ? "#fff0e3" : "#f1f1f1";
+
+    icon.style.color =
+      isActive || isCompleted ? "#38251d" : "#999999";
+
+    icon.style.borderColor =
+      isActive || isCompleted ? "#f1dfd2" : "#eeeeee";
   });
 
   if (actionSection) {
@@ -382,7 +398,6 @@ function renderOrder(order) {
 
 function renderStoreMap(order) {
   const store = order.store || {};
-
   const address = getStoreAddress(order);
 
   const latitude =
@@ -399,6 +414,12 @@ function renderStoreMap(order) {
 
   pickupAddress.textContent = address;
 
+  pickupAddress.style.display = "-webkit-box";
+  pickupAddress.style.webkitBoxOrient = "vertical";
+  pickupAddress.style.webkitLineClamp = "2";
+  pickupAddress.style.overflow = "hidden";
+  pickupAddress.style.overflowWrap = "anywhere";
+
   const pickupSection = document.querySelector(
     ".pickup-location-section"
   );
@@ -410,15 +431,11 @@ function renderStoreMap(order) {
   if (!mapContainer) {
     mapContainer = document.createElement("div");
     mapContainer.id = "pickup-map";
-
-    pickupAddress.insertAdjacentElement(
-      "afterend",
-      mapContainer
-    );
+    pickupAddress.insertAdjacentElement("afterend", mapContainer);
   }
 
   mapContainer.style.width = "100%";
-  mapContainer.style.height = "190px";
+  mapContainer.style.height = "180px";
   mapContainer.style.marginTop = "12px";
   mapContainer.style.overflow = "hidden";
   mapContainer.style.borderRadius = "12px";
@@ -452,48 +469,38 @@ function renderStoreMap(order) {
     return;
   }
 
-  mapContainer.innerHTML = `
-    <div style="padding:20px;text-align:center;color:#777;">
-      <i class="fa-solid fa-location-dot"></i>
-      <p>Menentukan rute dari lokasi kamu...</p>
-    </div>
-  `;
+  const destinationUrl = encodeURIComponent(destination);
 
-  const showMap = (origin = "") => {
-    const routeQuery = origin
-      ? `saddr=${encodeURIComponent(origin)}&`
-      : "";
-
-    const mapUrl =
-      `https://maps.google.com/maps?${routeQuery}daddr=${encodeURIComponent(destination)}&output=embed`;
+  const showMap = origin => {
+    const mapUrl = origin
+      ? `https://maps.google.com/maps?saddr=${encodeURIComponent(origin)}&daddr=${destinationUrl}&output=embed`
+      : `https://maps.google.com/maps?q=${destinationUrl}&output=embed`;
 
     mapContainer.innerHTML = `
       <iframe
         src="${mapUrl}"
         width="100%"
-        height="190"
+        height="180"
         style="border:0;display:block;"
         loading="lazy"
         referrerpolicy="no-referrer-when-downgrade"
-        allowfullscreen
       ></iframe>
     `;
   };
 
   if (!navigator.geolocation) {
-    showMap();
+    showMap("");
     return;
   }
 
   navigator.geolocation.getCurrentPosition(
     position => {
-      const origin =
-        `${position.coords.latitude},${position.coords.longitude}`;
-
-      showMap(origin);
+      showMap(
+        `${position.coords.latitude},${position.coords.longitude}`
+      );
     },
     () => {
-      showMap();
+      showMap("");
     },
     {
       enableHighAccuracy: true,
