@@ -211,7 +211,7 @@
   overflow: hidden;
 }
 
-.status-progress .progress-line:first-of-type::after {
+.status-progress .progress-line.progress-animated::after {
   content: "";
   position: absolute;
   top: 0;
