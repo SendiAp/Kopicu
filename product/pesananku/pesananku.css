@@ -254,6 +254,15 @@ button:focus-visible {
   overflow-wrap: anywhere;
 }
 
+#pickup-address {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
 .pickup-hint {
   display: flex;
   align-items: flex-start;
@@ -273,10 +282,20 @@ button:focus-visible {
   font-size: 13px;
 }
 
-.pickup-hint p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.7;
+#pickup-map {
+  width: 100%;
+  height: 180px;
+  margin-top: 12px;
+  border: 1px solid #eeeeee;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+#pickup-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .order-product-list {
@@ -507,7 +526,8 @@ button:focus-visible {
   margin-top: 20px;
 }
 
-.order-action-section[hidden] {
+.order-action-section[hidden],
+.order-cancel-section[hidden] {
   display: none;
 }
 
@@ -539,66 +559,9 @@ button:focus-visible {
   box-shadow: none;
 }
 
-@media (max-width: 380px) {
-  .order-page {
-    padding-right: 13px;
-    padding-left: 13px;
-  }
-
-  .page-header {
-    padding-right: 13px;
-    padding-left: 13px;
-  }
-
-  .information-row {
-    gap: 7px;
-    font-size: 11px;
-  }
-
-  .order-number {
-    gap: 5px;
-  }
-
-  .order-number strong {
-    max-width: 105px;
-    font-size: 10px;
-  }
-}
-
-@media (min-width: 600px) {
-  .order-page {
-    padding-top: 25px;
-  }
-
-  .page-header {
-    padding-right: max(18px, calc((100% - 584px) / 2));
-    padding-left: max(18px, calc((100% - 584px) / 2));
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-#pickup-address {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-  line-height: 1.5;
-}
-
 .order-cancel-section {
   margin: 20px 0 30px;
-  padding: 0 16px;
+  padding: 0;
 }
 
 .cancel-order-button {
@@ -656,4 +619,52 @@ button:focus-visible {
 #confirm-cancel-no {
   background: #eeeeee;
   color: #38251d;
+}
+
+@media (max-width: 380px) {
+  .order-page {
+    padding-right: 13px;
+    padding-left: 13px;
+  }
+
+  .page-header {
+    padding-right: 13px;
+    padding-left: 13px;
+  }
+
+  .information-row {
+    gap: 7px;
+    font-size: 11px;
+  }
+
+  .order-number {
+    gap: 5px;
+  }
+
+  .order-number strong {
+    max-width: 105px;
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 600px) {
+  .order-page {
+    padding-top: 25px;
+  }
+
+  .page-header {
+    padding-right: max(18px, calc((100% - 584px) / 2));
+    padding-left: max(18px, calc((100% - 584px) / 2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
