@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="Rincian pesanan KOPICU.">
+  <title>Rincian Pesananmu - KOPICU</title>
+
+  <link rel="stylesheet" href="pesananku.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+  <header class="page-header">
+    <button class="back-button" type="button" onclick="history.back()">
+      <i class="fa-solid fa-arrow-left"></i>
+    </button>
+
+    <h1>Rincian Pesananmu</h1>
+
+    <button class="help-button" type="button" aria-label="Bantuan">
+      <i class="fa-regular fa-circle-question"></i>
+    </button>
+  </header>
+
+  <main class="order-page">
+
+    <section class="order-status-section">
+
+      <div class="order-status-list">
+
+        <div class="status-item active">
+          <div class="status-icon">⌚</div>
+          <div class="status-content">
+            <h3>Proses!</h3>
+            <p>Pesananmu Sedang Disiapkan.</p>
+          </div>
+        </div>
+
+        <div class="status-item">
+          <div class="status-icon">🍽️</div>
+          <div class="status-content">
+            <h3>Siap!</h3>
+            <p>Pesananmu Siap Diambil.</p>
+          </div>
+        </div>
+
+        <div class="status-item">
+          <div class="status-icon">✅</div>
+          <div class="status-content">
+            <h3>Berhasil!</h3>
+            <p>Pesananmu Berhasil Diambil!</p>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="status-progress">
+        <span class="progress-start">⌚</span>
+        <div class="progress-line"></div>
+        <span class="progress-middle">🍽️</span>
+        <div class="progress-line"></div>
+        <span class="progress-end">✅</span>
+      </div>
+
+    </section>
+
+    <section class="pickup-location-section">
+
+      <div class="section-title">
+        <i class="fa-solid fa-location-dot"></i>
+        <h2>Lokasi Pickup</h2>
+      </div>
+
+      <p class="pickup-address" id="pickup-address">
+        Alamat lengkap restoran akan ditampilkan di sini.
+      </p>
+
+      <p class="pickup-hint">
+        Setelah pesananmu siap, kamu akan diarahkan ke alamat restoran secara otomatis, pastikan kamu membuka halaman ini saat pesananmu siap.
+      </p>
+
+    </section>
+
+    <section class="order-detail-section">
+
+      <div class="section-title">
+        <i class="fa-solid fa-receipt"></i>
+        <h2>Rincian Pesanan</h2>
+      </div>
+
+      <div class="order-product-list" id="order-product-list">
+
+        <div class="order-product">
+          <img src="" alt="Ayam Geprek Original" class="product-image">
+
+          <div class="product-info">
+            <p class="product-name">1 × Ayam Geprek Original</p>
+          </div>
+
+          <strong class="product-price">Rp15.200</strong>
+        </div>
+
+        <div class="order-product">
+          <img src="" alt="Ayam Geprek Mie" class="product-image">
+
+          <div class="product-info">
+            <p class="product-name">1 × Ayam Geprek Mie</p>
+          </div>
+
+          <strong class="product-price">Rp11.000</strong>
+        </div>
+
+      </div>
+
+      <div class="price-summary">
+
+        <div class="price-row">
+          <span>Subtotal Pesanan (2 menu)</span>
+          <strong>Rp26.200</strong>
+        </div>
+
+        <div class="price-row">
+          <span>Voucher Diskon</span>
+          <strong>-Rp0</strong>
+        </div>
+
+        <div class="price-row">
+          <span>Biaya Layanan</span>
+          <strong>Rp0</strong>
+        </div>
+
+        <div class="price-divider"></div>
+
+        <div class="grand-total">
+          <strong>Rp26.200</strong>
+          <span>Sudah Termasuk Pajak</span>
+        </div>
+
+      </div>
+
+    </section>
+
+    <section class="order-information-section">
+
+      <div class="section-title">
+        <i class="fa-solid fa-file-lines"></i>
+        <h2>Informasi Pesanan</h2>
+      </div>
+
+      <div class="information-row">
+        <span>Catatan Tambahan</span>
+        <strong>Tidak Ada</strong>
+      </div>
+
+      <div class="information-row">
+        <span>No. Pesanan</span>
+
+        <div class="order-number">
+          <strong id="order-number">32838388484</strong>
+          <button type="button" id="copy-order-number">
+            SALIN
+          </button>
+        </div>
+      </div>
+
+      <div class="information-row">
+        <span>Waktu Pemesanan</span>
+        <strong id="order-date">24 Des 2026 08:20</strong>
+      </div>
+
+      <div class="information-row">
+        <span>Pembayaran</span>
+        <strong id="payment-method">COD</strong>
+      </div>
+
+    </section>
+
+    <div class="order-action-section" id="order-action-section" hidden>
+      <button type="button" id="order-again-button">
+        <i class="fa-solid fa-rotate-right"></i>
+        Pesan Lagi
+      </button>
+    </div>
+
+  </main>
+
+  <script type="module" src="pesananku.js"></script>
+
+</body>
+</html>
