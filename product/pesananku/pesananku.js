@@ -138,12 +138,15 @@ function renderStatus(status) {
   const activeIndex = getOrderStatus(status);
 
   const items = document.querySelectorAll(".status-item");
-  const progressLines = document.querySelectorAll(".progress-line");
-  const progressIcons = document.querySelectorAll(".status-progress span");
 
   items.forEach((item, index) => {
-    item.classList.toggle("active", index <= activeIndex);
-    item.classList.toggle("completed", index < activeIndex);
+    const isActive = index === activeIndex;
+
+    item.hidden = !isActive;
+    item.style.display = isActive ? "" : "none";
+
+    item.classList.toggle("active", isActive);
+    item.classList.remove("completed");
 
     const title = item.querySelector("h3");
     const description = item.querySelector("p");
@@ -162,20 +165,9 @@ function renderStatus(status) {
     }
   });
 
-  progressLines.forEach((line, index) => {
-    line.style.background =
-      index < activeIndex ? "#38251d" : "#eeeeee";
-  });
-
-  progressIcons.forEach((icon, index) => {
-    const active = index <= activeIndex;
-
-    icon.style.background = active ? "#fff0e3" : "#f1f1f1";
-    icon.style.color = active ? "#38251d" : "#999999";
-    icon.style.borderColor = active ? "#f1dfd2" : "#eeeeee";
-  });
-
-  actionSection.hidden = activeIndex !== 2;
+  if (actionSection) {
+    actionSection.hidden = activeIndex !== 2;
+  }
 }
 
 function renderProducts(items = []) {
@@ -383,26 +375,15 @@ function renderOrder(order) {
     pickupSection.hidden = !isPickup;
   }
 
-  if (isPickup && pickupAddress) {
-    pickupAddress.textContent = getStoreAddress(order);
-  }
-
-  if (
-    isPickup &&
-    getOrderStatus(order.status) === 1
-  ) {
-    redirectToStore(order);
+  if (isPickup) {
+    renderStoreMap(order);
   }
 }
 
-function redirectToStore(order) {
-  const redirectKey = `kopicu_maps_redirected_${currentOrderId}`;
-
-  if (sessionStorage.getItem(redirectKey)) {
-    return;
-  }
-
+function renderStoreMap(order) {
   const store = order.store || {};
+
+  const address = getStoreAddress(order);
 
   const latitude =
     store.latitude ??
@@ -414,7 +395,34 @@ function redirectToStore(order) {
     store.lng ??
     order.storeLongitude;
 
-  const address = getStoreAddress(order);
+  if (!pickupAddress) return;
+
+  pickupAddress.textContent = address;
+
+  const pickupSection = document.querySelector(
+    ".pickup-location-section"
+  );
+
+  if (!pickupSection) return;
+
+  let mapContainer = $("pickup-map");
+
+  if (!mapContainer) {
+    mapContainer = document.createElement("div");
+    mapContainer.id = "pickup-map";
+
+    pickupAddress.insertAdjacentElement(
+      "afterend",
+      mapContainer
+    );
+  }
+
+  mapContainer.style.width = "100%";
+  mapContainer.style.height = "190px";
+  mapContainer.style.marginTop = "12px";
+  mapContainer.style.overflow = "hidden";
+  mapContainer.style.borderRadius = "12px";
+  mapContainer.style.background = "#f5f5f5";
 
   let destination = "";
 
@@ -434,23 +442,65 @@ function redirectToStore(order) {
     destination = address;
   }
 
-  if (!destination) return;
+  if (!destination) {
+    mapContainer.innerHTML = `
+      <div style="padding:20px;text-align:center;color:#777;">
+        <i class="fa-solid fa-map-location-dot"></i>
+        <p>Lokasi toko belum tersedia.</p>
+      </div>
+    `;
+    return;
+  }
 
-  sessionStorage.setItem(redirectKey, "true");
-
-  const mapsUrl =
-    `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(destination)}`;
-
-  window.location.href = mapsUrl;
-}
-
-function renderOrderMessage(icon, message) {
-  orderList.innerHTML = `
-    <div class="empty-order">
-      <i class="fa-solid ${icon}"></i>
-      <p>${escapeHTML(message)}</p>
+  mapContainer.innerHTML = `
+    <div style="padding:20px;text-align:center;color:#777;">
+      <i class="fa-solid fa-location-dot"></i>
+      <p>Menentukan rute dari lokasi kamu...</p>
     </div>
   `;
+
+  const showMap = (origin = "") => {
+    const routeQuery = origin
+      ? `saddr=${encodeURIComponent(origin)}&`
+      : "";
+
+    const mapUrl =
+      `https://maps.google.com/maps?${routeQuery}daddr=${encodeURIComponent(destination)}&output=embed`;
+
+    mapContainer.innerHTML = `
+      <iframe
+        src="${mapUrl}"
+        width="100%"
+        height="190"
+        style="border:0;display:block;"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        allowfullscreen
+      ></iframe>
+    `;
+  };
+
+  if (!navigator.geolocation) {
+    showMap();
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    position => {
+      const origin =
+        `${position.coords.latitude},${position.coords.longitude}`;
+
+      showMap(origin);
+    },
+    () => {
+      showMap();
+    },
+    {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 60000
+    }
+  );
 }
 
 function listenOrder() {
