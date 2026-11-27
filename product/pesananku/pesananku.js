@@ -85,7 +85,13 @@ function formatDate(value) {
   let date;
 
   if (typeof value === "number" || /^\d+$/.test(String(value))) {
-    date = new Date(Number(value));
+    let timestamp = Number(value);
+
+    if (timestamp < 1000000000000) {
+      timestamp *= 1000;
+    }
+
+    date = new Date(timestamp);
   } else {
     date = new Date(value);
   }
@@ -530,6 +536,28 @@ function renderStoreMap(order) {
   );
 }
 
+function renderOrderMessage(icon, message) {
+  if (!orderList) return;
+
+  orderList.innerHTML = `
+    <div class="empty-order">
+      <i class="fa-solid ${icon}"></i>
+      <p>${escapeHTML(message)}</p>
+    </div>
+  `;
+
+  if (actionSection) {
+    actionSection.hidden = true;
+  }
+
+  const cancelSection = $("order-cancel-section");
+
+  if (cancelSection) {
+    cancelSection.hidden = true;
+    cancelSection.innerHTML = "";
+  }
+}
+
 function listenOrder() {
   if (!currentOrderId) {
     renderOrderMessage(
@@ -546,6 +574,8 @@ function listenOrder() {
     orderRef,
     snapshot => {
       if (!snapshot.exists()) {
+        if (isCancellingOrder) return;
+
         renderOrderMessage(
           "fa-circle-exclamation",
           "Data pesanan tidak ditemukan."
@@ -559,6 +589,8 @@ function listenOrder() {
     error => {
       console.error("Gagal memuat pesanan:", error);
 
+      if (isCancellingOrder) return;
+
       renderOrderMessage(
         "fa-wifi",
         "Gagal memuat pesanan. Periksa koneksi internet kamu."
@@ -568,24 +600,24 @@ function listenOrder() {
 }
 
 function saveOrderHistory(order, status = "Dibatalkan") {
-  const history = JSON.parse(
-    localStorage.getItem(ORDER_HISTORY_KEY) || "[]"
-  );
+  let history = [];
+
+  try {
+    const storedHistory = JSON.parse(
+      localStorage.getItem(ORDER_HISTORY_KEY) || "[]"
+    );
+
+    history = Array.isArray(storedHistory) ? storedHistory : [];
+  } catch {
+    history = [];
+  }
 
   const savedOrder = {
+    ...order,
     orderId: currentOrderId,
     orderNumber: order.orderNumber || currentOrderId,
     status,
-    items: order.items || [],
-    subtotal: order.subtotal || 0,
-    voucherDiscount: order.voucherDiscount || order.discount || 0,
-    serviceFee: order.serviceFee || 0,
-    deliveryFee: order.deliveryFee || 0,
-    total: order.total || 0,
-    paymentMethod: order.paymentMethod || "—",
-    service: order.service || order.serviceType || "",
-    additionalNote: order.additionalNote || "",
-    createdAt: order.createdAt || order.orderDate || order.timestamp || Date.now(),
+    originalStatus: order.status || "",
     cancelledAt: Date.now()
   };
 
@@ -612,10 +644,13 @@ async function cancelOrder() {
 
   isCancellingOrder = true;
 
-  try {
-    saveOrderHistory(currentOrder);
+  const orderId = currentOrderId;
+  const orderData = currentOrder;
 
-    await remove(ref(db, `orders/${currentOrderId}`));
+  try {
+    await remove(ref(db, `orders/${orderId}`));
+
+    saveOrderHistory(orderData);
 
     if (pendingCancelTimer) {
       clearTimeout(pendingCancelTimer);
@@ -623,12 +658,15 @@ async function cancelOrder() {
     }
 
     localStorage.removeItem(
-      `kopicu_pending_since_${currentOrderId}`
+      `kopicu_pending_since_${orderId}`
     );
+
+    currentOrder = null;
 
     const cancelSection = $("order-cancel-section");
 
     if (cancelSection) {
+      cancelSection.hidden = false;
       cancelSection.innerHTML = `
         <div class="empty-order">
           <i class="fa-solid fa-circle-check"></i>
@@ -637,13 +675,16 @@ async function cancelOrder() {
       `;
     }
 
-    isCancellingOrder = false;
+    if (actionSection) {
+      actionSection.hidden = true;
+    }
 
   } catch (error) {
     console.error("Gagal membatalkan pesanan:", error);
 
     alert("Pesanan gagal dibatalkan. Silakan coba kembali.");
 
+  } finally {
     isCancellingOrder = false;
   }
 }
@@ -683,7 +724,7 @@ function renderCancellationControls(order) {
   let section = $("order-cancel-section");
 
   if (!section) {
-    section = document.createElement("div");
+    section = document.createElement("section");
     section.id = "order-cancel-section";
     section.className = "order-cancel-section";
 
@@ -694,13 +735,17 @@ function renderCancellationControls(order) {
     }
   }
 
-  const agreement = String(order.agreement || "pending")
+  if (!section) return;
+
+  const agreement = String(order.agreement || "")
     .toLowerCase()
     .trim();
 
   section.innerHTML = "";
 
   if (agreement === "pending") {
+    section.hidden = false;
+
     section.innerHTML = `
       <button
         type="button"
@@ -718,14 +763,16 @@ function renderCancellationControls(order) {
     );
 
   } else if (agreement === "approved") {
+    section.hidden = false;
     confirmCancelOrder();
+
   } else {
-    section.remove();
+    section.hidden = true;
   }
 }
 
 function schedulePendingCancellation(order) {
-  const agreement = String(order.agreement || "pending")
+  const agreement = String(order.agreement || "")
     .toLowerCase()
     .trim();
 
@@ -745,21 +792,38 @@ function schedulePendingCancellation(order) {
   const storageKey =
     `kopicu_pending_since_${currentOrderId}`;
 
-  const agreementTime = Number(
-    order.agreementAt ||
-    order.agreementPendingAt ||
-    localStorage.getItem(storageKey) ||
-    order.createdAt ||
-    Date.now()
-  );
+  function parseTimestamp(value) {
+    if (!value) return 0;
 
-  if (!localStorage.getItem(storageKey)) {
-    localStorage.setItem(storageKey, agreementTime);
+    let timestamp;
+
+    if (typeof value === "number" || /^\d+$/.test(String(value))) {
+      timestamp = Number(value);
+
+      if (timestamp < 1000000000000) {
+        timestamp *= 1000;
+      }
+    } else {
+      timestamp = new Date(value).getTime();
+    }
+
+    return Number.isFinite(timestamp) ? timestamp : 0;
+  }
+
+  let agreementTime =
+    parseTimestamp(order.agreementAt) ||
+    parseTimestamp(order.agreementPendingAt) ||
+    parseTimestamp(localStorage.getItem(storageKey));
+
+  if (!agreementTime) {
+    agreementTime = Date.now();
+    localStorage.setItem(storageKey, String(agreementTime));
   }
 
   pendingCancelSince = agreementTime;
 
   const fiveMinutes = 5 * 60 * 1000;
+
   const remainingTime = Math.max(
     0,
     fiveMinutes - (Date.now() - agreementTime)
@@ -768,25 +832,33 @@ function schedulePendingCancellation(order) {
   pendingCancelTimer = setTimeout(async () => {
     if (!currentOrder || isCancellingOrder) return;
 
-    const latestSnapshot = await get(
-      ref(db, `orders/${currentOrderId}`)
-    );
+    try {
+      const latestSnapshot = await get(
+        ref(db, `orders/${currentOrderId}`)
+      );
 
-    if (!latestSnapshot.exists()) return;
+      if (!latestSnapshot.exists()) return;
 
-    const latestOrder = latestSnapshot.val();
+      const latestOrder = latestSnapshot.val();
 
-    if (
-      String(latestOrder.agreement || "")
-        .toLowerCase()
-        .trim() !== "pending"
-    ) {
-      return;
+      if (
+        String(latestOrder.agreement || "")
+          .toLowerCase()
+          .trim() !== "pending"
+      ) {
+        return;
+      }
+
+      currentOrder = latestOrder;
+
+      await cancelOrder();
+
+    } catch (error) {
+      console.error(
+        "Gagal memeriksa status pembatalan otomatis:",
+        error
+      );
     }
-
-    currentOrder = latestOrder;
-
-    await cancelOrder();
   }, remainingTime);
 }
 
