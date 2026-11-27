@@ -167,6 +167,15 @@ function renderStatus(status) {
       index < activeIndex ? "#38251d" : "#eeeeee";
   });
 
+  const isProcessing = activeIndex === 0;
+  
+  progressLines.forEach((line, index) => {
+    line.classList.toggle(
+      "progress-animated",
+      isProcessing && index === 0
+    );
+  });
+  
   progressIcons.forEach((icon, index) => {
     const isActive = index === activeIndex;
     const isCompleted = index < activeIndex;
