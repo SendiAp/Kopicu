@@ -826,15 +826,28 @@ function updateService(service) {
 }
 
 function renderPickupStoreLocation() {
+  const productsSection = document.querySelector(
+    ".checkout-products-section"
+  );
+
+  const storeHeading = document.querySelector(".store-heading");
+
+  if (!productsSection || !storeHeading) return;
+
   let locationCard = $("pickup-store-location");
 
   if (!locationCard) {
     locationCard = document.createElement("div");
     locationCard.id = "pickup-store-location";
+    locationCard.style.cssText = `
+      margin-bottom: 16px;
+      padding: 14px;
+      background: #ffffff;
+      border: 1px solid #eeeeee;
+      border-radius: 12px;
+    `;
 
-    if (productList?.parentElement) {
-      productList.parentElement.insertBefore(locationCard, productList);
-    }
+    productsSection.insertBefore(locationCard, storeHeading);
   }
 
   const storeAddress = String(
@@ -847,38 +860,59 @@ function renderPickupStoreLocation() {
 
   const coordinates = getStoreCoordinates();
 
-  const mapUrl = coordinates
-    ? `https://www.google.com/maps?q=${coordinates.lat},${coordinates.lng}`
-    : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(storeAddress)}`;
+  const mapQuery = coordinates
+    ? `${coordinates.lat},${coordinates.lng}`
+    : storeAddress;
 
-  locationCard.hidden = !storeAddress && !coordinates;
-
-  locationCard.innerHTML = `
-    <div style="padding:14px 0;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">
-        <i class="fa-solid fa-location-dot" style="color:#38251d;"></i>
-        <strong style="font-size:14px;">Lokasi Pickup</strong>
-      </div>
-
-      <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#555;">
-        ${escapeHTML(storeAddress || "Alamat lengkap toko belum tersedia.")}
-      </p>
-
-      <a
-        href="${escapeHTML(mapUrl)}"
-        target="_blank"
-        rel="noopener noreferrer"
-        style="display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#38251d;text-decoration:none;font-weight:600;"
-      >
-        <i class="fa-solid fa-map"></i>
-        Lihat titik lokasi di Google Maps
-      </a>
-    </div>
-  `;
+  const mapUrl = mapQuery
+    ? `https://maps.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=16&output=embed`
+    : "";
 
   locationCard.hidden = !document.querySelector(
     '.service-option.active[data-service="pickup"]'
   );
+
+  if (!mapQuery) {
+    locationCard.innerHTML = `
+      <strong style="font-size:14px;">Lokasi Toko</strong>
+      <p style="font-size:12px;color:#777;margin-bottom:0;">
+        Alamat dan titik lokasi toko belum tersedia.
+      </p>
+    `;
+    return;
+  }
+
+  locationCard.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+      <i class="fa-solid fa-location-dot" style="color:#38251d;"></i>
+      <strong style="font-size:14px;color:#252525;">
+        Lokasi Toko
+      </strong>
+    </div>
+
+    <iframe
+      src="${escapeHTML(mapUrl)}"
+      width="100%"
+      height="135"
+      style="display:block;border:0;border-radius:9px;"
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      allowfullscreen
+      title="Peta Lokasi Restoran"
+    ></iframe>
+
+    <div style="display:flex;gap:9px;margin-top:11px;">
+      <i class="fa-solid fa-map-pin" style="color:#38251d;margin-top:3px;"></i>
+      <div>
+        <strong style="font-size:12px;color:#252525;">
+          Alamat Lengkap
+        </strong>
+        <p style="font-size:12px;color:#666;line-height:1.5;margin:4px 0 0;">
+          ${escapeHTML(storeAddress || "Alamat lengkap belum tersedia.")}
+        </p>
+      </div>
+    </div>
+  `;
 }
 
 async function loadStore() {
