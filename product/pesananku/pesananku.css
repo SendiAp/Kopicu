@@ -131,9 +131,6 @@ button:focus-visible {
   color: #38251d;
   background: #fff3e8;
   border-color: #f1dfd2;
-}
-
-.status-item.active .status-icon i {
   animation: statusPulse 1.8s ease-in-out infinite;
 }
 
@@ -178,19 +175,50 @@ button:focus-visible {
   transition: all 0.3s ease;
 }
 
-.status-progress .progress-start {
-  color: #38251d;
-  background: #fff0e3;
-  border-color: #f1dfd2;
+.status-progress .progress-start,
+.status-progress .progress-middle,
+.status-progress .progress-end {
+  color: #999999;
+  background: #f2f2f2;
+  border-color: #eeeeee;
 }
 
 .progress-line {
   position: relative;
   flex: 1;
+  min-width: 8px;
   height: 3px;
   overflow: hidden;
   background: #eeeeee;
   border-radius: 10px;
+}
+
+.status-progress .progress-line.progress-animated::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  border-radius: inherit;
+  background: #a4704f;
+  animation: progressMoving 1.8s linear infinite;
+}
+
+.status-progress .progress-line:nth-of-type(2)::after {
+  animation-delay: 0s;
+}
+
+.status-progress .progress-line:nth-of-type(4)::after {
+  animation-delay: 0.3s;
+}
+
+.status-progress .progress-line:nth-of-type(6)::after {
+  animation-delay: 0.6s;
+}
+
+.status-progress .progress-start i {
+  animation: softBounce 1.8s ease-in-out infinite;
 }
 
 .pickup-location-section,
@@ -218,6 +246,7 @@ button:focus-visible {
   background: #f7f2ef;
   border-radius: 10px;
   font-size: 14px;
+  animation: rotateIn 0.55s ease both;
 }
 
 .section-title h2 {
@@ -280,6 +309,7 @@ button:focus-visible {
   margin-top: 2px;
   color: #a5795d;
   font-size: 13px;
+  animation: softBounce 2s ease-in-out infinite;
 }
 
 #pickup-map {
@@ -309,6 +339,23 @@ button:focus-visible {
   align-items: center;
   gap: 11px;
   min-width: 0;
+  animation: fadeUp 0.5s ease both;
+}
+
+.order-product:nth-child(1) {
+  animation-delay: 0.08s;
+}
+
+.order-product:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+.order-product:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.order-product:nth-child(4) {
+  animation-delay: 0.32s;
 }
 
 .product-image {
@@ -520,6 +567,11 @@ button:focus-visible {
 
 .order-number button i {
   font-size: 10px;
+  transition: transform 0.25s ease;
+}
+
+.order-number button:active i {
+  transform: scale(0.85);
 }
 
 .order-action-section {
@@ -551,6 +603,11 @@ button:focus-visible {
 
 #order-again-button i {
   font-size: 14px;
+  transition: transform 0.35s ease;
+}
+
+#order-again-button:hover i {
+  transform: rotate(180deg);
 }
 
 #order-again-button:active {
@@ -643,6 +700,16 @@ button:focus-visible {
 
   .order-number strong {
     max-width: 105px;
+    font-size: 10px;
+  }
+
+  .status-progress {
+    gap: 5px;
+  }
+
+  .status-progress span {
+    width: 25px;
+    height: 25px;
     font-size: 10px;
   }
 }
