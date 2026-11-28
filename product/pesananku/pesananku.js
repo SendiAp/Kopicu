@@ -639,12 +639,42 @@ async function cancelOrder(automatic = false) {
     return;
   }
 
+  const agreement = String(currentOrder.agreement || "")
+    .toLowerCase()
+    .trim();
+
+  if (agreement !== "pending") {
+    return;
+  }
+
   isCancellingOrder = true;
 
   const orderId = currentOrderId;
   const orderData = currentOrder;
 
   try {
+    const latestSnapshot = await get(
+      ref(db, `orders/${orderId}`)
+    );
+
+    if (!latestSnapshot.exists()) {
+      redirectToProduct();
+      return;
+    }
+
+    const latestOrder = latestSnapshot.val();
+
+    if (
+      String(latestOrder.agreement || "")
+        .toLowerCase()
+        .trim() !== "pending"
+    ) {
+      currentOrder = latestOrder;
+      isCancellingOrder = false;
+      renderOrder(latestOrder);
+      return;
+    }
+
     await remove(ref(db, `orders/${orderId}`));
 
     saveOrderHistory(orderData);
@@ -725,7 +755,7 @@ function renderCancellationControls(order) {
 
   section.innerHTML = "";
 
-  if (["pending", "approved"].includes(agreement)) {
+  if (agreement === "pending") {
     section.hidden = false;
 
     section.innerHTML = `
