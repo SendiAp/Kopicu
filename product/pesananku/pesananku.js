@@ -130,19 +130,15 @@ function getOrderItems(items) {
   return [];
 }
 
-function getOrderStatus(status) {
+function getOrderStatus(status, agreement) {
   const normalized = String(status || "calling")
     .toLowerCase()
     .trim()
     .replace(/[\s-]+/g, "_");
 
-  if (["calling", "call", "menghubungi"].includes(normalized)) {
-    return 0;
-  }
-
-  if (["processing", "proses", "preparing", "prepared"].includes(normalized)) {
-    return 1;
-  }
+  const approved = String(agreement || "")
+    .toLowerCase()
+    .trim() === "approved";
 
   if (["ready", "siap", "ready_for_pickup"].includes(normalized)) {
     return 2;
@@ -155,11 +151,17 @@ function getOrderStatus(status) {
     return 3;
   }
 
-  return 0;
+  if (
+    ["processing", "proses", "preparing", "prepared"].includes(normalized)
+  ) {
+    return approved ? 1 : 0;
+  }
+
+  return approved ? 1 : 0;
 }
 
-function renderStatus(status) {
-  const activeIndex = getOrderStatus(status);
+function renderStatus(status, agreement) {
+  const activeIndex = getOrderStatus(status, agreement);
 
   const items = document.querySelectorAll(".status-item");
   const progressLines = document.querySelectorAll(".progress-line");
@@ -380,7 +382,7 @@ function getStoreAddress(order) {
 function renderOrder(order) {
   currentOrder = order;
 
-  renderStatus(order.status);
+  renderStatus(order.status, order.agreement);
   renderProducts(order.items);
   renderPriceSummary(order);
 
