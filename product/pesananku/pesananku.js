@@ -36,19 +36,24 @@ function redirectToProduct() {
 
 const STATUS_LIST = [
   {
-    title: "Proses!",
-    description: "Pesananmu Sedang Disiapkan.",
-    icon: "fa-clock"
+    title: "Calling!",
+    description: "Sedang Menghubungi Resto Untuk Menyiapkan Pesanan!",
+    icon: "fa-phone"
   },
   {
-    title: "Siap!",
-    description: "Pesananmu Siap Diambil.",
+    title: "Proses!",
+    description: "Sedang Menyiapkan Pesanan Untuk Dijemput!",
     icon: "fa-utensils"
   },
   {
+    title: "Siap!",
+    description: "Pesananmu Siap Dijemput, Dan Segera Untuk Diambil Diresto!",
+    icon: "fa-motorcycle"
+  },
+  {
     title: "Berhasil!",
-    description: "Pesananmu Berhasil Diambil!",
-    icon: "fa-circle-check"
+    description: "Pesananmu Berhasil Dijemput Dan Siap Dihidangkan!",
+    icon: "fa-store"
   }
 ];
 
@@ -126,15 +131,30 @@ function getOrderItems(items) {
 }
 
 function getOrderStatus(status) {
-  const normalized = String(status || "processing")
+  const normalized = String(status || "calling")
     .toLowerCase()
     .trim()
     .replace(/[\s-]+/g, "_");
 
   if (
-    ["ready", "siap", "prepared", "ready_for_pickup"].includes(normalized)
+    [
+      "processing",
+      "proses",
+      "preparing",
+      "prepared"
+    ].includes(normalized)
   ) {
     return 1;
+  }
+
+  if (
+    [
+      "ready",
+      "siap",
+      "ready_for_pickup"
+    ].includes(normalized)
+  ) {
+    return 2;
   }
 
   if (
@@ -147,7 +167,7 @@ function getOrderStatus(status) {
       "selesai"
     ].includes(normalized)
   ) {
-    return 2;
+    return 3;
   }
 
   return 0;
@@ -167,14 +187,19 @@ function renderStatus(status) {
     item.style.display = isActive ? "" : "none";
 
     item.classList.toggle("active", isActive);
-    item.classList.remove("completed");
+    item.classList.toggle("completed", index < activeIndex);
 
     const title = item.querySelector("h3");
     const description = item.querySelector("p");
     const icon = item.querySelector(".status-icon i");
 
-    if (title) title.textContent = STATUS_LIST[index].title;
-    if (description) description.textContent = STATUS_LIST[index].description;
+    if (title) {
+      title.textContent = STATUS_LIST[index].title;
+    }
+
+    if (description) {
+      description.textContent = STATUS_LIST[index].description;
+    }
 
     if (icon) {
       icon.className = `fa-solid ${STATUS_LIST[index].icon}`;
@@ -184,17 +209,10 @@ function renderStatus(status) {
   progressLines.forEach((line, index) => {
     line.style.background =
       index < activeIndex ? "#38251d" : "#eeeeee";
+
+    line.classList.add("progress-animated");
   });
 
-  const isProcessing = activeIndex === 0;
-  
-  progressLines.forEach((line, index) => {
-    line.classList.toggle(
-      "progress-animated",
-      isProcessing && index === 0
-    );
-  });
-  
   progressIcons.forEach((icon, index) => {
     const isActive = index === activeIndex;
     const isCompleted = index < activeIndex;
@@ -210,7 +228,7 @@ function renderStatus(status) {
   });
 
   if (actionSection) {
-    actionSection.hidden = activeIndex !== 2;
+    actionSection.hidden = activeIndex !== 3;
   }
 }
 
