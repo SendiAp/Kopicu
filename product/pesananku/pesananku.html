@@ -45,57 +45,76 @@
 
       <div class="order-status-list">
 
-        <div class="status-item active" data-status="processing">
+        <div class="status-item active" data-status="calling">
           <div class="status-icon">
-            <i class="fa-solid fa-clock"></i>
+            <i class="fa-solid fa-phone"></i>
           </div>
 
           <div class="status-content">
-            <h3>Proses!</h3>
-            <p>Pesananmu Sedang Disiapkan.</p>
+            <h3>Calling!</h3>
+            <p>Sedang Menghubungi Resto Untuk Menyiapkan Pesanan!</p>
           </div>
         </div>
 
-        <div class="status-item" data-status="ready">
+        <div class="status-item" data-status="processing">
           <div class="status-icon">
             <i class="fa-solid fa-utensils"></i>
           </div>
 
           <div class="status-content">
+            <h3>Proses!</h3>
+            <p>Sedang Menyiapkan Pesanan Untuk Dijemput!</p>
+          </div>
+        </div>
+
+        <div class="status-item" data-status="ready">
+          <div class="status-icon">
+            <i class="fa-solid fa-motorcycle"></i>
+          </div>
+
+          <div class="status-content">
             <h3>Siap!</h3>
-            <p>Pesananmu Siap Diambil.</p>
+            <p>Pesananmu Siap Dijemput, Dan Segera Untuk Diambil Diresto!</p>
           </div>
         </div>
 
         <div class="status-item" data-status="completed">
           <div class="status-icon">
-            <i class="fa-solid fa-circle-check"></i>
+            <i class="fa-solid fa-store"></i>
           </div>
 
           <div class="status-content">
             <h3>Berhasil!</h3>
-            <p>Pesananmu Berhasil Diambil!</p>
+            <p>Pesananmu Berhasil Dijemput Dan Siap Dihidangkan!</p>
           </div>
         </div>
 
       </div>
 
       <div class="status-progress">
+
         <span class="progress-start">
-          <i class="fa-solid fa-clock"></i>
+          <i class="fa-solid fa-phone"></i>
         </span>
 
-        <div class="progress-line"></div>
+        <div class="progress-line progress-animated"></div>
 
         <span class="progress-middle">
           <i class="fa-solid fa-utensils"></i>
         </span>
 
-        <div class="progress-line"></div>
+        <div class="progress-line progress-animated"></div>
+
+        <span class="progress-middle">
+          <i class="fa-solid fa-motorcycle"></i>
+        </span>
+
+        <div class="progress-line progress-animated"></div>
 
         <span class="progress-end">
-          <i class="fa-solid fa-check"></i>
+          <i class="fa-solid fa-store"></i>
         </span>
+
       </div>
 
     </section>
