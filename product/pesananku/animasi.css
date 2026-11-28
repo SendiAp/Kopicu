@@ -49,13 +49,13 @@
   }
 }
 
-@keyframes progressShimmer {
-  from {
+@keyframes progressMoving {
+  0% {
     transform: translateX(-100%);
   }
 
-  to {
-    transform: translateX(100%);
+  100% {
+    transform: translateX(250%);
   }
 }
 
@@ -186,26 +186,6 @@
   transform: scale(1.15);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-@keyframes progressMoving {
-  0% {
-    transform: translateX(-100%);
-  }
-
-  100% {
-    transform: translateX(250%);
-  }
-}
-
 .status-progress .progress-line {
   position: relative;
   overflow: hidden;
@@ -220,5 +200,27 @@
   height: 100%;
   border-radius: inherit;
   background: #a4704f;
-  animation: progressMoving 1.8s ease-in-out infinite;
+  animation: progressMoving 1.8s linear infinite;
+}
+
+.status-progress .progress-line:nth-of-type(2)::after {
+  animation-delay: 0s;
+}
+
+.status-progress .progress-line:nth-of-type(4)::after {
+  animation-delay: 0.3s;
+}
+
+.status-progress .progress-line:nth-of-type(6)::after {
+  animation-delay: 0.6s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
