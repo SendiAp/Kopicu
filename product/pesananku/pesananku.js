@@ -136,36 +136,21 @@ function getOrderStatus(status) {
     .trim()
     .replace(/[\s-]+/g, "_");
 
-  if (
-    [
-      "processing",
-      "proses",
-      "preparing",
-      "prepared"
-    ].includes(normalized)
-  ) {
+  if (["calling", "call", "menghubungi"].includes(normalized)) {
+    return 0;
+  }
+
+  if (["processing", "proses", "preparing", "prepared"].includes(normalized)) {
     return 1;
   }
 
-  if (
-    [
-      "ready",
-      "siap",
-      "ready_for_pickup"
-    ].includes(normalized)
-  ) {
+  if (["ready", "siap", "ready_for_pickup"].includes(normalized)) {
     return 2;
   }
 
   if (
-    [
-      "completed",
-      "success",
-      "berhasil",
-      "picked_up",
-      "done",
-      "selesai"
-    ].includes(normalized)
+    ["completed", "success", "berhasil", "picked_up", "done", "selesai"]
+      .includes(normalized)
   ) {
     return 3;
   }
@@ -193,24 +178,19 @@ function renderStatus(status) {
     const description = item.querySelector("p");
     const icon = item.querySelector(".status-icon i");
 
-    if (title) {
-      title.textContent = STATUS_LIST[index].title;
-    }
-
-    if (description) {
-      description.textContent = STATUS_LIST[index].description;
-    }
-
-    if (icon) {
-      icon.className = `fa-solid ${STATUS_LIST[index].icon}`;
-    }
+    if (title) title.textContent = STATUS_LIST[index].title;
+    if (description) description.textContent = STATUS_LIST[index].description;
+    if (icon) icon.className = `fa-solid ${STATUS_LIST[index].icon}`;
   });
 
   progressLines.forEach((line, index) => {
     line.style.background =
       index < activeIndex ? "#38251d" : "#eeeeee";
 
-    line.classList.add("progress-animated");
+    line.classList.toggle(
+      "progress-animated",
+      index === activeIndex && activeIndex < 3
+    );
   });
 
   progressIcons.forEach((icon, index) => {
@@ -672,40 +652,17 @@ async function cancelOrder(automatic = false) {
       pendingCancelTimer = null;
     }
 
-    localStorage.removeItem(
-      `kopicu_pending_since_${orderId}`
-    );
+    localStorage.removeItem(`kopicu_pending_since_${orderId}`);
 
     currentOrder = null;
 
-    if (automatic) {
-      redirectToProduct();
-      return;
-    }
-
-    const section = $("order-cancel-section");
-
-    if (section) {
-      section.hidden = false;
-      section.innerHTML = `
-        <div class="empty-order">
-          <i class="fa-solid fa-circle-check"></i>
-          <p>Pesanan berhasil dibatalkan.</p>
-        </div>
-      `;
-    }
-
-    if (actionSection) {
-      actionSection.hidden = true;
-    }
+    redirectToProduct();
 
   } catch (error) {
     console.error("Gagal membatalkan pesanan:", error);
+    isCancellingOrder = false;
 
     alert("Pesanan gagal dibatalkan. Silakan coba kembali.");
-
-  } finally {
-    isCancellingOrder = false;
   }
 }
 
