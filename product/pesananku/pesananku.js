@@ -29,6 +29,11 @@ let pendingCancelTimer = null;
 let pendingCancelSince = null;
 let isCancellingOrder = false;
 
+function redirectToProduct() {
+  localStorage.removeItem(CURRENT_ORDER_KEY);
+  window.location.href = "../product.html";
+}
+
 const STATUS_LIST = [
   {
     title: "Proses!",
@@ -560,11 +565,7 @@ function renderOrderMessage(icon, message) {
 
 function listenOrder() {
   if (!currentOrderId) {
-    renderOrderMessage(
-      "fa-receipt",
-      "Pesanan tidak ditemukan. Silakan lakukan pemesanan terlebih dahulu."
-    );
-
+    redirectToProduct();
     return;
   }
 
@@ -576,11 +577,7 @@ function listenOrder() {
       if (!snapshot.exists()) {
         if (isCancellingOrder) return;
 
-        renderOrderMessage(
-          "fa-circle-exclamation",
-          "Data pesanan tidak ditemukan."
-        );
-
+        redirectToProduct();
         return;
       }
 
@@ -637,7 +634,7 @@ function saveOrderHistory(order, status = "Dibatalkan") {
   );
 }
 
-async function cancelOrder() {
+async function cancelOrder(automatic = false) {
   if (!currentOrder || !currentOrderId || isCancellingOrder) {
     return;
   }
@@ -663,11 +660,16 @@ async function cancelOrder() {
 
     currentOrder = null;
 
-    const cancelSection = $("order-cancel-section");
+    if (automatic) {
+      redirectToProduct();
+      return;
+    }
 
-    if (cancelSection) {
-      cancelSection.hidden = false;
-      cancelSection.innerHTML = `
+    const section = $("order-cancel-section");
+
+    if (section) {
+      section.hidden = false;
+      section.innerHTML = `
         <div class="empty-order">
           <i class="fa-solid fa-circle-check"></i>
           <p>Pesanan berhasil dibatalkan.</p>
@@ -694,13 +696,15 @@ function confirmCancelOrder() {
 
   if (!section) return;
 
+  section.hidden = false;
+
   section.innerHTML = `
     <div class="cancel-confirmation">
       <p>Apa kamu yakin ingin membatalkan pesanan ini?</p>
 
       <div class="cancel-confirmation-actions">
         <button type="button" id="confirm-cancel-yes">
-          Ya
+          Ya, Batalkan
         </button>
 
         <button type="button" id="confirm-cancel-no">
@@ -710,13 +714,14 @@ function confirmCancelOrder() {
     </div>
   `;
 
-  $("confirm-cancel-yes").addEventListener(
-    "click",
-    cancelOrder
-  );
+  $("confirm-cancel-yes").addEventListener("click", () => {
+    cancelOrder(false);
+  });
 
   $("confirm-cancel-no").addEventListener("click", () => {
-    section.innerHTML = "";
+    if (currentOrder) {
+      renderCancellationControls(currentOrder);
+    }
   });
 }
 
@@ -743,7 +748,7 @@ function renderCancellationControls(order) {
 
   section.innerHTML = "";
 
-  if (agreement === "pending") {
+  if (["pending", "approved"].includes(agreement)) {
     section.hidden = false;
 
     section.innerHTML = `
@@ -759,12 +764,8 @@ function renderCancellationControls(order) {
 
     $("cancel-order-button").addEventListener(
       "click",
-      cancelOrder
+      confirmCancelOrder
     );
-
-  } else if (agreement === "approved") {
-    section.hidden = false;
-    confirmCancelOrder();
 
   } else {
     section.hidden = true;
@@ -797,7 +798,10 @@ function schedulePendingCancellation(order) {
 
     let timestamp;
 
-    if (typeof value === "number" || /^\d+$/.test(String(value))) {
+    if (
+      typeof value === "number" ||
+      /^\d+$/.test(String(value))
+    ) {
       timestamp = Number(value);
 
       if (timestamp < 1000000000000) {
@@ -817,7 +821,11 @@ function schedulePendingCancellation(order) {
 
   if (!agreementTime) {
     agreementTime = Date.now();
-    localStorage.setItem(storageKey, String(agreementTime));
+
+    localStorage.setItem(
+      storageKey,
+      String(agreementTime)
+    );
   }
 
   pendingCancelSince = agreementTime;
@@ -837,7 +845,10 @@ function schedulePendingCancellation(order) {
         ref(db, `orders/${currentOrderId}`)
       );
 
-      if (!latestSnapshot.exists()) return;
+      if (!latestSnapshot.exists()) {
+        redirectToProduct();
+        return;
+      }
 
       const latestOrder = latestSnapshot.val();
 
@@ -851,7 +862,7 @@ function schedulePendingCancellation(order) {
 
       currentOrder = latestOrder;
 
-      await cancelOrder();
+      await cancelOrder(true);
 
     } catch (error) {
       console.error(
